@@ -1,4 +1,4 @@
-import WebServiceModal from './components/WebServiceModal'
+import WebServiceModal from './core/components/WebServiceModal'
 
 export default function App() {
   return (

@@ -7,7 +7,7 @@ import {
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, TableI, TableRowStyled } from './Table'
-import { getSubstring } from '../common/common'
+import { getSubstring } from '../../common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
 import DoneIcon from '@mui/icons-material/Done'
@@ -16,7 +16,7 @@ import "ace-builds/src-noconflict/mode-json"
 import "ace-builds/src-noconflict/theme-dracula"
 import "ace-builds/src-noconflict/ext-language_tools"
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
-import Apicall from '../common/apicall'
+import Apicall from '../../common/apicall'
 
 interface TabPanelProps {
     children?: ReactNode
