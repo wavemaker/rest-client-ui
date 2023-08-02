@@ -1,32 +1,34 @@
-import React, { useState } from 'react';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import React, { ReactNode, useEffect, useState } from 'react'
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, Link, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table,
     TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button,
     TextareaAutosize
-} from '@mui/material';
-import ProviderModal from './ProviderModal';
-import { BodyParamsI, HeaderAndQueryTable, MultipartTable, TableI, TableRowStyled } from './Table';
-import { getSubstring } from '../common/common';
-import InfoIcon from '@mui/icons-material/Info';
-import AddIcon from '@mui/icons-material/Add';
-import DoneIcon from '@mui/icons-material/Done';
-import AceEditor from "react-ace";
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/theme-dracula";
-import "ace-builds/src-noconflict/ext-language_tools";
+} from '@mui/material'
+import ProviderModal from './ProviderModal'
+import { BodyParamsI, HeaderAndQueryTable, MultipartTable, TableI, TableRowStyled } from './Table'
+import { getSubstring } from '../common/common'
+import InfoIcon from '@mui/icons-material/Info'
+import AddIcon from '@mui/icons-material/Add'
+import DoneIcon from '@mui/icons-material/Done'
+import AceEditor from "react-ace"
+import "ace-builds/src-noconflict/mode-json"
+import "ace-builds/src-noconflict/theme-dracula"
+import "ace-builds/src-noconflict/ext-language_tools"
+import { AxiosRequestConfig, AxiosResponse } from 'axios'
+import Apicall from '../common/apicall'
 
 interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
+    children?: ReactNode
+    index: number
+    value: number
 }
 interface PathParamsI {
-    name: string;
-    value: string;
+    name: string
+    value: string
 }
 function CustomTabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props;
+    const { children, value, index, ...other } = props
 
     return (
         <div
@@ -86,6 +88,13 @@ export default function WebServiceModal() {
     const [contentTypes, setcontentTypes] = useState(defaultContentTypes)
     const [newContentType, setnewContentType] = useState('')
     const [responseEditorValue, setresponseEditorValue] = useState('')
+    const [response, setresponse] = useState<AxiosResponse>()
+
+    useEffect(() => {
+        handleChangeResponseTabs(null, responseTabValue)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [response])
+
 
     const getPathParams = () => {
         if (getSubstring(apiURL, "{", "}").length > 0) {
@@ -146,16 +155,16 @@ export default function WebServiceModal() {
     const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => {
         setrequestTabValue(newValue);
     };
-    const handleChangeResponseTabs = (event: React.SyntheticEvent, newValue: number) => {
+    const handleChangeResponseTabs = (event: any, newValue: number) => {
         switch (newValue) {
             case 0:
-                setresponseEditorValue(JSON.stringify('', undefined, 2))
+                setresponseEditorValue(JSON.stringify(response?.data, undefined, 2))
                 break
             case 1:
-                setresponseEditorValue(JSON.stringify('', undefined, 2))
+                setresponseEditorValue(JSON.stringify(response?.headers, undefined, 2))
                 break
             case 2:
-                setresponseEditorValue(JSON.stringify('', undefined, 2))
+                setresponseEditorValue(JSON.stringify({ statusCode: response?.status }, undefined, 2))
                 break
         }
         setresponseTabValue(newValue);
@@ -204,6 +213,9 @@ export default function WebServiceModal() {
                 newQueryParams.push({ name: '', value: '', type: '' })
                 setqueryParams(newQueryParams)
             }
+            else {
+                setqueryParams([{ name: '', value: '', type: '' }])
+            }
         }
     }
     const handleAddCustomContentType = () => {
@@ -224,34 +236,52 @@ export default function WebServiceModal() {
             setnewContentType("")
         }
     }
-    const handleTestClick = () => {
-        let header = '', body;
+    const handleResponseEditorChange = (newValue: string) => {
+        setresponseEditorValue(newValue)
+    }
+    const handleTestClick = async () => {
+        let header: any = {}, body;
         let requestAPI = apiURL
         pathParams.forEach((params) => {
             requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
         })
         headerParams.forEach((data, index) => {
             if (headerParams.length - 1 !== index)
-                header += `"${data.name}":"${data.value}",`
+                header[data.name] = data.value
         })
         if (contentType === 'multipart/form-data') {
             const formData = new FormData()
             multipartParams.forEach((data, index) => {
-                if (multipartParams.length - 1 !== index) {
-                    formData.append(data.name, data.value as any)
-                }
+                if (multipartParams.length - 1 !== index)
+                    formData.append(data.name, data.value)
             })
             body = formData
-        } else {
+        } else
             body = JSON.stringify(bodyParams)
+        const configWOProxy: AxiosRequestConfig = {
+            url: requestAPI,
+            headers: header,
+            method: httpMethod,
+            data: body
         }
-
-        console.log(header)
-        console.log(requestAPI)
-        console.log(body)
-    }
-    const handleResponseEditorChange = (newValue: string) => {
-        setresponseEditorValue(newValue)
+        const configWProxy: AxiosRequestConfig = {
+            url: "https://stage-studio.wavemakeronline.com/studio/services/projects/WMPRJ2c91808888f52524018968db801516c9/restservices/invoke?optimizeResponse=true",
+            data: {
+                "endpointAddress": requestAPI,
+                "method": httpMethod,
+                "contentType": contentType,
+                "requestBody": body,
+                "headers": header,
+                "authDetails": null
+            },
+            method: "POST",
+        }
+        const config = useProxy ? configWProxy : configWOProxy
+        const response: AxiosResponse = await Apicall(config)
+        console.log(response)
+        //@ts-ignore
+        const checkResponse = response.status >= 200 && response.status < 300 ? response : response.response
+        setresponse(checkResponse)
     }
 
     return (
@@ -458,7 +488,7 @@ export default function WebServiceModal() {
                                     <Stack>
                                         <Typography>
                                             {`No path param found. A path param is used against certain entity of the URL that is required to change dynamically.
-                                                            A path param can be set by enclosing an entity in the URL in a curly bracket "{}".`}
+                                            A path param can be set by enclosing an entity in the URL in a curly bracket "{}".`}
                                         </Typography>
                                         <Typography>
                                             {`e.g. For URL "http:wavemaker.com/projects/{pid}/?mode=json", "pid" is the path param. (More info)`}
@@ -472,14 +502,14 @@ export default function WebServiceModal() {
                     <Box sx={{ width: '100%' }}>
                         <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                             <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
-                                <Tab label="Response Seader" />
                                 <Tab label="Response Body" />
+                                <Tab label="Response Header" />
                                 <Tab label="Response Status" />
                             </Tabs>
                         </Box>
                     </Box>
                     <AceEditor
-                        setOptions={{ useWorker: false, printMargin: false }}
+                        setOptions={{ useWorker: false, printMargin: false, wrap: true }}
                         mode="json"
                         theme="dracula"
                         editorProps={{ $blockScrolling: true }}
