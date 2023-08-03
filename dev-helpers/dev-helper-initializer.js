@@ -17,7 +17,6 @@ window.onload = function() {
     plugins: [
       RestImportBundle.plugins.DownloadUrl
     ],
-    requestSnippetsEnabled: true,
     layout: "BaseLayout"
   })
 
