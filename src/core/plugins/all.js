@@ -1,6 +1,6 @@
 import { pascalCaseFilename } from "core/utils"
 
-const request = require.context(".", true, /\.jsx?$/)
+const request = require.context(".", true, /\.(jsx|tsx|ts)$/)
 
 const allPlugins = {}
 

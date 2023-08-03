@@ -32,7 +32,6 @@ export default function RestImport(opts) {
     docExpansion: "list",
     maxDisplayedTags: null,
     filter: null,
-    validatorUrl: "https://validator.swagger.io/validator",
     oauth2RedirectUrl: `${window.location.protocol}//${window.location.host}${window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/"))}/oauth2-redirect.html`,
     persistAuthorization: false,
     configs: {},
@@ -142,7 +141,7 @@ export default function RestImport(opts) {
   if(constructorConfig.initialState) {
     // if the user sets a key as `undefined`, that signals to us that we
     // should delete the key entirely.
-    // known usage: Swagger-Editor validate plugin tests
+    // known usage: rest-import-Editor validate plugin tests
     for (var key in constructorConfig.initialState) {
       if(
         Object.prototype.hasOwnProperty.call(constructorConfig.initialState, key)

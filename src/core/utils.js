@@ -641,24 +641,6 @@ export const sorters = {
   }
 }
 
-export const buildFormData = (data) => {
-  let formArr = []
-
-  for (let name in data) {
-    let val = data[name]
-    if (val !== undefined && val !== "") {
-      formArr.push([name, "=", encodeURIComponent(val).replace(/%20/g,"+")].join(""))
-    }
-  }
-  return formArr.join("&")
-}
-
-// Is this really required as a helper? Perhaps. TODO: expose the system of presets.apis in docs, so we know what is supported
-export const shallowEqualKeys = (a,b, keys) => {
-  return !!find(keys, (key) => {
-    return eq(a[key], b[key])
-  })
-}
 
 export function sanitizeUrl(url) {
   if(typeof url !== "string" || url === "") {
@@ -668,36 +650,6 @@ export function sanitizeUrl(url) {
   return braintreeSanitizeUrl(url)
 }
 
-export function requiresValidationURL(uri) {
-  if (!uri || uri.indexOf("localhost") >= 0 || uri.indexOf("127.0.0.1") >= 0 || uri === "none") {
-    return false
-  }
-  return true
-}
-
-
-export function getAcceptControllingResponse(responses) {
-  if(!Im.OrderedMap.isOrderedMap(responses)) {
-    // wrong type!
-    return null
-  }
-
-  if(!responses.size) {
-    // responses is empty
-    return null
-  }
-
-  const suitable2xxResponse = responses.find((res, k) => {
-    return k.startsWith("2") && Object.keys(res.get("content") || {}).length > 0
-  })
-
-  // try to find a suitable `default` responses
-  const defaultResponse = responses.get("default") || Im.OrderedMap()
-  const defaultResponseMediaTypes = (defaultResponse.get("content") || Im.OrderedMap()).keySeq().toJS()
-  const suitableDefaultResponse = defaultResponseMediaTypes.length ? defaultResponse : null
-
-  return suitable2xxResponse || suitableDefaultResponse
-}
 
 // suitable for use in URL fragments
 export const createDeepLinkPath = (str) => typeof str == "string" || str instanceof String ? str.trim().replace(/\s/g, "%20") : ""

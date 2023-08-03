@@ -17,23 +17,12 @@ export default class BaseLayout extends React.Component {
 
   render() {
     const { specSelectors, getComponent } = this.props;
-    const url = specSelectors.url();
+    const WebServiceModal = getComponent('WebServiceModal')
     const value = specSelectors.value();
-    const objval = specSelectors.objval();
     return (
-      <div className="swagger-ui">
+      <div className="rest-import-ui">
         <div className="information-container">
-          <div>
-            {url}
-            <p>{value}</p>
-            <p>{objval.name}</p>
-          </div>
-          <Stack spacing={2} direction="row">
-            <Button variant="text">Text</Button>
-            <Button variant="contained">{value}</Button>
-            <Button variant="outlined">Outlined</Button>
-          </Stack>
-          <p>WElcome</p>
+        <WebServiceModal  url={value}/>
         </div>
       </div>
     );

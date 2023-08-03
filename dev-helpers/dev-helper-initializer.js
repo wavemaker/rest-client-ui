@@ -9,7 +9,7 @@ window.onload = function() {
       id:"1",
       "name":'Ponnarasi'
     },
-    value:"dynamic Value",
+    value:"https://www.google.com/",
     presets: [
       RestImportBundle.presets.apis,
       RestImportStandalonePreset

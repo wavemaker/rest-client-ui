@@ -8,8 +8,8 @@ import Paper from '@mui/material/Paper';
 import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { ChangeEvent } from 'react';
-import { getCurrentDateTime } from '../../common/common';
+import React, { ChangeEvent } from 'react';
+import { getCurrentDateTime } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 

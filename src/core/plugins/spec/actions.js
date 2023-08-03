@@ -393,7 +393,7 @@ export const executeRequest = (req) =>
 
             // if the value is falsy or an empty Immutable iterable...
             if(!paramValue || (paramValue && paramValue.size === 0)) {
-              // set it to empty string, so Swagger Client will treat it as
+              // set it to empty string, so rest-import Client will treat it as
               // present but empty.
               req.parameters[param.get("name")] = ""
             }

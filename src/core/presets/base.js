@@ -9,11 +9,12 @@ import logs from "core/plugins/logs"
 import App from "core/components/app"
 import BaseLayout from "core/components/layouts/base"
 import * as LayoutUtils from "core/components/layout-utils"
-
+import WebServiceModal from "../../jsx/WebServiceModal"
 export default function () {
   let coreComponents = {
     components: {
       App,
+      WebServiceModal,
       BaseLayout,
     },
   }
