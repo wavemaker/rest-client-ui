@@ -11,11 +11,6 @@ request.keys().forEach( function( key ){
     return
   }
 
-  // if( key.slice(2).indexOf("/") > -1) {
-  //   // skip files in subdirs
-  //   return
-  // }
-
   let mod = request(key)
   allPlugins[pascalCaseFilename(key)] = mod.default ? mod.default : mod
 })

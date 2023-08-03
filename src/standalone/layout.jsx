@@ -15,13 +15,12 @@ export default class StandaloneLayout extends React.Component {
 
   render() {
     const { getComponent } = this.props
-    const Container = getComponent("Container")
     const BaseLayout = getComponent("BaseLayout", true)
 
     return (
-      <Container className='rest-import-ui'>
+      <div className='rest-import-ui'>
         <BaseLayout />
-      </Container>
+      </div>
     )
   }
 

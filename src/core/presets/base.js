@@ -4,11 +4,9 @@
 import layout from "core/plugins/layout"
 import spec from "core/plugins/spec"
 import view from "core/plugins/view"
-import requestSnippets from "core/plugins/request-snippets"
 import logs from "core/plugins/logs"
 import App from "core/components/app"
 import BaseLayout from "core/components/layouts/base"
-import * as LayoutUtils from "core/components/layout-utils"
 import WebServiceModal from "../../jsx/WebServiceModal"
 export default function () {
   let coreComponents = {
@@ -19,9 +17,6 @@ export default function () {
     },
   }
 
-  let formComponents = {
-    components: LayoutUtils,
-  }
 
   return [
     logs,
@@ -29,7 +24,5 @@ export default function () {
     spec,
     layout,
     coreComponents,
-    formComponents,
-    requestSnippets,
   ]
 }
