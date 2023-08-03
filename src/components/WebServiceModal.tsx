@@ -7,7 +7,7 @@ import {
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, TableI, TableRowStyled } from './Table'
-import { getSubstring } from '../common/common'
+import { findDuplicateObjects, findDuplicatesAcrossArraysExceptFirst, getSubstring, httpStatusCodes, removeDuplicatesKeepFirst, removeSecondDuplicateSubstring } from '../common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
 import DoneIcon from '@mui/icons-material/Done'
@@ -17,6 +17,8 @@ import "ace-builds/src-noconflict/theme-dracula"
 import "ace-builds/src-noconflict/ext-language_tools"
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import Apicall from '../common/apicall'
+import { encode } from 'js-base64';
+import toast, { Toaster } from 'react-hot-toast'
 
 interface TabPanelProps {
     children?: ReactNode
@@ -89,6 +91,8 @@ export default function WebServiceModal() {
     const [newContentType, setnewContentType] = useState('')
     const [responseEditorValue, setresponseEditorValue] = useState('')
     const [response, setresponse] = useState<AxiosResponse>()
+    const [userName, setuserName] = useState('')
+    const [userPassword, setuserPassword] = useState('')
 
     useEffect(() => {
         handleChangeResponseTabs(null, responseTabValue)
@@ -97,9 +101,9 @@ export default function WebServiceModal() {
 
 
     const getPathParams = () => {
-        if (getSubstring(apiURL, "{", "}").length > 0) {
+        if (getSubstring(apiURL.split("?")[0], "{", "}").length > 0) {
             const pathParamsClone = [...pathParams]
-            const paths = getSubstring(apiURL, "{", "}")
+            let paths = getSubstring(apiURL.split("?")[0], "{", "}")
             const newPathParams: PathParamsI[] = []
             const checkPath = (name: string): boolean => {
                 let returnBool = false
@@ -114,12 +118,31 @@ export default function WebServiceModal() {
                 })
                 return returnBool
             }
-            paths.forEach((path) => {
+            if ((paths.filter((item, index) => paths.indexOf(item) !== index)).length > 0) {
+                toast.error("Paths cannot have duplicates, removed the dupicates", {
+                    position: 'top-right'
+                })
+                const duplicatePaths = paths.filter((item, index) => paths.indexOf(item) !== index)
+                duplicatePaths.forEach((value) => {
+                    setapiURL(removeSecondDuplicateSubstring(apiURL, `{${value}}`))
+                })
+            }
+            paths = paths.filter((item, index) => paths.indexOf(item) === index)
+            paths.forEach((path) => { 
                 if (!checkPath(path))
                     if (path !== '')
                         newPathParams.push({ name: path, value: "" })
             })
-            setpathParams(newPathParams)
+            const headerParamsClone = [...headerParams]
+            const queryParamsClone = [...queryParams]
+            const duplicates = findDuplicatesAcrossArraysExceptFirst([headerParamsClone.slice(0, headerParamsClone.length - 1), queryParamsClone.slice(0, queryParamsClone.length - 1), newPathParams], "name")
+            if (duplicates.length > 0) {
+                toast.error(`Parameter "${duplicates[0].name}" already exists`, {
+                    position: 'top-right'
+                })
+            }
+            else
+                setpathParams(newPathParams)
         }
         else {
             setpathParams([])
@@ -183,6 +206,13 @@ export default function WebServiceModal() {
             const query = apiURL?.split('?')[1]
             const queries = query?.split('&')
             if (query) {
+                const queryNames = queries.map(query => {
+                    const data = {
+                        name: query.split('=')[0],
+                        value: query.split('=')[1]
+                    }
+                    return data
+                })
                 const newQueryParams: TableI[] = []
                 const queryParamsClone = [...queryParams]
                 const checkQuery = (name: string, value: string): boolean => {
@@ -202,9 +232,21 @@ export default function WebServiceModal() {
                     })
                     return returnBool
                 }
-                queries.forEach((data) => {
-                    const key = data.split('=')[0]
-                    const value = data.split('=')[1]
+                const nonDuplicate = removeDuplicatesKeepFirst(queryNames, "name")
+                const duplicates = findDuplicateObjects(queryNames, "name")
+                if (duplicates.length > 0) {
+                    let apiURLCopy = apiURL
+                    toast.error("Queries cannot have duplicates, removed the dupicates", {
+                        position: 'top-right'
+                    })
+                    duplicates.forEach((data) => {
+                        apiURLCopy = apiURLCopy.replace(`&${data.name}=${data.value}`, '')
+                    })
+                    setapiURL(apiURLCopy)
+                }
+                nonDuplicate.forEach((data) => {
+                    const key = data.name
+                    const value = data.value
                     if (!checkQuery(key, value)) {
                         if (key !== '' && value !== '')
                             newQueryParams.push({ name: key, value: value, type: "string" })
@@ -216,6 +258,9 @@ export default function WebServiceModal() {
             else {
                 setqueryParams([{ name: '', value: '', type: '' }])
             }
+        }
+        else {
+            setqueryParams([{ name: '', value: '', type: '' }])
         }
     }
     const handleAddCustomContentType = () => {
@@ -248,6 +293,9 @@ export default function WebServiceModal() {
         headerParams.forEach((data, index) => {
             if (headerParams.length - 1 !== index)
                 header[data.name] = data.value
+            if (httpAuth === "Basic" && index === 0) {
+                header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
+            }
         })
         if (contentType === 'multipart/form-data') {
             const formData = new FormData()
@@ -265,7 +313,7 @@ export default function WebServiceModal() {
             data: body
         }
         const configWProxy: AxiosRequestConfig = {
-            url: "https://stage-studio.wavemakeronline.com/studio/services/projects/WMPRJ2c91808888f52524018968db801516c9/restservices/invoke?optimizeResponse=true",
+            url: "http://stage-studio.wavemakeronline.com/studio/services/projects/WMPRJ2c91808888f52524018968db801516c9/restservices/invoke?optimizeResponse=true",
             data: {
                 "endpointAddress": requestAPI,
                 "method": httpMethod,
@@ -277,15 +325,15 @@ export default function WebServiceModal() {
             method: "POST",
         }
         const config = useProxy ? configWProxy : configWOProxy
-        const response: AxiosResponse = await Apicall(config)
+        const response: any = await Apicall(config)
         console.log(response)
-        //@ts-ignore
-        const checkResponse = response.status >= 200 && response.status < 300 ? response : response.response
+        const checkResponse = response.status >= 200 && response.status < 300 ? response : response.response !== undefined ? response.response : { data: response.message, status: httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.data.headers }
         setresponse(checkResponse)
     }
 
     return (
         <>
+            <Toaster />
             <Grid gap={5} p={2} className='cmnflx' container>
                 <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
                     <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
@@ -377,7 +425,7 @@ export default function WebServiceModal() {
                                     </Grid>
                                     <Grid item md={9}>
                                         <Stack direction={'row'}>
-                                            <TextField size='small' label="User Name" placeholder='User Name' />
+                                            <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label="User Name" placeholder='User Name' />
                                             <Tooltip title="Delete">
                                                 <IconButton>
                                                     <HelpOutlineIcon />
@@ -390,7 +438,7 @@ export default function WebServiceModal() {
                                     </Grid>
                                     <Grid item md={9}>
                                         <Stack direction={'row'}>
-                                            <TextField size='small' label="Password" placeholder='Password' />
+                                            <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label="Password" placeholder='Password' />
                                             <Tooltip title="Delete">
                                                 <IconButton>
                                                     <HelpOutlineIcon />
@@ -405,7 +453,7 @@ export default function WebServiceModal() {
                                     </Grid>
                                     <Grid item md={9}>
                                         <Stack spacing={2} direction={'row'}>
-                                            <TextField size='small' label="No Provider Selected yet" />
+                                            <TextField disabled size='small' label={"No Provider Selected yet"} />
                                             <Button onClick={() => setproviderOpen(true)} variant='contained'>Select/Add Provider</Button>
                                         </Stack>
                                     </Grid>

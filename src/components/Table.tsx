@@ -9,9 +9,10 @@ import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuI
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { ChangeEvent } from 'react';
-import { getCurrentDateTime } from '../common/common';
+import { findDuplicateObjects, getCurrentDateTime } from '../common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
+import toast from 'react-hot-toast'
 
 export interface TableI {
     name: string
@@ -90,7 +91,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         if (name !== null) {
             valueClone.map((data: TableI, index) => {
                 if (index === currentIndex) {
-                    data.name = name as string
+                    data.name = name
                 }
                 return data
             })
@@ -153,25 +154,37 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         let orginalURL = apiURL
         const lastRow = value[value.length - 1]
         const valueClone = [...value]
-        if (from === 'query') {
-            valueClone.forEach((data, index) => {
-                let addData = data.name + "=" + data.value
-                if (index === 0) {
-                    if (!orginalURL.includes("?" + addData) && !orginalURL.includes("&" + addData))
-                        orginalURL += "?" + data.name + "=" + data.value
-                }
-                else {
-                    if (!orginalURL.includes(addData))
-                        orginalURL += "&" + data.name + "=" + data.value
-                }
-            })
-            changeapiURL(orginalURL)
-        }
+        // const nonDuplicate = removeDuplicatesKeepFirst(valueClone, "name")
+        const duplicates = findDuplicateObjects(valueClone, "name")
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
-            valueClone.push({
+            if (duplicates.length > 0) {
+                toast.error(`${from} "${duplicates[0].name}" already exists`, {
+                    position: 'top-right'
+                })
+            }
+            if (from === 'query' && duplicates.length === 0) {
+                valueClone.forEach((data, index) => {
+                    let addData = data.name + "=" + data.value
+                    if (index === 0) {
+                        if (!orginalURL.includes("?" + addData) && !orginalURL.includes("&" + addData))
+                            orginalURL += "?" + data.name + "=" + data.value
+                    }
+                    else {
+                        if (!orginalURL.includes(addData))
+                            orginalURL += "&" + data.name + "=" + data.value
+                    }
+                })
+                changeapiURL(orginalURL)
+            }
+            duplicates.length === 0 && valueClone.push({
                 name: '', value: "", type: ''
             })
             setValue(valueClone)
+        }
+        else {
+            toast.error(`Please fill the mandatory fields`, {
+                position: 'top-right'
+            })
         }
     }
 
@@ -229,7 +242,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                     <Autocomplete
                                         size='small'
                                         disabled={index !== value.length - 1}
-                                        sx={{ minWidth: 150 }}
+                                        sx={{ minWidth: 100 }}
                                         inputValue={data.name}
                                         onInputChange={(event, newValue: string) => {
                                             handleChangeName(newValue, index);
@@ -240,7 +253,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                     />}
                             </TableCell>
                             <TableCell align='center'>
-                                <FormControl size='small' sx={{ minWidth: 300 }}>
+                                <FormControl size='small' sx={{ minWidth: 200 }}>
                                     <InputLabel>Select Type</InputLabel>
                                     <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
                                         <ListSubheader>UI Types</ListSubheader>
@@ -359,7 +372,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                                 <TextField disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} />
                             </TableCell>
                             <TableCell align='center'>
-                                <FormControl size='small' sx={{ minWidth: 300 }}>
+                                <FormControl size='small' sx={{ minWidth: 200 }}>
                                     <InputLabel>Select Type</InputLabel>
                                     <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
                                         <MenuItem value={'file'}>File</MenuItem>
