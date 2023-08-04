@@ -7,7 +7,7 @@ import {
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, TableI, TableRowStyled } from './Table'
-import { findDuplicateObjects, findDuplicatesAcrossArraysExceptFirst, getSubstring, httpStatusCodes, removeDuplicatesKeepFirst, removeSecondDuplicateSubstring } from '../common/common'
+import { findDuplicateObjects, findDuplicatesAcrossArrays, getSubstring, httpStatusCodes, removeDuplicatesByComparison, removeDuplicatesKeepFirst } from '../common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
 import DoneIcon from '@mui/icons-material/Done'
@@ -25,7 +25,7 @@ interface TabPanelProps {
     index: number
     value: number
 }
-interface PathParamsI {
+export interface PathParamsI {
     name: string
     value: string
 }
@@ -118,28 +118,20 @@ export default function WebServiceModal() {
                 })
                 return returnBool
             }
-            if ((paths.filter((item, index) => paths.indexOf(item) !== index)).length > 0) {
-                toast.error("Paths cannot have duplicates, removed the dupicates", {
-                    position: 'top-right'
-                })
-                const duplicatePaths = paths.filter((item, index) => paths.indexOf(item) !== index)
-                duplicatePaths.forEach((value) => {
-                    setapiURL(removeSecondDuplicateSubstring(apiURL, `{${value}}`))
-                })
-            }
             paths = paths.filter((item, index) => paths.indexOf(item) === index)
-            paths.forEach((path) => { 
+            paths.forEach((path) => {
                 if (!checkPath(path))
                     if (path !== '')
                         newPathParams.push({ name: path, value: "" })
             })
             const headerParamsClone = [...headerParams]
             const queryParamsClone = [...queryParams]
-            const duplicates = findDuplicatesAcrossArraysExceptFirst([headerParamsClone.slice(0, headerParamsClone.length - 1), queryParamsClone.slice(0, queryParamsClone.length - 1), newPathParams], "name")
+            const duplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), queryParamsClone.slice(0, queryParamsClone.length - 1), newPathParams], "name")
             if (duplicates.length > 0) {
                 toast.error(`Parameter "${duplicates[0].name}" already exists`, {
                     position: 'top-right'
                 })
+                setpathParams(removeDuplicatesByComparison(newPathParams, duplicates, "name"))
             }
             else
                 setpathParams(newPathParams)
@@ -461,7 +453,7 @@ export default function WebServiceModal() {
                             </Grid>
                         </CustomTabPanel>
                         <CustomTabPanel value={requestTabValue} index={1}>
-                            <HeaderAndQueryTable from='header' value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                            <HeaderAndQueryTable from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                         </CustomTabPanel>
                         <CustomTabPanel value={requestTabValue} index={2}>
                             <Stack spacing={1} mt={2} ml={1}>
@@ -502,7 +494,7 @@ export default function WebServiceModal() {
                             </Stack>
                         </CustomTabPanel>
                         <CustomTabPanel value={requestTabValue} index={3}>
-                            <HeaderAndQueryTable from='query' value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                            <HeaderAndQueryTable from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                         </CustomTabPanel>
                         <CustomTabPanel value={requestTabValue} index={4}>
                             {pathParams.length > 0 ? <TableContainer component={Paper}>

@@ -157,7 +157,7 @@ export const removeSecondDuplicateSubstring = (
   });
 };
 
-export function findDuplicatesAcrossArraysExceptFirst(
+export function findDuplicatesAcrossArrays(
   arrays: any[],
   propertyName: string
 ) {
@@ -175,4 +175,15 @@ export function findDuplicatesAcrossArraysExceptFirst(
   }
 
   return duplicates;
+}
+
+export function removeDuplicatesByComparison(
+  originalArray: any[],
+  comparisonArray: any[],
+  key: string
+) {
+  return originalArray.filter(
+    (item) =>
+      !comparisonArray.some((compareItem) => compareItem[key] === item[key])
+  );
 }

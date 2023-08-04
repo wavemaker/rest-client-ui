@@ -8,11 +8,12 @@ import Paper from '@mui/material/Paper';
 import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { ChangeEvent } from 'react';
-import { findDuplicateObjects, getCurrentDateTime } from '../common/common';
+import React, { ChangeEvent } from 'react';
+import { findDuplicateObjects, findDuplicatesAcrossArrays, getCurrentDateTime } from '../common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import toast from 'react-hot-toast'
+import { PathParamsI } from './WebServiceModal';
 
 export interface TableI {
     name: string
@@ -36,8 +37,8 @@ export const TableRowStyled = styled(TableRow)`
   } 
 `;
 
-export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL }:
-    { value: TableI[], setValue: (data: TableI[]) => void, from: string, apiURL: string, changeapiURL: (value: string) => void }) {
+export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams }:
+    { value: TableI[], setValue: (data: TableI[]) => void, from: string, apiURL: string, changeapiURL: (value: string) => void, headerParams: TableI[], queryParams: TableI[], pathParams: PathParamsI[] }) {
     const selectTypes =
     {
         UITypes: [
@@ -154,15 +155,32 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         let orginalURL = apiURL
         const lastRow = value[value.length - 1]
         const valueClone = [...value]
-        // const nonDuplicate = removeDuplicatesKeepFirst(valueClone, "name")
         const duplicates = findDuplicateObjects(valueClone, "name")
+        const headerParamsClone = [...headerParams]
+        const queryParamsClone = [...queryParams]
+        const pathParamsClone = [...pathParams]
+        const allDuplicates = (): any[] => {
+            let returnDuplicates: any[] = []
+            if (from === 'header') {
+                returnDuplicates = findDuplicatesAcrossArrays([valueClone, queryParamsClone.slice(0, queryParamsClone.length - 1), pathParamsClone], "name")
+            }
+            else {
+                returnDuplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), valueClone, pathParamsClone], "name")
+            }
+            return returnDuplicates
+        }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
             if (duplicates.length > 0) {
                 toast.error(`${from} "${duplicates[0].name}" already exists`, {
                     position: 'top-right'
                 })
             }
-            if (from === 'query' && duplicates.length === 0) {
+            if (allDuplicates().length > 0) {
+                toast.error(`${from} "${allDuplicates()[0].name}" already exists`, {
+                    position: 'top-right'
+                })
+            }
+            if (from === 'query' && duplicates.length === 0 && allDuplicates().length === 0) {
                 valueClone.forEach((data, index) => {
                     let addData = data.name + "=" + data.value
                     if (index === 0) {
@@ -176,9 +194,10 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                 })
                 changeapiURL(orginalURL)
             }
-            duplicates.length === 0 && valueClone.push({
-                name: '', value: "", type: ''
-            })
+            if (duplicates.length === 0 && allDuplicates().length === 0)
+                valueClone.push({
+                    name: '', value: "", type: ''
+                })
             setValue(valueClone)
         }
         else {
