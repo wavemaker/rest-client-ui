@@ -277,50 +277,56 @@ export default function WebServiceModal() {
         setresponseEditorValue(newValue)
     }
     const handleTestClick = async () => {
-        let header: any = {}, body;
-        let requestAPI = apiURL
-        pathParams.forEach((params) => {
-            requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
-        })
-        headerParams.forEach((data, index) => {
-            if (headerParams.length - 1 !== index)
-                header[data.name] = data.value
-            if (httpAuth === "Basic" && index === 0) {
-                header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
-            }
-        })
-        if (contentType === 'multipart/form-data') {
-            const formData = new FormData()
-            multipartParams.forEach((data, index) => {
-                if (multipartParams.length - 1 !== index)
-                    formData.append(data.name, data.value)
+        if (apiURL.length > 0) {
+            let header: any = {}, body;
+            let requestAPI = apiURL
+            pathParams.forEach((params) => {
+                requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
             })
-            body = formData
-        } else
-            body = JSON.stringify(bodyParams)
-        const configWOProxy: AxiosRequestConfig = {
-            url: requestAPI,
-            headers: header,
-            method: httpMethod,
-            data: body
+            headerParams.forEach((data, index) => {
+                if (headerParams.length - 1 !== index)
+                    header[data.name] = data.value
+                if (httpAuth === "Basic" && index === 0) {
+                    header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
+                }
+            })
+            if (contentType === 'multipart/form-data') {
+                const formData = new FormData()
+                multipartParams.forEach((data, index) => {
+                    if (multipartParams.length - 1 !== index)
+                        formData.append(data.name, data.value)
+                })
+                body = formData
+            } else
+                body = JSON.stringify(bodyParams)
+            const configWOProxy: AxiosRequestConfig = {
+                url: requestAPI,
+                headers: header,
+                method: httpMethod,
+                data: body
+            }
+            const configWProxy: AxiosRequestConfig = {
+                url: "http://stage-studio.wavemakeronline.com/studio/services/projects/WMPRJ2c91808888f52524018968db801516c9/restservices/invoke?optimizeResponse=true",
+                data: {
+                    "endpointAddress": requestAPI,
+                    "method": httpMethod,
+                    "contentType": contentType,
+                    "requestBody": body,
+                    "headers": header,
+                    "authDetails": null
+                },
+                method: "POST",
+            }
+            const config = useProxy ? configWProxy : configWOProxy
+            const response: any = await Apicall(config)
+            console.log(response)
+            const checkResponse = response.status >= 200 && response.status < 300 ? response : response.response !== undefined ? response.response : { data: response.message, status: httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.data.headers }
+            setresponse(checkResponse)
         }
-        const configWProxy: AxiosRequestConfig = {
-            url: "http://stage-studio.wavemakeronline.com/studio/services/projects/WMPRJ2c91808888f52524018968db801516c9/restservices/invoke?optimizeResponse=true",
-            data: {
-                "endpointAddress": requestAPI,
-                "method": httpMethod,
-                "contentType": contentType,
-                "requestBody": body,
-                "headers": header,
-                "authDetails": null
-            },
-            method: "POST",
-        }
-        const config = useProxy ? configWProxy : configWOProxy
-        const response: any = await Apicall(config)
-        console.log(response)
-        const checkResponse = response.status >= 200 && response.status < 300 ? response : response.response !== undefined ? response.response : { data: response.message, status: httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.data.headers }
-        setresponse(checkResponse)
+        else
+            toast.error("Please provide a valid URL", {
+                position: 'top-right'
+            })
     }
 
     return (
