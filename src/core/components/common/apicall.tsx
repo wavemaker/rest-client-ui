@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
 export default async function Apicall(config: AxiosRequestConfig) {
   const response = await axios
@@ -6,7 +6,7 @@ export default async function Apicall(config: AxiosRequestConfig) {
     .then((res) => {
       return res;
     })
-    .catch((err) => {
+    .catch((err: AxiosError) => {
       return err;
     });
   return response;

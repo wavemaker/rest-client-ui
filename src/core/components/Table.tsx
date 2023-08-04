@@ -5,13 +5,15 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
+import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, Stack, TextField } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import React, { ChangeEvent } from 'react';
-import { getCurrentDateTime } from './common/common';
+import { findDuplicateObjects, findDuplicatesAcrossArrays, getCurrentDateTime } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
+import toast from 'react-hot-toast'
+import { PathParamsI } from './WebServiceModal';
 
 export interface TableI {
     name: string
@@ -35,8 +37,8 @@ export const TableRowStyled = styled(TableRow)`
   } 
 `;
 
-export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL }:
-    { value: TableI[], setValue: (data: TableI[]) => void, from: string, apiURL: string, changeapiURL: (value: string) => void }) {
+export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams }:
+    { value: TableI[], setValue: (data: TableI[]) => void, from: string, apiURL: string, changeapiURL: (value: string) => void, headerParams: TableI[], queryParams: TableI[], pathParams: PathParamsI[] }) {
     const selectTypes =
     {
         UITypes: [
@@ -90,7 +92,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         if (name !== null) {
             valueClone.map((data: TableI, index) => {
                 if (index === currentIndex) {
-                    data.name = name as string
+                    data.name = name
                 }
                 return data
             })
@@ -153,25 +155,55 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         let orginalURL = apiURL
         const lastRow = value[value.length - 1]
         const valueClone = [...value]
-        if (from === 'query') {
-            valueClone.forEach((data, index) => {
-                let addData = data.name + "=" + data.value
-                if (index === 0) {
-                    if (!orginalURL.includes("?" + addData) && !orginalURL.includes("&" + addData))
-                        orginalURL += "?" + data.name + "=" + data.value
-                }
-                else {
-                    if (!orginalURL.includes(addData))
-                        orginalURL += "&" + data.name + "=" + data.value
-                }
-            })
-            changeapiURL(orginalURL)
+        const duplicates = findDuplicateObjects(valueClone, "name")
+        const headerParamsClone = [...headerParams]
+        const queryParamsClone = [...queryParams]
+        const pathParamsClone = [...pathParams]
+        const allDuplicates = (): any[] => {
+            let returnDuplicates: any[] = []
+            if (from === 'header') {
+                returnDuplicates = findDuplicatesAcrossArrays([valueClone, queryParamsClone.slice(0, queryParamsClone.length - 1), pathParamsClone], "name")
+            }
+            else {
+                returnDuplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), valueClone, pathParamsClone], "name")
+            }
+            return returnDuplicates
         }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
-            valueClone.push({
-                name: '', value: "", type: ''
-            })
+            if (duplicates.length > 0) {
+                return toast.error(`parameter "${duplicates[0].name}" already exists`, {
+                    position: 'top-right'
+                })
+            }
+            if (allDuplicates().length > 0) {
+                return toast.error(`parameter "${allDuplicates()[0].name}" already exists`, {
+                    position: 'top-right'
+                })
+            }
+            if (from === 'query' && duplicates.length === 0 && allDuplicates().length === 0) {
+                valueClone.forEach((data, index) => {
+                    let addData = data.name + "=" + data.value
+                    if (index === 0) {
+                        if (!orginalURL.includes("?" + addData) && !orginalURL.includes("&" + addData))
+                            orginalURL += "?" + data.name + "=" + data.value
+                    }
+                    else {
+                        if (!orginalURL.includes(addData))
+                            orginalURL += "&" + data.name + "=" + data.value
+                    }
+                })
+                changeapiURL(orginalURL)
+            }
+            if (duplicates.length === 0 && allDuplicates().length === 0)
+                valueClone.push({
+                    name: '', value: "", type: ''
+                })
             setValue(valueClone)
+        }
+        else {
+            toast.error(`Please fill the mandatory fields`, {
+                position: 'top-right'
+            })
         }
     }
 
@@ -225,32 +257,48 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
                             <TableCell align='center'>
-                                {from === 'query' ? <TextField disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} /> :
-                                    <Autocomplete
-                                        size='small'
-                                        disabled={index !== value.length - 1}
-                                        sx={{ minWidth: 150 }}
-                                        inputValue={data.name}
-                                        onInputChange={(event, newValue: string) => {
-                                            handleChangeName(newValue, index);
-                                        }}
-                                        freeSolo
-                                        options={selectNames.map((option) => option.label)}
-                                        renderInput={(params) => <TextField  {...params} />}
-                                    />}
+                                <Stack className='cmnflx'>
+                                    {from === 'query' ?
+                                        <Autocomplete
+                                            sx={{ width: 200 }}
+                                            size='small'
+                                            disabled={index !== value.length - 1}
+                                            inputValue={data.name}
+                                            onInputChange={(event, newValue: string) => {
+                                                handleChangeName(newValue, index);
+                                            }}
+                                            freeSolo
+                                            options={[]}
+                                            renderInput={(params) => <TextField  {...params} />}
+                                        /> :
+                                        <Autocomplete
+                                            sx={{ width: 200 }}
+                                            size='small'
+                                            disabled={index !== value.length - 1}
+                                            inputValue={data.name}
+                                            onInputChange={(event, newValue: string) => {
+                                                handleChangeName(newValue, index);
+                                            }}
+                                            freeSolo
+                                            options={selectNames.map((option) => option.label)}
+                                            renderInput={(params) => <TextField  {...params} />}
+                                        />}
+                                </Stack>
                             </TableCell>
-                            <TableCell align='center'>
-                                <FormControl size='small' sx={{ minWidth: 300 }}>
-                                    <InputLabel>Select Type</InputLabel>
-                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
-                                        <ListSubheader>UI Types</ListSubheader>
-                                        {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader>Server Side Properties</ListSubheader>
-                                        {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader>AppEnvironment Properties</ListSubheader>
-                                        {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                    </Select>
-                                </FormControl>
+                            <TableCell>
+                                <Stack className='cmnflx'>
+                                    <FormControl size='small' sx={{ minWidth: 200 }}>
+                                        <InputLabel>Select Type</InputLabel>
+                                        <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
+                                            <ListSubheader>UI Types</ListSubheader>
+                                            {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                            <ListSubheader>Server Side Properties</ListSubheader>
+                                            {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                            <ListSubheader>AppEnvironment Properties</ListSubheader>
+                                            {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        </Select>
+                                    </FormControl>
+                                </Stack>
                             </TableCell>
                             <TableCell align='center'>
                                 <TextField size='small' onBlur={() => handleOnBlurTestValue()} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
@@ -359,7 +407,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                                 <TextField disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} />
                             </TableCell>
                             <TableCell align='center'>
-                                <FormControl size='small' sx={{ minWidth: 300 }}>
+                                <FormControl size='small' sx={{ minWidth: 200 }}>
                                     <InputLabel>Select Type</InputLabel>
                                     <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
                                         <MenuItem value={'file'}>File</MenuItem>

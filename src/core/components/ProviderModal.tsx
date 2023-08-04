@@ -4,7 +4,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import CloseIcon from '@mui/icons-material/Close';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { Card, CardContent, CardMedia, Grid, IconButton, Link, Stack, Tooltip, Typography } from '@mui/material';
-import React , { useState } from 'react';
+import React, { useState } from 'react';
 import ConfigModel from './ConfigModel';
 
 export default function ProviderModal({ handleOpen, handleClose }: { handleOpen: boolean, handleClose: () => void }) {
