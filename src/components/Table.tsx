@@ -5,7 +5,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
+import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, Stack, TextField } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import React, { ChangeEvent } from 'react';
@@ -171,12 +171,12 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
             if (duplicates.length > 0) {
-                toast.error(`${from} "${duplicates[0].name}" already exists`, {
+                return toast.error(`parameter "${duplicates[0].name}" already exists`, {
                     position: 'top-right'
                 })
             }
             if (allDuplicates().length > 0) {
-                toast.error(`${from} "${allDuplicates()[0].name}" already exists`, {
+                return toast.error(`parameter "${allDuplicates()[0].name}" already exists`, {
                     position: 'top-right'
                 })
             }
@@ -257,32 +257,48 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
                             <TableCell align='center'>
-                                {from === 'query' ? <TextField disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} /> :
-                                    <Autocomplete
-                                        size='small'
-                                        disabled={index !== value.length - 1}
-                                        sx={{ minWidth: 100 }}
-                                        inputValue={data.name}
-                                        onInputChange={(event, newValue: string) => {
-                                            handleChangeName(newValue, index);
-                                        }}
-                                        freeSolo
-                                        options={selectNames.map((option) => option.label)}
-                                        renderInput={(params) => <TextField  {...params} />}
-                                    />}
+                                <Stack className='cmnflx'>
+                                    {from === 'query' ?
+                                        <Autocomplete
+                                            sx={{ width: 200 }}
+                                            size='small'
+                                            disabled={index !== value.length - 1}
+                                            inputValue={data.name}
+                                            onInputChange={(event, newValue: string) => {
+                                                handleChangeName(newValue, index);
+                                            }}
+                                            freeSolo
+                                            options={[]}
+                                            renderInput={(params) => <TextField  {...params} />}
+                                        /> :
+                                        <Autocomplete
+                                            sx={{ width: 200 }}
+                                            size='small'
+                                            disabled={index !== value.length - 1}
+                                            inputValue={data.name}
+                                            onInputChange={(event, newValue: string) => {
+                                                handleChangeName(newValue, index);
+                                            }}
+                                            freeSolo
+                                            options={selectNames.map((option) => option.label)}
+                                            renderInput={(params) => <TextField  {...params} />}
+                                        />}
+                                </Stack>
                             </TableCell>
-                            <TableCell align='center'>
-                                <FormControl size='small' sx={{ minWidth: 200 }}>
-                                    <InputLabel>Select Type</InputLabel>
-                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
-                                        <ListSubheader>UI Types</ListSubheader>
-                                        {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader>Server Side Properties</ListSubheader>
-                                        {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader>AppEnvironment Properties</ListSubheader>
-                                        {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                    </Select>
-                                </FormControl>
+                            <TableCell>
+                                <Stack className='cmnflx'>
+                                    <FormControl size='small' sx={{ minWidth: 200 }}>
+                                        <InputLabel>Select Type</InputLabel>
+                                        <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
+                                            <ListSubheader>UI Types</ListSubheader>
+                                            {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                            <ListSubheader>Server Side Properties</ListSubheader>
+                                            {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                            <ListSubheader>AppEnvironment Properties</ListSubheader>
+                                            {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        </Select>
+                                    </FormControl>
+                                </Stack>
                             </TableCell>
                             <TableCell align='center'>
                                 <TextField size='small' onBlur={() => handleOnBlurTestValue()} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
