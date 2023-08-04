@@ -25,7 +25,7 @@ const result = configBuilder(
   {
     entry: {
       "rest-import-bundle": [
-        "./src/index.js",
+        "./src/root-index.js",
       ],
     },
     output: {

@@ -7,7 +7,7 @@ import view from "core/plugins/view"
 import logs from "core/plugins/logs"
 import App from "core/components/app"
 import BaseLayout from "core/components/layouts/base"
-import WebServiceModal from "../../jsx/WebServiceModal"
+import WebServiceModal from "../../jsx/core/components/WebServiceModal"
 export default function () {
   let coreComponents = {
     components: {

@@ -46,6 +46,6 @@ You can learn more in the [Create React App documentation](https://facebook.gith
 To learn React, check out the [React documentation](https://reactjs.org/).
 
 1.npm install
-2.npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false
-3.npm run dev
-4.npm run build:bundle
+2.npm run dev
+3.npm run build
+
