@@ -25,7 +25,7 @@
     "randombytes": "^2.1.0",
     "react": "^18.2.0",
     "react-ace": "^10.1.0",
-    "react-dom": "^18.2.0", 
+    "react-dom": "^18.2.0",
     "react-immutable-proptypes": "2.2.0",
     "react-redux": "^8.1.1",
     "redux": "^4.1.2",
@@ -40,8 +40,7 @@
     "build": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/bundle.babel.js",
     "build:bundle": "webpack --color --config webpack/bundle.babel.js",
     "dev": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack serve --config webpack/dev.babel.js",
-    "build-stylesheets": "webpack --color --config webpack/stylesheets.babel.js",
-    "convert-jsx": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false"
+    "build-stylesheets": "webpack --color --config webpack/stylesheets.babel.js"
   },
   "eslintConfig": {
     "extends": [
