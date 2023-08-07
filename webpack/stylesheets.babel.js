@@ -8,13 +8,12 @@
 import path from "path"
 import MiniCssExtractPlugin from "mini-css-extract-plugin"
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default {
   mode: "production",
-
   entry: {
-    "rest-import-ui": "./src/style/main.scss",
+    "rest-import-ui": "./src/index.scss",
   },
-
   module: {
     rules: [
       {

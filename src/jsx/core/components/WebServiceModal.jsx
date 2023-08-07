@@ -316,7 +316,7 @@ export default function WebServiceModal() {
             {loading ? <FallbackSpinner /> :
             <>
                     <Toaster position='top-right'/>
-                    <Grid gap={5} p={2} className='cmnflx' container>
+                    <Grid gap={5} p={2} className='cmnflx rest-import-ui' container>
                         <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
                             <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                                 <Typography variant='h6' fontWeight={600}>Web Service</Typography>
