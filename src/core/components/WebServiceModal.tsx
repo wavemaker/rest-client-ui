@@ -19,7 +19,7 @@ import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import Apicall from './common/apicall'
 import { encode } from 'js-base64';
 import toast, { Toaster } from 'react-hot-toast'
-import FallbackSpinner from './loader'
+import FallbackSpinner from './common/loader'
 
 interface TabPanelProps {
     children?: ReactNode
