@@ -1,0 +1,41 @@
+.rest-import-ui
+{      
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
+  html,
+  body {
+    max-width: 100vw;
+  }
+  .box {
+    background-color: lightblue;
+    border: 1px solid red;
+  }
+  .cmnflx {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .cardcontainer:hover {
+    border: 2px solid #1794ef;
+  }
+  .loadingScreen {
+    width: "100%";
+    height: "100%";
+    position: fixed;
+    z-index: 10;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0.9;
+    justify-content: center;
+    align-items: center;
+  }
+  
+}
+
