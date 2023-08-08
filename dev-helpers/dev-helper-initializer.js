@@ -5,11 +5,8 @@ window.onload = function() {
   // Build a system
   const ui = RestImportBundle({
     dom_id: "#rest-import-ui",
-    objval:{
-      id:"1",
-      "name":'Ponnarasi'
-    },
     value:"https://www.google.com/",
+    language:'zh',
     presets: [
       RestImportBundle.presets.apis,
       RestImportStandalonePreset

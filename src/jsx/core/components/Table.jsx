@@ -232,10 +232,10 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                     {from === 'query' ?
                 <Autocomplete sx={{ width: 200 }} size='small' disabled={index !== value.length - 1} inputValue={data.name} onInputChange={(event, newValue) => {
                         handleChangeName(newValue, index);
-                    }} freeSolo options={[]} renderInput={(params) => <TextField {...params}/>}/> :
+                    }} freeSolo options={[]} renderInput={(params) => <TextField {...params} InputLabelProps={{ children: '' }}/>}/> :
                 <Autocomplete sx={{ width: 200 }} size='small' disabled={index !== value.length - 1} inputValue={data.name} onInputChange={(event, newValue) => {
                         handleChangeName(newValue, index);
-                    }} freeSolo options={selectNames.map((option) => option.label)} renderInput={(params) => <TextField {...params}/>}/>}
+                    }} freeSolo options={selectNames.map((option) => option.label)} renderInput={(params) => <TextField {...params} InputLabelProps={{ children: '' }}/>}/>}
                                 </Stack>
                             </TableCell>
                             <TableCell>

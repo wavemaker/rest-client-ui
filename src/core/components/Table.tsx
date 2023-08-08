@@ -14,6 +14,7 @@ import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import toast from 'react-hot-toast'
 import { PathParamsI } from './WebServiceModal';
+import { useTranslation } from 'react-i18next';
 
 export interface TableI {
     name: string
@@ -241,16 +242,17 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             changeapiURL(originalURL + createQueryString)
         }
     }
+    const { t } = useTranslation();
 
     return (
         <TableContainer component={Paper}>
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
-                        <TableCell align='center'>Name</TableCell>
-                        <TableCell align='center'>Type</TableCell>
-                        <TableCell align='center'>Test Value</TableCell>
-                        <TableCell align='center'>Actions</TableCell>
+                        <TableCell align='center'>{t("Name")}</TableCell>
+                        <TableCell align='center'>{t("Type")}</TableCell>
+                        <TableCell align='center'>{t("Test Value")}</TableCell>
+                        <TableCell align='center'>{t("Actions")}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -269,7 +271,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                             }}
                                             freeSolo
                                             options={[]}
-                                            renderInput={(params) => <TextField  {...params} />}
+                                            renderInput={(params) => <TextField  {...params}  InputLabelProps={{ children: '' }}/>}
                                         /> :
                                         <Autocomplete
                                             sx={{ width: 200 }}
@@ -281,21 +283,21 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                             }}
                                             freeSolo
                                             options={selectNames.map((option) => option.label)}
-                                            renderInput={(params) => <TextField  {...params} />}
+                                            renderInput={(params) => <TextField  {...params}  InputLabelProps={{ children: '' }}/>}
                                         />}
                                 </Stack>
                             </TableCell>
                             <TableCell>
                                 <Stack className='cmnflx'>
                                     <FormControl size='small' sx={{ minWidth: 200 }}>
-                                        <InputLabel>Select Type</InputLabel>
-                                        <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
-                                            <ListSubheader>UI Types</ListSubheader>
-                                            {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                            <ListSubheader>Server Side Properties</ListSubheader>
-                                            {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                            <ListSubheader>AppEnvironment Properties</ListSubheader>
-                                            {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        <InputLabel>{t("Select Type")}</InputLabel>
+                                        <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={t("Select Type")}>
+                                            <ListSubheader>{t("UI Types")}</ListSubheader>
+                                            {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{t(type.label)}</MenuItem>)}
+                                            <ListSubheader>{t("Server Side Properties")}</ListSubheader>
+                                            {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{t(type.label)}</MenuItem>)}
+                                            <ListSubheader>{t("AppEnvironment Properties")}</ListSubheader>
+                                            {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{t(type.label)}</MenuItem>)}
                                         </Select>
                                     </FormControl>
                                 </Stack>
@@ -388,16 +390,17 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
         valueClone.splice(currentIndex, 1)
         setValue(valueClone)
     }
+    const { t } = useTranslation();
 
     return (
         <TableContainer component={Paper}>
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
-                        <TableCell align='center'>Name</TableCell>
-                        <TableCell align='center'>Type</TableCell>
-                        <TableCell align='center'>Test Value</TableCell>
-                        <TableCell align='center'>Actions</TableCell>
+                        <TableCell align='center'>{t('Name')}</TableCell>
+                        <TableCell align='center'>{t('Type')}</TableCell>
+                        <TableCell align='center'>{t('Test Value')}</TableCell>
+                        <TableCell align='center'>{t('Actions')}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -408,12 +411,12 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                             </TableCell>
                             <TableCell align='center'>
                                 <FormControl size='small' sx={{ minWidth: 200 }}>
-                                    <InputLabel>Select Type</InputLabel>
-                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
-                                        <MenuItem value={'file'}>File</MenuItem>
-                                        <MenuItem value={'text'}>Text</MenuItem>
-                                        <MenuItem value={'plaintext'}>Text(Text/Plain)</MenuItem>
-                                        <MenuItem value={'application/json'}>application/json</MenuItem>
+                                    <InputLabel>{t('Select Type')}</InputLabel>
+                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={t('Select Type')}>
+                                        <MenuItem value={'file'}>{t("File")}</MenuItem>
+                                        <MenuItem value={'text'}>{t("Text")}</MenuItem>
+                                        <MenuItem value={'plaintext'}>{t("Text(Text/Plain)")}</MenuItem>
+                                        <MenuItem value={'application/json'}>{t("application/json")}</MenuItem>
                                     </Select>
                                 </FormControl>
                             </TableCell>

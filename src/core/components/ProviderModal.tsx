@@ -6,6 +6,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { Card, CardContent, CardMedia, Grid, IconButton, Link, Stack, Tooltip, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import ConfigModel from './ConfigModel';
+import { useTranslation } from 'react-i18next';
 
 export default function ProviderModal({ handleOpen, handleClose }: { handleOpen: boolean, handleClose: () => void }) {
     const [openConfig, setopenConfig] = useState(false)
@@ -71,19 +72,21 @@ export default function ProviderModal({ handleOpen, handleClose }: { handleOpen:
         setopenConfig(false)
     }
 
+    const { t } = useTranslation();
+
     return (
         <>
             <Dialog maxWidth={'md'} open={handleOpen} onClose={handleClose}>
                 <DialogTitle>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                        <Typography variant='h6' fontWeight={600}>Select Or Add Provider</Typography>
+                        <Typography variant='h6' fontWeight={600}>{t("Select Or Add Provider")}</Typography>
                         <Stack spacing={1} className='cmnflx' direction={'row'}>
                             <Tooltip title="Delete">
                                 <IconButton>
                                     <HelpOutlineIcon />
                                 </IconButton>
                             </Tooltip>
-                            <Link sx={{ color: 'gray' }}>Help</Link>
+                            <Link sx={{ color: 'gray' }}>{t("Help")}</Link>
                             <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleClose} />
                         </Stack>
                     </Stack>
@@ -99,7 +102,7 @@ export default function ProviderModal({ handleOpen, handleClose }: { handleOpen:
                                 />
                                 <CardContent>
                                     <Typography>
-                                        Add Provider
+                                        {t("Add Provider")}
                                     </Typography>
                                 </CardContent>
                             </Card>
