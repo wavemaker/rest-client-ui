@@ -294,11 +294,11 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                         <InputLabel>{translate("SELECT") + " " +translate("TYPE")}</InputLabel>
                                         <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")}>
                                             <ListSubheader>{translate("UI_TYPES")}</ListSubheader>
-                                            {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{translate(type.label)}</MenuItem>)}
+                                            {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                             <ListSubheader>{translate("SERVER_SIDE")+ " " + translate("PROPERTIES")}</ListSubheader>
-                                            {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{translate(type.label)}</MenuItem>)}
+                                            {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                             <ListSubheader>{translate("APPENVIRONMENT")+ " " + translate("PROPERTIES")}</ListSubheader>
-                                            {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{translate(type.label)}</MenuItem>)}
+                                            {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                         </Select>
                                     </FormControl>
                                 </Stack>

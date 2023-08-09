@@ -18,12 +18,13 @@ const resources = {
     translation: require('./locales/fr.json')
   },
 };
-
+const defaultLanguage = 'en'; 
 i18n
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
     resources,
-    lng: window.navigator.language || 'en', // default language
+    lng: window.navigator.language, // default language
+    fallbackLng: defaultLanguage,
     interpolation: {
       escapeValue: false 
     }

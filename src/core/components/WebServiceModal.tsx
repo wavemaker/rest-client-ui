@@ -73,7 +73,7 @@ const defaultContentTypes = [
         label: 'text/plain', value: 'text/plain'
     },
 ]
-export default function WebServiceModal(props:any) {
+export default function WebServiceModal({language}:{language:string}) {
     const { t:translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState('')
     const [httpMethod, sethttpMethod] = useState('GET')
@@ -98,8 +98,7 @@ export default function WebServiceModal(props:any) {
     const [loading, setloading] = useState(false)
 
     useEffect(() => {
-        i18n.changeLanguage(props.language);
-        // i18n.changeLanguage("zh");
+        i18n.changeLanguage(language);
         handleChangeResponseTabs(null, responseTabValue)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
