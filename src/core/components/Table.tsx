@@ -173,16 +173,14 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             return returnDuplicates
         }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
-            if (duplicates.length > 0) {
+            if (duplicates.length > 0)
                 return toast.error(`parameter "${duplicates[0].name}" already exists`, {
                     position: 'top-right'
                 })
-            }
-            if (allDuplicates().length > 0) {
+            if (allDuplicates().length > 0)
                 return toast.error(`parameter "${allDuplicates()[0].name}" already exists`, {
                     position: 'top-right'
                 })
-            }
             if (from === 'query' && duplicates.length === 0 && allDuplicates().length === 0) {
                 valueClone.forEach((data, index) => {
                     let addData = data.name + "=" + data.value
