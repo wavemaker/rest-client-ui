@@ -1,7 +1,7 @@
 // ** MUI Imports 
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
-import React from 'react';
+import React from 'react'; 
 
 const FallbackSpinner = () => {
 
