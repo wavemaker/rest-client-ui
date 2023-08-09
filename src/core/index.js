@@ -25,7 +25,7 @@ export default function RestImport(opts) {
     domNode: null,
     spec: {},
     url: "",
-    language:"en",
+    language: window.navigator.language || "en",
     objval:{},
     value:"",
     urls: null,

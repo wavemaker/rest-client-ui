@@ -2,14 +2,20 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
 const resources = {
+  da: {
+    translation: require('./locales/da.json')
+  },
+  de: {
+    translation: require('./locales/de.json')
+  },
   en: {
     translation: require('./locales/en.json')
   },
-  vi: {
-    translation: require('./locales/vi.json')
+  es: {
+    translation: require('./locales/es.json')
   },
-  zh: {
-    translation: require('./locales/zh.json')
+  fr: {
+    translation: require('./locales/fr.json')
   },
 };
 
@@ -17,7 +23,7 @@ i18n
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
     resources,
-    lng: "en", // default language
+    lng: window.navigator.language || 'en', // default language
     interpolation: {
       escapeValue: false 
     }

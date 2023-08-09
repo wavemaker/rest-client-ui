@@ -67,14 +67,14 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
             <Dialog maxWidth={'md'} open={handleOpen} onClose={handleClose}>
                 <DialogTitle sx={{ backgroundColor: 'lightgray' }}>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                        <Typography variant='h6' fontWeight={600}>{t("OAuth Provider Configuration")}</Typography>
+                        <Typography variant='h6' fontWeight={600}>{t("OAUTH") + " "+t("PROVIDER")+ " "+ t("CONFIGURATION")}</Typography>
                         <Stack spacing={1} className='cmnflx' direction={'row'}>
-                            <Tooltip title="Delete">
+                            <Tooltip title={t("DELETE")}>
                                 <IconButton>
                                     <HelpOutlineIcon />
                                 </IconButton>
                             </Tooltip>
-                            <Link sx={{ color: 'gray' }}>Help</Link>
+                            <Link sx={{ color: 'gray' }}>{t("HELP")}</Link>
                             <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleClose} />
                         </Stack>
                     </Stack>
@@ -82,18 +82,18 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                 <DialogContent sx={{ mt: 4 }}>
                     <Grid spacing={2} mt={0.5} className='cmnflx' sx={{ width: '100%' }} container>
                         <Grid item md={3}>
-                            <Typography>{t("Provider ID")}</Typography>
+                            <Typography>{t('PROVIDER') + " " +t('ID')}</Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} fullWidth placeholder={t('Provider ID')} label={t('Provider ID')} />
+                            <TextField sx={{ width: "30em" }} fullWidth placeholder={t('PROVIDER') + " " +t('ID')} label={t('PROVIDER') + " " +t('ID')} />
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("Callback URL")}</Typography>
+                            <Typography>{t('CALLBACK') + " " +t('URL')}</Typography>
                         </Grid>
                         <Grid item md={9}>
                             <Stack direction={'row'}>
-                                <TextField sx={{ width: "30em" }} helperText={t("Set this as the callback URL in OAuth Provider app settings page")} fullWidth label={t('Callback URL')} placeholder={t('Callback URL')} />
-                                <Tooltip sx={{ ":hover": { backgroundColor: 'transparent' } }} title={t("Copy to Clipboard")}>
+                                <TextField sx={{ width: "30em" }} helperText={t("CALLBACK_iNFO")} fullWidth label={t('CALLBACK') + " " +t('URL')} placeholder={t('CALLBACK') + " " +t('URL')} />
+                                <Tooltip sx={{ ":hover": { backgroundColor: 'transparent' } }} title={t("CLIPBOARD_TEXT")}>
                                     <IconButton>
                                         <ContentCopyIcon />
                                     </IconButton>
@@ -101,7 +101,7 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                             </Stack>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("Flow")}</Typography>
+                            <Typography>{t("FLOW")}</Typography>
                         </Grid>
                         <Grid item md={9}>
                             <FormControl sx={{ width: "30em" }}>
@@ -109,14 +109,14 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                                     value={Flow}
                                     onChange={handleChangeFlow}
                                 >
-                                    <MenuItem value={'Authorization Code'}>{t("Authorization Code")}</MenuItem>
-                                    <MenuItem value={'Implicit'}>{t("Implicit(Not Remcommended)")}</MenuItem>
+                                    <MenuItem value={'Authorization Code'}>{t("AUTHORIZATION")+ " " + t("CODE")} </MenuItem>
+                                    <MenuItem value={'Implicit'}> {t("IMPLICIT")} ({t("NOT_RECOMMENDED")}) </MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item md={3}>
                             <Typography>
-                               {t("Use PKCE?")}
+                               {t("USE_PKCE")}?
                             </Typography>
                         </Grid>
                         <Grid item md={9}>
@@ -124,38 +124,38 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                                 checked={PKCE}
                                 onChange={handleChangePKCE}
                             />
-                            <Tooltip title="Delete">
+                            <Tooltip title={t("DELETE")}>
                                 <IconButton>
                                     <HelpOutlineIcon />
                                 </IconButton>
                             </Tooltip>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("Authorization URL")}</Typography>
+                            <Typography>{t("AUTHORIZATION") + " "+t("URL")}  </Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder={t('Authorization URL')} label={t('Authorization URL')} />
+                            <TextField sx={{ width: "30em" }} placeholder={t("AUTHORIZATION") + " "+t("URL")} label={t("AUTHORIZATION") + " "+t("URL")} />
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("Access Token URL")}</Typography>
+                            <Typography>{t("ACCESS_TOKEN") + " "+t("URL")}</Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder={t('Access Token URL')} label={t('Access Token URL')} />
+                            <TextField sx={{ width: "30em" }} placeholder={t("ACCESS_TOKEN") + " "+t("URL")} label={t("ACCESS_TOKEN") + " "+t("URL")} />
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("Client ID")}</Typography>
+                            <Typography>{t("CLIENT") + " "+ t("ID")}</Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder={t('Client ID')} label={t('Client ID')} />
+                            <TextField sx={{ width: "30em" }} placeholder={t("CLIENT") + " "+ t("ID")} label={t("CLIENT") + " "+ t("ID")} />
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("Client Secret")}</Typography>
+                            <Typography>{t("CLIENT") + " "+ t("SECRET")}</Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder={t('Client Secret')} label={t('Client Secret')} />
+                            <TextField sx={{ width: "30em" }} placeholder={t("CLIENT") + " "+ t("SECRET")} label={t("CLIENT") + " "+ t("SECRET")} />
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("Send AccessToken As")}</Typography>
+                            <Typography>{t("SEND_ACCESSTOKEN")}</Typography>
                         </Grid>
                         <Grid item md={9}>
                             <FormControl sx={{ width: "30em" }}>
@@ -163,13 +163,13 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                                     value={sendTokenAs}
                                     onChange={handleChangesendTokenAs}
                                 >
-                                    <MenuItem value={'Header'}>{t("Header")}</MenuItem>
-                                    <MenuItem value={'Query'}>{t("Query")}</MenuItem>
+                                    <MenuItem value={'Header'}>{t("HEADER")}</MenuItem>
+                                    <MenuItem value={'Query'}>{t("QUERY")}</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("Scope")}</Typography>
+                            <Typography>{t("SCOPE")}</Typography>
                         </Grid>
                         <Grid item md={9}>
                             <Grid className='cmnflx' spacing={1} container>
@@ -179,10 +179,10 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                                     </Stack>
                                 </Grid>
                                 <Grid item md={4}>
-                                    <Typography>{t("Scope Key")}</Typography>
+                                    <Typography>{t("SCOPE")+ " "+ t("KEY")}</Typography>
                                 </Grid>
                                 <Grid item md={4}>
-                                    <Typography>{t("Scope Value")}</Typography>
+                                    <Typography>{t("SCOPE")+ " "+ t("VALUE")}</Typography>
                                 </Grid>
                                 <Grid item md={4}>
                                 </Grid>
@@ -190,13 +190,13 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                                     <hr />
                                 </Grid>
                                 <Grid item md={4}>
-                                    <TextField value={scopeKey} onChange={(e) => setscopeKey(e.target.value)} placeholder={t('Scope Key')} label={t('Scope Key')} />
+                                    <TextField value={scopeKey} onChange={(e) => setscopeKey(e.target.value)} placeholder={t("SCOPE")+ " "+ t("KEY")} label={t("SCOPE")+ " "+ t("KEY")} />
                                 </Grid>
                                 <Grid item md={4}>
-                                    <TextField value={scopeValue} onChange={(e) => setscopeValue(e.target.value)} placeholder={t('Scope Value')} label={t('Scope Value')} />
+                                    <TextField value={scopeValue} onChange={(e) => setscopeValue(e.target.value)} placeholder={t("SCOPE")+ " "+ t("VALUE")} label={t("SCOPE")+ " "+ t("VALUE")} />
                                 </Grid>
                                 <Grid className='cmnflx' item md={4}>
-                                    <Button onClick={handleAddScope} variant='contained'>{t("Add")}</Button>
+                                    <Button onClick={handleAddScope} variant='contained'>{t("ADD")}</Button>
                                 </Grid>
                             </Grid>
                         </Grid>
@@ -205,10 +205,10 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                 <hr />
                 <DialogActions sx={{ p: 2 }}>
                     <Button variant='contained' color='warning' onClick={handleClose}>
-                        {t("Close")}
+                        {t("CLOSE")}
                     </Button>
                     <Button variant='contained' onClick={handleClose}>
-                        {t("Save")}
+                        {t("SAVE")}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -98,8 +98,8 @@ export default function WebServiceModal(props:any) {
     const [loading, setloading] = useState(false)
 
     useEffect(() => {
-        // i18n.changeLanguage(props.language);
-        i18n.changeLanguage("zh");
+        i18n.changeLanguage(props.language);
+        // i18n.changeLanguage("zh");
         handleChangeResponseTabs(null, responseTabValue)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
@@ -337,7 +337,7 @@ export default function WebServiceModal(props:any) {
             setresponse(checkResponse)
         }
         else
-            toast.error("Please provide a valid URL", {
+            toast.error(t("VALID_URL_ALERT"), {
                 position: 'top-right'
             })
     }
@@ -350,14 +350,14 @@ export default function WebServiceModal(props:any) {
                     <Grid gap={5} p={2} className='cmnflx rest-import-ui' container>
                         <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
                             <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                                <Typography variant='h6' fontWeight={600}>{t('Web Service')}</Typography>
+                                <Typography variant='h6' fontWeight={600}>{t('WEB_SERVICE')}</Typography>
                                 <Stack spacing={1} className='cmnflx' direction={'row'}>
-                                    <Tooltip title="Delete">
+                                    <Tooltip title={t("DELETE")}>
                                         <IconButton>
                                             <HelpOutlineIcon />
                                         </IconButton>
                                     </Tooltip>
-                                    <Link sx={{ color: 'gray' }}>{t('Help')}</Link>
+                                    <Link sx={{ color: 'gray' }}>{t('HELP')}</Link>
                                 </Stack>
                             </Stack>
                         </Grid>
@@ -368,34 +368,34 @@ export default function WebServiceModal(props:any) {
                                         value={httpMethod}
                                         onChange={handleChangehttpMethod}
                                     >
-                                        <MenuItem value={'GET'}>{t('GET')}</MenuItem>
-                                        <MenuItem value={'POST'}>{t('POST')}</MenuItem>
-                                        <MenuItem value={'PUT'}>{t('PUT')}</MenuItem>
-                                        <MenuItem value={'HEAD'}>{t('HEAD')}</MenuItem>
-                                        <MenuItem value={'PATCH'}>{t('PATCH')}</MenuItem>
-                                        <MenuItem value={'DELETE'}>{t('DELETE')}</MenuItem>
+                                        <MenuItem value={'GET'}>{'GET'}</MenuItem>
+                                        <MenuItem value={'POST'}>{'POST'}</MenuItem>
+                                        <MenuItem value={'PUT'}>{'PUT'}</MenuItem>
+                                        <MenuItem value={'HEAD'}>{'HEAD'}</MenuItem>
+                                        <MenuItem value={'PATCH'}>{'PATCH'}</MenuItem>
+                                        <MenuItem value={'DELETE'}>{'DELETE'}</MenuItem>
                                     </Select>
                                 </FormControl>
                                 <TextField onBlur={() => {
                                     getPathParams()
                                     handleQueryChange()
                                 }} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={t('URL')} placeholder={t('URL')} />
-                                <Button onClick={handleTestClick} variant='contained'>{t('Test')}</Button>
+                                <Button onClick={handleTestClick} variant='contained'>{t('TEST')}</Button>
                             </Stack>
                         </Grid>
                         <Grid item md={12}>
                             <Grid container>
                                 <Grid item md={6}>
                                     <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
-                                        <Typography>{t('Service Name')}</Typography>
+                                        <Typography>{t('SERVICE_NAME')}</Typography>
                                         <TextField disabled size='small' />
                                     </Stack>
                                 </Grid>
                                 <Grid item md={6}>
                                     <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
-                                        <Typography>{t('Use Proxy')}</Typography>
+                                        <Typography>{t('USE_PROXY')}</Typography>
                                         <Switch checked={useProxy} onChange={handleChangeProxy} />
-                                        <Tooltip title="Delete">
+                                        <Tooltip title={t("DELETE")}>
                                             <IconButton>
                                                 <HelpOutlineIcon />
                                             </IconButton>
@@ -408,17 +408,17 @@ export default function WebServiceModal(props:any) {
                             <Box sx={{ width: '100%' }}>
                                 <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                     <Tabs value={requestTabValue} onChange={handleChangeHeaderTabs}>
-                                        <Tab label={t("Authorization")} />
-                                        <Tab label={t("Header Params")} />
-                                        <Tab label={t("Body Params")} disabled={httpMethod === "GET" ? true : false} />
-                                        <Tab label={t("Query Params")} />
-                                        <Tab label={t("Path Params")} />
+                                        <Tab label={t("AUTHORIZATION")} />
+                                        <Tab label={t("HEADER") + " "+ t("PARAMS")} />
+                                        <Tab label={t("BODY") + " " +t("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
+                                        <Tab label={t("QUERY") + " " +t("PARAMS")} />
+                                        <Tab label={t("PATH") + " " +t("PARAMS")} />
                                     </Tabs>
                                 </Box>
                                 <CustomTabPanel value={requestTabValue} index={0}>
                                     <Grid spacing={2} mt={2} className='cmnflx' container>
                                         <Grid item md={3}>
-                                            <Typography>{t('HTTP Authentication')}</Typography>
+                                            <Typography>{t('HTTP') + " "+ t("AUTHENTICATION")}</Typography>
                                         </Grid>
                                         <Grid item md={9}>
                                             <FormControl size='small' >
@@ -426,20 +426,20 @@ export default function WebServiceModal(props:any) {
                                                     value={httpAuth}
                                                     onChange={handleChangehttpAuth}
                                                 >
-                                                    <MenuItem value={'None'}>{t("None")}</MenuItem>
-                                                    <MenuItem value={'Basic'}>{t("Basic")}</MenuItem>
-                                                    <MenuItem value={'OAuth 2.0'}>{t("OAuth 2.0")}</MenuItem>
+                                                    <MenuItem value={'None'}>{t("NONE")}</MenuItem>
+                                                    <MenuItem value={'Basic'}>{t("BASIC")}</MenuItem>
+                                                    <MenuItem value={'OAuth 2.0'}>{t("OAUTH")} 2.0</MenuItem>
                                                 </Select>
                                             </FormControl>
                                         </Grid>
                                         {httpAuth === "Basic" && <>
                                             <Grid item md={3}>
-                                                <Typography>{t("User Name")}</Typography>
+                                                <Typography>{t("USER_NAME")}</Typography>
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack direction={'row'}>
-                                                    <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={t("User Name")} placeholder={t("User Name")}  />
-                                                    <Tooltip title="Delete">
+                                                    <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={t("USER_NAME")} placeholder={t("USER_NAME")}  />
+                                                    <Tooltip title={t("DELETE")}>
                                                         <IconButton>
                                                             <HelpOutlineIcon />
                                                         </IconButton>
@@ -447,12 +447,12 @@ export default function WebServiceModal(props:any) {
                                                 </Stack>
                                             </Grid>
                                             <Grid item md={3}>
-                                                <Typography>{t("Password")}</Typography>
+                                                <Typography>{t("PASSWORD")}</Typography>
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack direction={'row'}>
-                                                    <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={t("Password")} placeholder={t("Password")} />
-                                                    <Tooltip title="Delete">
+                                                    <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={t("PASSWORD")} placeholder={t("PASSWORD")} />
+                                                    <Tooltip title={t("DELETE")}>
                                                         <IconButton>
                                                             <HelpOutlineIcon />
                                                         </IconButton>
@@ -462,12 +462,12 @@ export default function WebServiceModal(props:any) {
                                         </>}
                                         {httpAuth === "OAuth 2.0" && <>
                                             <Grid item md={3}>
-                                                <Typography>{t("OAuth Provider")}</Typography>
+                                                <Typography>{t("OAuth") +" " +t("PROVIDER")}</Typography>
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack spacing={2} direction={'row'}>
-                                                    <TextField disabled size='small' label={t("No Provider Selected yet")} />
-                                                    <Button onClick={() => setproviderOpen(true)} variant='contained'>{t("Select/Add Provider")}</Button>
+                                                    <TextField disabled size='small' label={t("NO")+ " "+ t("PROVIDER")+ " "+  t("SELECTED_YET")} />
+                                                    <Button onClick={() => setproviderOpen(true)} variant='contained'>{t("SELECT")+ "/"+ t("ADD") + " "+ t("PROVIDER")}</Button>
                                                 </Stack>
                                             </Grid>
                                         </>}
@@ -479,7 +479,7 @@ export default function WebServiceModal(props:any) {
                                 <CustomTabPanel value={requestTabValue} index={2}>
                                     <Stack spacing={1} mt={2} ml={1}>
                                         <Stack spacing={10} display={'flex'} alignItems={'center'} direction={'row'}>
-                                            <Typography>{t("Content Type")}</Typography>
+                                            <Typography>{t("CONTENT") + " " +t("TYPE")}</Typography>
                                             <Stack spacing={3} display={'flex'} alignItems={'center'} direction={'row'}>
                                                 <FormControl size='small' sx={{ width: "20em" }}>
                                                     <Select
@@ -489,20 +489,20 @@ export default function WebServiceModal(props:any) {
                                                         {contentTypes.map((data) => <MenuItem key={data.value} value={data.value}>{t(data.label)}</MenuItem>)}
                                                     </Select>
                                                 </FormControl>
-                                                <Tooltip title="Delete">
+                                                <Tooltip title={t("DELETE")}>
                                                     <IconButton>
                                                         <HelpOutlineIcon />
                                                     </IconButton>
                                                 </Tooltip>
                                                 {addCustomType ? <Stack direction={'row'}>
                                                     <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' />
-                                                    <Tooltip title={t("Add")}>
+                                                    <Tooltip title={t("ADD")}>
                                                         <IconButton>
                                                             <DoneIcon onClick={() => handleAddCustomContentType()} sx={{ cursor: 'pointer', color: 'black' }} />
                                                         </IconButton>
                                                     </Tooltip>
                                                 </Stack> :
-                                                    <Tooltip title={t("Add a Custom Content Type")}>
+                                                    <Tooltip title={t("CUSTOM_CONTENT_TYPE")}>
                                                         <IconButton>
                                                             <AddIcon onClick={() => setaddCustomType(true)} sx={{ cursor: 'pointer', color: 'black' }} />
                                                         </IconButton>
@@ -510,7 +510,7 @@ export default function WebServiceModal(props:any) {
                                             </Stack>
                                         </Stack>
                                         {contentType === 'multipart/form-data' ? <MultipartTable value={multipartParams} setValue={handlemultipartParams} /> :
-                                            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={t('Request Body: Provide sample POST data here that the service would consume')} />
+                                            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={t('REQUEST') +" " + t('BODY') + ":"+ t('REQUEST_BODY_PLACEHOLDER')} />
                                         }
                                     </Stack>
                                 </CustomTabPanel>
@@ -522,9 +522,9 @@ export default function WebServiceModal(props:any) {
                                         <Table>
                                             <TableHead>
                                                 <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
-                                                    <TableCell align='center'>{t("Name")}</TableCell>
-                                                    <TableCell align='center'>{t("Type")}</TableCell>
-                                                    <TableCell align='center'>{t("Value")}</TableCell>
+                                                    <TableCell align='center'>{t("NAME")}</TableCell>
+                                                    <TableCell align='center'>{t("TYPE")}</TableCell>
+                                                    <TableCell align='center'>{t("VALUE")}</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
@@ -548,12 +548,12 @@ export default function WebServiceModal(props:any) {
                                             <InfoIcon sx={{ height: 18, width: 18, color: '#31708f', mt: 0.5 }} />
                                             <Stack>
                                                 <Typography>
-                                                    {t(`No path param found. A path param is used against certain entity of the URL that is required to change dynamically.`)} 
-                                                    {t(`A path param can be set by enclosing an entity in the URL in a curly bracket '{}'.`)}
+                                                    {t('NO_PATH_PARAMS')} 
+                                                    {t('NO_PATH_PARAMS_DESC')}
                                                 </Typography>
                                                 <Typography>
                                                     {t(`e.g. For URL`)} {`"http:wavemaker.com/projects/{pid}/?mode=json", "pid"`} {t(`is the path param`)}.
-                                                    (<a href='https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/'>{t("More info")}</a>)
+                                                    (<a href='https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/'>{t("MORE_INFO")}</a>)
                                                 </Typography>
                                             </Stack>
                                         </Stack>}
@@ -564,9 +564,9 @@ export default function WebServiceModal(props:any) {
                             <Box sx={{ width: '100%' }}>
                                 <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                     <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
-                                        <Tab label={t("Response Body")} />
-                                        <Tab label={t("Response Header")} />
-                                        <Tab label={t("Response Status")} />
+                                        <Tab label={t("RESPONSE")+" "+ t("BODY")} />
+                                        <Tab label={t("RESPONSE")+" "+ t("HEADER")} />
+                                        <Tab label={t("RESPONSE")+" "+ t("STATUS")} />
                                     </Tabs>
                                 </Box>
                             </Box>
