@@ -14,6 +14,7 @@ import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import toast from 'react-hot-toast'
 import { PathParamsI } from './WebServiceModal';
+import { useTranslation } from 'react-i18next';
 
 export interface TableI {
     name: string
@@ -39,28 +40,30 @@ export const TableRowStyled = styled(TableRow)`
 
 export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams }:
     { value: TableI[], setValue: (data: TableI[]) => void, from: string, apiURL: string, changeapiURL: (value: string) => void, headerParams: TableI[], queryParams: TableI[], pathParams: PathParamsI[] }) {
+    const { t:translate } = useTranslation();
+
     const selectTypes =
     {
         UITypes: [
-            { value: 'boolean', label: 'Boolean' },
-            { value: 'date', label: 'Date' },
-            { value: 'datetime', label: 'Date Time' },
-            { value: 'double', label: 'Double' },
-            { value: 'float', label: 'Float' },
-            { value: 'interger', label: 'Integer' },
-            { value: 'long', label: 'Long' },
-            { value: 'string', label: 'String' },
+            { value: 'boolean', label: translate('BOOLEAN') },
+            { value: 'date', label: translate('DATE') },
+            { value: 'datetime', label: translate('DATE') + " " +translate('TIME') },
+            { value: 'double', label: translate('DOUBLE') },
+            { value: 'float', label: translate('FLOAT') },
+            { value: 'interger', label: translate('INTEGER') },
+            { value: 'long', label: translate('LONG') },
+            { value: 'string', label: translate('STRING') },
         ],
         ServerSideProperties: [
-            { value: 'currentdate', label: 'Current Date' },
-            { value: 'currentdatetime', label: 'Current Date Time' },
-            { value: 'currenttime', label: 'Current Time' },
-            { value: 'currenttimestamp', label: 'Current Timestamp' },
-            { value: 'loggedinuserid', label: 'LoggedIn UserID' },
-            { value: 'loggedinusername', label: 'LoggedIn Username' },
+            { value: 'currentdate', label: translate('CURRENT') + " " +translate('DATE') },
+            { value: 'currentdatetime', label: translate('CURRENT') + " " +translate('DATE')+ " " +translate('TIME') },
+            { value: 'currenttime', label: translate('CURRENT')+ " " +translate('TIME') },
+            { value: 'currenttimestamp', label: translate('CURRENT')+ " " +translate('TIMESTAMP') },
+            { value: 'loggedinuserid', label:  translate('LOGGEDIN')+ " " +translate('USERID') },
+            { value: 'loggedinusername', label: translate('LOGGEDIN')+ " " +translate('USERNAME') },
         ],
         AppEnvironmentProperties: [
-            { value: 'option1', label: 'Option 1' },
+            { value: 'option1', label:  translate('OPTION')+" " + 1 },
         ],
     }
 
@@ -199,7 +202,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             setValue(valueClone)
         }
         else {
-            toast.error(`Please fill the mandatory fields`, {
+            toast.error(translate("MANDATORY_ALERT"), {
                 position: 'top-right'
             })
         }
@@ -245,10 +248,10 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
-                        <TableCell align='center'>Name</TableCell>
-                        <TableCell align='center'>Type</TableCell>
-                        <TableCell align='center'>Test Value</TableCell>
-                        <TableCell align='center'>Actions</TableCell>
+                        <TableCell align='center'>{translate("NAME")}</TableCell>
+                        <TableCell align='center'>{translate("TYPE")}</TableCell>
+                        <TableCell align='center'>{translate("TEST") + " " +translate("VALUE")}</TableCell>
+                        <TableCell align='center'>{translate("ACTIONS")}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -267,7 +270,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                             }}
                                             freeSolo
                                             options={[]}
-                                            renderInput={(params) => <TextField  {...params} />}
+                                            renderInput={(params) => <TextField  {...params}  InputLabelProps={{ children: '' }}/>}
                                         /> :
                                         <Autocomplete
                                             sx={{ width: 200 }}
@@ -279,20 +282,20 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                             }}
                                             freeSolo
                                             options={selectNames.map((option) => option.label)}
-                                            renderInput={(params) => <TextField  {...params} />}
+                                            renderInput={(params) => <TextField  {...params}  InputLabelProps={{ children: '' }}/>}
                                         />}
                                 </Stack>
                             </TableCell>
                             <TableCell>
                                 <Stack className='cmnflx'>
                                     <FormControl size='small' sx={{ minWidth: 200 }}>
-                                        <InputLabel>Select Type</InputLabel>
-                                        <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
-                                            <ListSubheader>UI Types</ListSubheader>
+                                        <InputLabel>{translate("SELECT") + " " +translate("TYPE")}</InputLabel>
+                                        <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")}>
+                                            <ListSubheader>{translate("UI_TYPES")}</ListSubheader>
                                             {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                            <ListSubheader>Server Side Properties</ListSubheader>
+                                            <ListSubheader>{translate("SERVER_SIDE")+ " " + translate("PROPERTIES")}</ListSubheader>
                                             {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                            <ListSubheader>AppEnvironment Properties</ListSubheader>
+                                            <ListSubheader>{translate("APPENVIRONMENT")+ " " + translate("PROPERTIES")}</ListSubheader>
                                             {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                         </Select>
                                     </FormControl>
@@ -386,16 +389,17 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
         valueClone.splice(currentIndex, 1)
         setValue(valueClone)
     }
+    const { t:translate } = useTranslation();
 
     return (
         <TableContainer component={Paper}>
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
-                        <TableCell align='center'>Name</TableCell>
-                        <TableCell align='center'>Type</TableCell>
-                        <TableCell align='center'>Test Value</TableCell>
-                        <TableCell align='center'>Actions</TableCell>
+                        <TableCell align='center'>{translate('NAME')}</TableCell>
+                        <TableCell align='center'>{translate('TYPE')}</TableCell>
+                        <TableCell align='center'>{translate('TEST') + " " +translate('VALUE')}</TableCell>
+                        <TableCell align='center'>{translate('ACTIONS')}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -406,12 +410,12 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                             </TableCell>
                             <TableCell align='center'>
                                 <FormControl size='small' sx={{ minWidth: 200 }}>
-                                    <InputLabel>Select Type</InputLabel>
-                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label="Select Type">
-                                        <MenuItem value={'file'}>File</MenuItem>
-                                        <MenuItem value={'text'}>Text</MenuItem>
-                                        <MenuItem value={'plaintext'}>Text(Text/Plain)</MenuItem>
-                                        <MenuItem value={'application/json'}>application/json</MenuItem>
+                                    <InputLabel>{translate('SELECT') + " "+translate('TYPE')}</InputLabel>
+                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " "+translate('TYPE')}>
+                                        <MenuItem value={'file'}>{translate("FILE")}</MenuItem>
+                                        <MenuItem value={'text'}>{translate("TEXT")}</MenuItem>
+                                        <MenuItem value={'plaintext'}>{translate("Text(Text/Plain)")}</MenuItem>
+                                        <MenuItem value={'application/json'}>{translate("application/json")}</MenuItem>
                                     </Select>
                                 </FormControl>
                             </TableCell>

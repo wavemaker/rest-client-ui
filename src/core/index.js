@@ -25,40 +25,17 @@ export default function RestImport(opts) {
     domNode: null,
     spec: {},
     url: "",
-    value:"",
+    language: window.navigator.language,
     objval:{},
+    value:"",
     urls: null,
     layout: "BaseLayout",
-    docExpansion: "list",
     maxDisplayedTags: null,
     filter: null,
-    oauth2RedirectUrl: `${window.location.protocol}//${window.location.host}${window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/"))}/oauth2-redirect.html`,
-    persistAuthorization: false,
     configs: {},
     custom: {},
-    displayOperationId: false,
-    displayRequestDuration: false,
-    deepLinking: false,
-    tryItOutEnabled: false,
     requestInterceptor: (a => a),
     responseInterceptor: (a => a),
-    showMutatedRequest: true,
-    defaultModelRendering: "example",
-    defaultModelExpandDepth: 1,
-    defaultModelsExpandDepth: 1,
-    showExtensions: false,
-    showCommonExtensions: false,
-    withCredentials: undefined,
-    supportedSubmitMethods: [
-      "get",
-      "put",
-      "post",
-      "delete",
-      "options",
-      "head",
-      "patch",
-      "trace"
-    ],
     queryConfigEnabled: false,
 
     // Initial set of plugins ( TODO rename this, or refactor - we don't need presets _and_ plugins. Its just there for performance.
@@ -113,7 +90,9 @@ export default function RestImport(opts) {
         spec: "",
         url: constructorConfig.url,
         value: constructorConfig.value,
-        objval:constructorConfig.objval
+        objval:constructorConfig.objval,
+        language:constructorConfig.language,
+        
       },
     }, constructorConfig.initialState)
   }

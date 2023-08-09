@@ -7,6 +7,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, SelectChangeEvent, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface ScopeI {
     checked: boolean;
@@ -59,19 +60,21 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
         }
     }
 
+    const { t: translate} = useTranslation();
+
     return (
         <>
             <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose}>
                 <DialogTitle sx={{ backgroundColor: 'lightgray' }}>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                        <Typography variant='h6' fontWeight={600}>OAuth Provider Configuration</Typography>
+                        <Typography variant='h6' fontWeight={600}>{translate("OAUTH") + " "+translate("PROVIDER")+ " "+ translate("CONFIGURATION")}</Typography>
                         <Stack spacing={1} className='cmnflx' direction={'row'}>
-                            <Tooltip title="Delete">
+                            <Tooltip title={translate("DELETE")}>
                                 <IconButton>
                                     <HelpOutlineIcon />
                                 </IconButton>
                             </Tooltip>
-                            <Link sx={{ color: 'gray' }}>Help</Link>
+                            <Link sx={{ color: 'gray' }}>{translate("HELP")}</Link>
                             <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleClose} />
                         </Stack>
                     </Stack>
@@ -79,18 +82,18 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                 <DialogContent sx={{ mt: 4 }}>
                     <Grid spacing={2} mt={0.5} className='cmnflx' sx={{ width: '100%' }} container>
                         <Grid item md={3}>
-                            <Typography>Provider ID</Typography>
+                            <Typography>{translate('PROVIDER') + " " +translate('ID')}</Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} fullWidth placeholder='Provider ID' label='Provider ID' />
+                            <TextField sx={{ width: "30em" }} fullWidth placeholder={translate('PROVIDER') + " " +translate('ID')} label={translate('PROVIDER') + " " +translate('ID')} />
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>Callback URL</Typography>
+                            <Typography>{translate('CALLBACK') + " " +translate('URL')}</Typography>
                         </Grid>
                         <Grid item md={9}>
                             <Stack direction={'row'}>
-                                <TextField sx={{ width: "30em" }} helperText="Set this as the callback URL in OAuth Provider app settings page" fullWidth label='Callback URL' placeholder='Callback URL' />
-                                <Tooltip sx={{ ":hover": { backgroundColor: 'transparent' } }} title="Copy to Clipboard">
+                                <TextField sx={{ width: "30em" }} helperText={translate("CALLBACK_iNFO")} fullWidth label={translate('CALLBACK') + " " +translate('URL')} placeholder={translate('CALLBACK') + " " +translate('URL')} />
+                                <Tooltip sx={{ ":hover": { backgroundColor: 'transparent' } }} title={translate("CLIPBOARD_TEXT")}>
                                     <IconButton>
                                         <ContentCopyIcon />
                                     </IconButton>
@@ -98,7 +101,7 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                             </Stack>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>Flow</Typography>
+                            <Typography>{translate("FLOW")}</Typography>
                         </Grid>
                         <Grid item md={9}>
                             <FormControl sx={{ width: "30em" }}>
@@ -106,14 +109,14 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                                     value={Flow}
                                     onChange={handleChangeFlow}
                                 >
-                                    <MenuItem value={'Authorization Code'}>Authorization Code</MenuItem>
-                                    <MenuItem value={'Implicit'}>Implicit(Not Remcommended)</MenuItem>
+                                    <MenuItem value={'Authorization Code'}>{translate("AUTHORIZATION")+ " " + translate("CODE")} </MenuItem>
+                                    <MenuItem value={'Implicit'}> {translate("IMPLICIT")} ({translate("NOT_RECOMMENDED")}) </MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item md={3}>
                             <Typography>
-                                Use PKCE?
+                               {translate("USE_PKCE")}?
                             </Typography>
                         </Grid>
                         <Grid item md={9}>
@@ -121,38 +124,38 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                                 checked={PKCE}
                                 onChange={handleChangePKCE}
                             />
-                            <Tooltip title="Delete">
+                            <Tooltip title={translate("DELETE")}>
                                 <IconButton>
                                     <HelpOutlineIcon />
                                 </IconButton>
                             </Tooltip>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>Authorization URL</Typography>
+                            <Typography>{translate("AUTHORIZATION") + " "+translate("URL")}  </Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder='Authorization URL' label='Authorization URL' />
+                            <TextField sx={{ width: "30em" }} placeholder={translate("AUTHORIZATION") + " "+translate("URL")} label={translate("AUTHORIZATION") + " "+translate("URL")} />
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>Access Token URL</Typography>
+                            <Typography>{translate("ACCESS_TOKEN") + " "+translate("URL")}</Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder='Access Token URL' label='Access Token URL' />
+                            <TextField sx={{ width: "30em" }} placeholder={translate("ACCESS_TOKEN") + " "+translate("URL")} label={translate("ACCESS_TOKEN") + " "+translate("URL")} />
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>Client ID</Typography>
+                            <Typography>{translate("CLIENT") + " "+ translate("ID")}</Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder='Client ID' label='Client ID' />
+                            <TextField sx={{ width: "30em" }} placeholder={translate("CLIENT") + " "+ translate("ID")} label={translate("CLIENT") + " "+ translate("ID")} />
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>Client Secret</Typography>
+                            <Typography>{translate("CLIENT") + " "+ translate("SECRET")}</Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder='Client Secret' label='Client Secret' />
+                            <TextField sx={{ width: "30em" }} placeholder={translate("CLIENT") + " "+ translate("SECRET")} label={translate("CLIENT") + " "+ translate("SECRET")} />
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>Send AccessToken As</Typography>
+                            <Typography>{translate("SEND_ACCESSTOKEN")}</Typography>
                         </Grid>
                         <Grid item md={9}>
                             <FormControl sx={{ width: "30em" }}>
@@ -160,13 +163,13 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                                     value={sendTokenAs}
                                     onChange={handleChangesendTokenAs}
                                 >
-                                    <MenuItem value={'Header'}>Header</MenuItem>
-                                    <MenuItem value={'Query'}>Query</MenuItem>
+                                    <MenuItem value={'Header'}>{translate("HEADER")}</MenuItem>
+                                    <MenuItem value={'Query'}>{translate("QUERY")}</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>Scope</Typography>
+                            <Typography>{translate("SCOPE")}</Typography>
                         </Grid>
                         <Grid item md={9}>
                             <Grid className='cmnflx' spacing={1} container>
@@ -176,10 +179,10 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                                     </Stack>
                                 </Grid>
                                 <Grid item md={4}>
-                                    <Typography>Scope Key</Typography>
+                                    <Typography>{translate("SCOPE")+ " "+ translate("KEY")}</Typography>
                                 </Grid>
                                 <Grid item md={4}>
-                                    <Typography>Scope Value</Typography>
+                                    <Typography>{translate("SCOPE")+ " "+ translate("VALUE")}</Typography>
                                 </Grid>
                                 <Grid item md={4}>
                                 </Grid>
@@ -187,13 +190,13 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                                     <hr />
                                 </Grid>
                                 <Grid item md={4}>
-                                    <TextField value={scopeKey} onChange={(e) => setscopeKey(e.target.value)} placeholder='Scope Key' label='Scope Key' />
+                                    <TextField value={scopeKey} onChange={(e) => setscopeKey(e.target.value)} placeholder={translate("SCOPE")+ " "+ translate("KEY")} label={translate("SCOPE")+ " "+ translate("KEY")} />
                                 </Grid>
                                 <Grid item md={4}>
-                                    <TextField value={scopeValue} onChange={(e) => setscopeValue(e.target.value)} placeholder='Scope Value' label='Scope Value' />
+                                    <TextField value={scopeValue} onChange={(e) => setscopeValue(e.target.value)} placeholder={translate("SCOPE")+ " "+ translate("VALUE")} label={translate("SCOPE")+ " "+ translate("VALUE")} />
                                 </Grid>
                                 <Grid className='cmnflx' item md={4}>
-                                    <Button onClick={handleAddScope} variant='contained'>Add</Button>
+                                    <Button onClick={handleAddScope} variant='contained'>{translate("ADD")}</Button>
                                 </Grid>
                             </Grid>
                         </Grid>
@@ -202,10 +205,10 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
                 <hr />
                 <DialogActions sx={{ p: 2 }}>
                     <Button variant='contained' color='warning' onClick={handleClose}>
-                        Close
+                        {translate("CLOSE")}
                     </Button>
                     <Button variant='contained' onClick={handleClose}>
-                        Save
+                        {translate("SAVE")}
                     </Button>
                 </DialogActions>
             </Dialog>

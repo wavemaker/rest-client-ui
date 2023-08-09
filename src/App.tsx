@@ -3,10 +3,10 @@ import WebServiceModal from './core/components/WebServiceModal'
 
 export default function App() {
   return (
-    <>
+    <> 
       <Stack className='rest-import-ui'>
-        <WebServiceModal />
-      </Stack>
+      <WebServiceModal language='en'/>
+      </Stack> 
     </>
   )
 }

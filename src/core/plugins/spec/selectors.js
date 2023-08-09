@@ -28,6 +28,11 @@ export const value = createSelector(
   spec => spec.get("value")
 )
 
+export const language = createSelector(
+  state,
+  spec => spec.get("language")
+)
+
 export const objval = createSelector(
   state,
   spec =>{

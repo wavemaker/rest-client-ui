@@ -3,8 +3,9 @@
  */
 import React from "react";
 import PropTypes from "prop-types";
-import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
+import '../../../i18n';
+import { useTranslation } from 'react-i18next';
+
 export default class BaseLayout extends React.Component {
   static propTypes = {
     errSelectors: PropTypes.object.isRequired,
@@ -19,10 +20,12 @@ export default class BaseLayout extends React.Component {
     const { specSelectors, getComponent } = this.props;
     const WebServiceModal = getComponent('WebServiceModal')
     const value = specSelectors.value();
+    const language = specSelectors.language();
+
     return (
       <div className="rest-import-ui">
         <div className="information-container">
-        <WebServiceModal  url={value}/>
+        <WebServiceModal  language={language}/>
         </div>
       </div>
     );
