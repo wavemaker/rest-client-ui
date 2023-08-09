@@ -73,7 +73,7 @@ export default function ProviderModal({ handleOpen, handleClose }: { handleOpen:
 
     return (
         <>
-            <Dialog maxWidth={'md'} open={handleOpen} onClose={handleClose}>
+            <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose}>
                 <DialogTitle>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                         <Typography variant='h6' fontWeight={600}>Select Or Add Provider</Typography>

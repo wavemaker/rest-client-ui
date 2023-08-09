@@ -61,7 +61,7 @@ export default function ConfigModel({ handleOpen, handleClose }: { handleOpen: b
 
     return (
         <>
-            <Dialog maxWidth={'md'} open={handleOpen} onClose={handleClose}>
+            <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose}>
                 <DialogTitle sx={{ backgroundColor: 'lightgray' }}>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                         <Typography variant='h6' fontWeight={600}>OAuth Provider Configuration</Typography>

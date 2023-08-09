@@ -73,6 +73,7 @@ const defaultContentTypes = [
         label: 'text/plain', value: 'text/plain'
     },
 ]
+
 export default function WebServiceModal() {
     const [apiURL, setapiURL] = useState('')
     const [httpMethod, sethttpMethod] = useState('GET')
@@ -103,9 +104,9 @@ export default function WebServiceModal() {
 
 
     const getPathParams = () => {
-        if (getSubstring(apiURL.split("?")[0], "{", "}").length > 0) {
+        let paths = getSubstring(apiURL.split("?")[0], "{", "}")
+        if (paths.length > 0) {
             const pathParamsClone = [...pathParams]
-            let paths = getSubstring(apiURL.split("?")[0], "{", "}")
             const newPathParams: PathParamsI[] = []
             const checkPath = (name: string): boolean => {
                 let returnBool = false
@@ -134,13 +135,11 @@ export default function WebServiceModal() {
                     position: 'top-right'
                 })
                 setpathParams(removeDuplicatesByComparison(newPathParams, duplicates, "name"))
-            }
-            else
+            } else
                 setpathParams(newPathParams)
         }
-        else {
+        else
             setpathParams([])
-        }
     }
     const handlePathParamsChanges = (value: string, currentIndex: number) => {
         const pathParamsClone = [...pathParams]
@@ -228,6 +227,12 @@ export default function WebServiceModal() {
                 }
                 const nonDuplicate = removeDuplicatesKeepFirst(queryNames, "name")
                 const duplicates = findDuplicateObjects(queryNames, "name")
+                const headerParamsClone = [...headerParams]
+                const paths = getSubstring(apiURL.split("?")[0], "{", "}")
+                const pathParamsClone = paths.map(path => {
+                    return { "name": path }
+                })
+                const allDuplicates = findDuplicatesAcrossArrays([nonDuplicate, headerParamsClone.slice(0, headerParamsClone.length - 1), pathParamsClone], "name")
                 if (duplicates.length > 0) {
                     let apiURLCopy = apiURL
                     toast.error("Queries cannot have duplicates, removed the dupicates", {
@@ -238,14 +243,20 @@ export default function WebServiceModal() {
                     })
                     setapiURL(apiURLCopy)
                 }
-                nonDuplicate.forEach((data) => {
-                    const key = data.name
-                    const value = data.value
-                    if (!checkQuery(key, value)) {
-                        if (key !== '' && value !== '')
-                            newQueryParams.push({ name: key, value: value, type: "string" })
-                    }
-                })
+                if (allDuplicates.length > 0) {
+                    return toast.error(`parameter "${allDuplicates[0].name}" already exists`, {
+                        position: 'top-right'
+                    })
+                } else {
+                    nonDuplicate.forEach((data) => {
+                        const key = data.name
+                        const value = data.value
+                        if (!checkQuery(key, value)) {
+                            if (key !== '' && value !== '')
+                                newQueryParams.push({ name: key, value: value, type: "string" })
+                        }
+                    })
+                }
                 newQueryParams.push({ name: '', value: '', type: '' })
                 setqueryParams(newQueryParams)
             }
@@ -306,7 +317,7 @@ export default function WebServiceModal() {
                 })
                 body = formData
             } else
-                body = JSON.stringify(bodyParams)
+                body = bodyParams
             const configWOProxy: AxiosRequestConfig = {
                 url: requestAPI,
                 headers: header,
@@ -314,7 +325,7 @@ export default function WebServiceModal() {
                 data: body
             }
             const configWProxy: AxiosRequestConfig = {
-                url: "http://stage-studio.wavemakeronline.com/studio/services/projects/WMPRJ2c91808888f52524018968db801516c9/restservices/invoke?optimizeResponse=true",
+                url: "http://localhost:5000/restimport",
                 data: {
                     "endpointAddress": requestAPI,
                     "method": httpMethod,
@@ -324,14 +335,18 @@ export default function WebServiceModal() {
                     "authDetails": null
                 },
                 method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                withCredentials: true
             }
             setloading(true)
             const config = useProxy ? configWProxy : configWOProxy
+            console.log(config)
             const response: any = await Apicall(config)
             console.log(response)
-            const checkResponse = response.status >= 200 && response.status < 300 ? response : response.response !== undefined ? response.response : { data: response.message, status: httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.data.headers }
+            handleResponse(response)
             setloading(false)
-            setresponse(checkResponse)
         }
         else
             toast.error("Please provide a valid URL", {
@@ -339,12 +354,33 @@ export default function WebServiceModal() {
             })
     }
 
+    function handleResponse(response: any): void {
+        let responseValue;
+        if (useProxy) { 
+            if (response.status >= 200 && response.status < 300)
+                if (response.data.statusCode >= 200 && response.data.statusCode < 300)
+                    responseValue = { data: response.data.responseBody !== "" ? JSON.parse(response.data.responseBody) : response.data.responseBody, status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
+                else
+                    responseValue = { data: response?.data.responseBody, status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
+            else
+                responseValue = { data: httpStatusCodes.get(response?.response?.status), status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
+        } else {
+            if (response.status >= 200 && response.status < 300)
+                responseValue = { data: response?.data, status: response?.status + " " + httpStatusCodes.get(response?.status), headers: response?.headers }
+            else if (response.response !== undefined)
+                responseValue = { data: response.response?.data, status: response?.response.status + " " + httpStatusCodes.get(response.response?.status), headers: response.response?.headers }
+            else
+                responseValue = { data: response.message, status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
+        }
+        setresponse(responseValue as any)
+    }
+
     return (
         <>
             {loading ? <FallbackSpinner /> :
-                <>
+                <Stack className='rest-import-ui'>
                     <Toaster position='top-right' />
-                    <Grid gap={5} p={2} className='cmnflx rest-import-ui' container>
+                    <Grid gap={5} p={2} className='cmnflx' container>
                         <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
                             <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                                 <Typography variant='h6' fontWeight={600}>Web Service</Typography>
@@ -579,7 +615,7 @@ export default function WebServiceModal() {
                         </Grid>
                     </Grid>
                     <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} />
-                </>}
+                </Stack>}
         </>
     );
 }
