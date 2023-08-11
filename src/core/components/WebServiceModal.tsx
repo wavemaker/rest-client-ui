@@ -6,8 +6,11 @@ import {
     TextareaAutosize
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
-import { BodyParamsI, HeaderAndQueryTable, MultipartTable, TableI, TableRowStyled } from './Table'
-import { findDuplicateObjects, findDuplicatesAcrossArrays, getSubstring, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, removeDuplicatesKeepFirst } from './common/common'
+import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
+import {
+    findDuplicateObjects, findDuplicatesAcrossArrays, getSubstring, httpStatusCodes, isValidUrl, removeDuplicatesByComparison,
+    removeDuplicatesKeepFirst
+} from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
 import DoneIcon from '@mui/icons-material/Done'
@@ -21,6 +24,7 @@ import { encode } from 'js-base64';
 import toast, { Toaster } from 'react-hot-toast'
 import FallbackSpinner from './common/loader'
 import { useTranslation } from 'react-i18next';
+import { restImportConfigI } from '../../App'
 interface TabPanelProps {
     children?: ReactNode
     index: number
@@ -72,31 +76,35 @@ const defaultContentTypes = [
     {
         label: 'text/plain', value: 'text/plain'
     },
-] 
+]
 
-export default function WebServiceModal({language}:{language:string}) {
-  
-    const { t:translate, i18n } = useTranslation(); 
-    const [apiURL, setapiURL] = useState('')
-    const [httpMethod, sethttpMethod] = useState('GET')
-    const [useProxy, setuseProxy] = useState(true)
+export function handleToastError(message: string) {
+    toast.error(message)
+}
+
+export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig?: restImportConfigI }) {
+    const defaultValueforHandQParams = { name: '', value: '', type: '' }
+    const { t: translate, i18n } = useTranslation();
+    const [apiURL, setapiURL] = useState<string>(restImportConfig?.url || '')
+    const [httpMethod, sethttpMethod] = useState<"GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT">(restImportConfig?.httpMethod || 'GET')
+    const [useProxy, setuseProxy] = useState<boolean>(restImportConfig?.useProxy === true ? true : false)
     const [requestTabValue, setrequestTabValue] = useState(0)
     const [responseTabValue, setresponseTabValue] = useState(0)
-    const [httpAuth, sethttpAuth] = useState('None')
+    const [httpAuth, sethttpAuth] = useState<"NONE" | "BASIC" | "OAUTH2.0">(restImportConfig?.httpAuth || 'NONE')
     const [providerOpen, setproviderOpen] = useState(false)
-    const [headerParams, setheaderParams] = useState<TableI[]>([{ name: '', value: '', type: '' }])
-    const [queryParams, setqueryParams] = useState<TableI[]>([{ name: '', value: '', type: '' }])
-    const [bodyParams, setbodyParams] = useState('')
-    const [multipartParams, setmultipartParams] = useState<BodyParamsI[]>([{ name: '', value: '', type: 'file', filename: '' }])
+    const [headerParams, setheaderParams] = useState<HeaderAndQueryI[]>(restImportConfig?.headerParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
+    const [queryParams, setqueryParams] = useState<HeaderAndQueryI[]>([defaultValueforHandQParams])
+    const [bodyParams, setbodyParams] = useState<string>(restImportConfig?.bodyParams || '')
+    const [multipartParams, setmultipartParams] = useState<BodyParamsI[]>(restImportConfig?.multipartParams?.concat({ name: '', value: '', type: 'file', filename: '' }) || [{ name: '', value: '', type: 'file', filename: '' }])
     const [pathParams, setpathParams] = useState<PathParamsI[]>([])
-    const [contentType, setcontentType] = useState('application/json')
+    const [contentType, setcontentType] = useState(restImportConfig?.contentType || 'application/json')
     const [addCustomType, setaddCustomType] = useState(false)
     const [contentTypes, setcontentTypes] = useState(defaultContentTypes)
     const [newContentType, setnewContentType] = useState('')
     const [responseEditorValue, setresponseEditorValue] = useState('')
     const [response, setresponse] = useState<AxiosResponse>()
-    const [userName, setuserName] = useState('')
-    const [userPassword, setuserPassword] = useState('')
+    const [userName, setuserName] = useState(restImportConfig?.userName || '')
+    const [userPassword, setuserPassword] = useState(restImportConfig?.userPassword || '')
     const [loading, setloading] = useState(false)
 
     useEffect(() => {
@@ -134,9 +142,7 @@ export default function WebServiceModal({language}:{language:string}) {
             const queryParamsClone = [...queryParams]
             const duplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), queryParamsClone.slice(0, queryParamsClone.length - 1), newPathParams], "name")
             if (duplicates.length > 0) {
-                toast.error(`Parameter "${duplicates[0].name}" already exists`, {
-                    position: 'top-right'
-                })
+                handleToastError(`Parameter "${duplicates[0].name}" already exists`)
                 setpathParams(removeDuplicatesByComparison(newPathParams, duplicates, "name"))
             } else
                 setpathParams(newPathParams)
@@ -159,17 +165,17 @@ export default function WebServiceModal({language}:{language:string}) {
     const handleChangeapiURL = (value: string) => {
         setapiURL(value)
     }
-    const handleChangeHeaderParams = (data: TableI[]) => {
+    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => {
         setheaderParams(data)
     }
-    const handleChangeQueryParams = (data: TableI[]) => {
+    const handleChangeQueryParams = (data: HeaderAndQueryI[]) => {
         setqueryParams(data)
     }
     const handlemultipartParams = (data: BodyParamsI[]) => {
         setmultipartParams(data)
     }
     const handleChangehttpAuth = (event: SelectChangeEvent) => {
-        sethttpAuth(event.target.value as string)
+        sethttpAuth(event.target.value as any)
     }
     const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => {
         setrequestTabValue(newValue);
@@ -189,7 +195,7 @@ export default function WebServiceModal({language}:{language:string}) {
         setresponseTabValue(newValue);
     };
     const handleChangehttpMethod = (event: SelectChangeEvent) => {
-        sethttpMethod(event.target.value as string)
+        sethttpMethod(event.target.value as any)
     }
     const handleChangecontentType = (event: SelectChangeEvent) => {
         setcontentType(event.target.value as string)
@@ -209,7 +215,7 @@ export default function WebServiceModal({language}:{language:string}) {
                     }
                     return data
                 })
-                const newQueryParams: TableI[] = []
+                const newQueryParams: HeaderAndQueryI[] = []
                 const queryParamsClone = [...queryParams]
                 const checkQuery = (name: string, value: string): boolean => {
                     let returnBool = false
@@ -238,18 +244,14 @@ export default function WebServiceModal({language}:{language:string}) {
                 const allDuplicates = findDuplicatesAcrossArrays([nonDuplicate, headerParamsClone.slice(0, headerParamsClone.length - 1), pathParamsClone], "name")
                 if (duplicates.length > 0) {
                     let apiURLCopy = apiURL
-                    toast.error("Queries cannot have duplicates, removed the dupicates", {
-                        position: 'top-right'
-                    })
+                    handleToastError("Queries cannot have duplicates, removed the dupicates")
                     duplicates.forEach((data) => {
                         apiURLCopy = apiURLCopy.replace(`&${data.name}=${data.value}`, '')
                     })
                     setapiURL(apiURLCopy)
                 }
                 if (allDuplicates.length > 0) {
-                    return toast.error(`parameter "${allDuplicates[0].name}" already exists`, {
-                        position: 'top-right'
-                    })
+                    return handleToastError(`parameter "${allDuplicates[0].name}" already exists`)
                 } else {
                     nonDuplicate.forEach((data) => {
                         const key = data.name
@@ -293,73 +295,75 @@ export default function WebServiceModal({language}:{language:string}) {
         setresponseEditorValue(newValue)
     }
     const handleTestClick = async () => {
-        if (apiURL.length > 0 && isValidUrl(apiURL)) {
-            if (httpAuth === "Basic") {
-                if (userName.trim() === "")
-                    return toast.error("Please enter a username for basic authentication")
-                if (userPassword.trim() === "")
-                    return toast.error("Please enter a password for basic authentication")
-            }
+        if (apiURL.length > 0) {
             let header: any = {}, body;
             let requestAPI = apiURL
             pathParams.forEach((params) => {
-                requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
+                if (params.value.trim() !== "")
+                    requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
+                else
+                    return handleToastError(translate("PATHPARAMSALERT"))
             })
-            headerParams.forEach((data, index) => {
-                if (headerParams.length - 1 !== index)
-                    header[data.name] = data.value
-                if (httpAuth === "Basic" && index === 0) {
-                    header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
+            if (isValidUrl(requestAPI)) {
+                if (httpAuth === "BASIC") {
+                    if (userName.trim() === "")
+                        return handleToastError("Please enter a username for basic authentication")
+                    if (userPassword.trim() === "")
+                        return handleToastError("Please enter a password for basic authentication")
                 }
-            })
-            if (contentType === 'multipart/form-data') {
-                const formData = new FormData()
-                multipartParams.forEach((data, index) => {
-                    if (multipartParams.length - 1 !== index)
-                        formData.append(data.name, data.value)
+                headerParams.forEach((data, index) => {
+                    if (httpAuth === "BASIC" && index === 0)
+                        header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
+                    if (headerParams.length - 1 !== index)
+                        header[data.name] = data.value
                 })
-                body = formData
+                if (contentType === 'multipart/form-data') {
+                    const formData = new FormData()
+                    multipartParams.forEach((data, index) => {
+                        if (multipartParams.length - 1 !== index)
+                            formData.append(data.name, data.value)
+                    })
+                    body = formData
+                } else
+                    body = bodyParams
+                const configWOProxy: AxiosRequestConfig = {
+                    url: requestAPI,
+                    headers: header,
+                    method: httpMethod,
+                    data: body
+                }
+                const configWProxy: AxiosRequestConfig = {
+                    url: "http://localhost:5000/restimport",
+                    data: {
+                        "endpointAddress": requestAPI,
+                        "method": httpMethod,
+                        "contentType": contentType,
+                        "requestBody": body,
+                        "headers": header,
+                        "authDetails": null
+                    },
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    withCredentials: true
+                }
+                setloading(true)
+                const config = useProxy ? configWProxy : configWOProxy
+                console.log(config)
+                const response: any = await Apicall(config)
+                console.log(response)
+                handleResponse(response)
+                setloading(false)
             } else
-                body = bodyParams
-            const configWOProxy: AxiosRequestConfig = {
-                url: requestAPI,
-                headers: header,
-                method: httpMethod,
-                data: body
-            }
-            const configWProxy: AxiosRequestConfig = {
-                url: "http://localhost:5000/restimport",
-                data: {
-                    "endpointAddress": requestAPI,
-                    "method": httpMethod,
-                    "contentType": contentType,
-                    "requestBody": body,
-                    "headers": header,
-                    "authDetails": null
-                },
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                withCredentials: true
-            }
-            setloading(true)
-            const config = useProxy ? configWProxy : configWOProxy
-            console.log(config)
-            const response: any = await Apicall(config)
-            console.log(response)
-            handleResponse(response)
-            setloading(false)
+                handleToastError(translate("VALID_URL_ALERT"))
         }
         else
-            toast.error(translate("VALID_URL_ALERT"), {
-                position: 'top-right'
-            })
+            handleToastError(translate("VALID_URL_ALERT"))
     }
-
     function handleResponse(response: any): void {
         let responseValue;
-        if (useProxy) { 
+        if (useProxy) {
             if (response.status >= 200 && response.status < 300)
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
                     responseValue = { data: response.data.responseBody !== "" ? JSON.parse(response.data.responseBody) : response.data.responseBody, status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
@@ -374,6 +378,9 @@ export default function WebServiceModal({language}:{language:string}) {
                 responseValue = { data: response.response?.data, status: response?.response.status + " " + httpStatusCodes.get(response.response?.status), headers: response.response?.headers }
             else
                 responseValue = { data: response.message, status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
+        }
+        if (responseValue.data === undefined || responseValue.headers === undefined) {
+            responseValue = { data: response.message, status: response.code, headers: {} }
         }
         setresponse(responseValue as any)
     }
@@ -415,7 +422,7 @@ export default function WebServiceModal({language}:{language:string}) {
                                 <TextField onBlur={() => {
                                     getPathParams()
                                     handleQueryChange()
-                                }} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
+                                }} autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
                                 <Button onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
                             </Stack>
                         </Grid>
@@ -445,16 +452,16 @@ export default function WebServiceModal({language}:{language:string}) {
                                 <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                     <Tabs value={requestTabValue} onChange={handleChangeHeaderTabs}>
                                         <Tab label={translate("AUTHORIZATION")} />
-                                        <Tab label={translate("HEADER") + " "+ translate("PARAMS")} />
-                                        <Tab label={translate("BODY") + " " +translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
-                                        <Tab label={translate("QUERY") + " " +translate("PARAMS")} />
-                                        <Tab label={translate("PATH") + " " +translate("PARAMS")} />
+                                        <Tab label={translate("HEADER") + " " + translate("PARAMS")} />
+                                        <Tab label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
+                                        <Tab label={translate("QUERY") + " " + translate("PARAMS")} />
+                                        <Tab label={translate("PATH") + " " + translate("PARAMS")} />
                                     </Tabs>
                                 </Box>
                                 <CustomTabPanel value={requestTabValue} index={0}>
                                     <Grid spacing={2} mt={2} className='cmnflx' container>
                                         <Grid item md={3}>
-                                            <Typography>{translate('HTTP') + " "+ translate("AUTHENTICATION")}</Typography>
+                                            <Typography>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
                                         </Grid>
                                         <Grid item md={9}>
                                             <FormControl size='small' >
@@ -462,19 +469,19 @@ export default function WebServiceModal({language}:{language:string}) {
                                                     value={httpAuth}
                                                     onChange={handleChangehttpAuth}
                                                 >
-                                                    <MenuItem value={'None'}>{translate("NONE")}</MenuItem>
-                                                    <MenuItem value={'Basic'}>{translate("BASIC")}</MenuItem>
-                                                    <MenuItem value={'OAuth 2.0'}>{translate("OAUTH")} 2.0</MenuItem>
+                                                    <MenuItem value={'NONE'}>{translate("NONE")}</MenuItem>
+                                                    <MenuItem value={'BASIC'}>{translate("BASIC")}</MenuItem>
+                                                    <MenuItem value={'OAUTH2.0'}>{translate("OAUTH")} 2.0</MenuItem>
                                                 </Select>
                                             </FormControl>
                                         </Grid>
-                                        {httpAuth === "Basic" && <>
+                                        {httpAuth === "BASIC" && <>
                                             <Grid item md={3}>
                                                 <Typography>{translate("USER_NAME")}</Typography>
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack direction={'row'}>
-                                                    <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")}  />
+                                                    <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
                                                     <Tooltip title={translate("DELETE")}>
                                                         <IconButton>
                                                             <HelpOutlineIcon />
@@ -496,14 +503,14 @@ export default function WebServiceModal({language}:{language:string}) {
                                                 </Stack>
                                             </Grid>
                                         </>}
-                                        {httpAuth === "OAuth 2.0" && <>
+                                        {httpAuth === "OAUTH2.0" && <>
                                             <Grid item md={3}>
-                                                <Typography>{translate("OAuth") +" " +translate("PROVIDER")}</Typography>
+                                                <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack spacing={2} direction={'row'}>
-                                                    <TextField disabled size='small' label={translate("NO")+ " "+ translate("PROVIDER")+ " "+  translate("SELECTED_YET")} />
-                                                    <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT")+ "/"+ translate("ADD") + " "+ translate("PROVIDER")}</Button>
+                                                    <TextField disabled size='small' label={translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET")} />
+                                                    <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
                                                 </Stack>
                                             </Grid>
                                         </>}
@@ -515,7 +522,7 @@ export default function WebServiceModal({language}:{language:string}) {
                                 <CustomTabPanel value={requestTabValue} index={2}>
                                     <Stack spacing={1} mt={2} ml={1}>
                                         <Stack spacing={10} display={'flex'} alignItems={'center'} direction={'row'}>
-                                            <Typography>{translate("CONTENT") + " " +translate("TYPE")}</Typography>
+                                            <Typography>{translate("CONTENT") + " " + translate("TYPE")}</Typography>
                                             <Stack spacing={3} display={'flex'} alignItems={'center'} direction={'row'}>
                                                 <FormControl size='small' sx={{ width: "20em" }}>
                                                     <Select
@@ -546,7 +553,7 @@ export default function WebServiceModal({language}:{language:string}) {
                                             </Stack>
                                         </Stack>
                                         {contentType === 'multipart/form-data' ? <MultipartTable value={multipartParams} setValue={handlemultipartParams} /> :
-                                            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') +" " + translate('BODY') + ":"+ translate('REQUEST_BODY_PLACEHOLDER')} />
+                                            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
                                         }
                                     </Stack>
                                 </CustomTabPanel>
@@ -584,7 +591,7 @@ export default function WebServiceModal({language}:{language:string}) {
                                             <InfoIcon sx={{ height: 18, width: 18, color: '#31708f', mt: 0.5 }} />
                                             <Stack>
                                                 <Typography>
-                                                    {translate('NO_PATH_PARAMS')} 
+                                                    {translate('NO_PATH_PARAMS')}
                                                     {translate('NO_PATH_PARAMS_DESC')}
                                                 </Typography>
                                                 <Typography>
@@ -600,9 +607,9 @@ export default function WebServiceModal({language}:{language:string}) {
                             <Box sx={{ width: '100%' }}>
                                 <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                     <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
-                                        <Tab label={translate("RESPONSE")+" "+ translate("BODY")} />
-                                        <Tab label={translate("RESPONSE")+" "+ translate("HEADER")} />
-                                        <Tab label={translate("RESPONSE")+" "+ translate("STATUS")} />
+                                        <Tab label={translate("RESPONSE") + " " + translate("BODY")} />
+                                        <Tab label={translate("RESPONSE") + " " + translate("HEADER")} />
+                                        <Tab label={translate("RESPONSE") + " " + translate("STATUS")} />
                                     </Tabs>
                                 </Box>
                             </Box>

@@ -12,11 +12,10 @@ import React, { ChangeEvent } from 'react';
 import { findDuplicateObjects, findDuplicatesAcrossArrays, getCurrentDateTime } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
-import toast from 'react-hot-toast'
-import { PathParamsI } from './WebServiceModal';
+import { PathParamsI, handleToastError } from './WebServiceModal';
 import { useTranslation } from 'react-i18next';
 
-export interface TableI {
+export interface HeaderAndQueryI {
     name: string
     type: string
     value: string
@@ -26,7 +25,7 @@ export interface BodyParamsI {
     name: string
     type: string
     value: string | File
-    filename: string
+    filename?: string
 }
 
 export const TableRowStyled = styled(TableRow)`
@@ -39,15 +38,15 @@ export const TableRowStyled = styled(TableRow)`
 `;
 
 export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams }:
-    { value: TableI[], setValue: (data: TableI[]) => void, from: string, apiURL: string, changeapiURL: (value: string) => void, headerParams: TableI[], queryParams: TableI[], pathParams: PathParamsI[] }) {
-    const { t:translate } = useTranslation();
+    { value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string, apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[], pathParams: PathParamsI[] }) {
+    const { t: translate } = useTranslation();
 
     const selectTypes =
     {
         UITypes: [
             { value: 'boolean', label: translate('BOOLEAN') },
             { value: 'date', label: translate('DATE') },
-            { value: 'datetime', label: translate('DATE') + " " +translate('TIME') },
+            { value: 'datetime', label: translate('DATE') + " " + translate('TIME') },
             { value: 'double', label: translate('DOUBLE') },
             { value: 'float', label: translate('FLOAT') },
             { value: 'interger', label: translate('INTEGER') },
@@ -55,15 +54,15 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             { value: 'string', label: translate('STRING') },
         ],
         ServerSideProperties: [
-            { value: 'currentdate', label: translate('CURRENT') + " " +translate('DATE') },
-            { value: 'currentdatetime', label: translate('CURRENT') + " " +translate('DATE')+ " " +translate('TIME') },
-            { value: 'currenttime', label: translate('CURRENT')+ " " +translate('TIME') },
-            { value: 'currenttimestamp', label: translate('CURRENT')+ " " +translate('TIMESTAMP') },
-            { value: 'loggedinuserid', label:  translate('LOGGEDIN')+ " " +translate('USERID') },
-            { value: 'loggedinusername', label: translate('LOGGEDIN')+ " " +translate('USERNAME') },
+            { value: 'currentdate', label: translate('CURRENT') + " " + translate('DATE') },
+            { value: 'currentdatetime', label: translate('CURRENT') + " " + translate('DATE') + " " + translate('TIME') },
+            { value: 'currenttime', label: translate('CURRENT') + " " + translate('TIME') },
+            { value: 'currenttimestamp', label: translate('CURRENT') + " " + translate('TIMESTAMP') },
+            { value: 'loggedinuserid', label: translate('LOGGEDIN') + " " + translate('USERID') },
+            { value: 'loggedinusername', label: translate('LOGGEDIN') + " " + translate('USERNAME') },
         ],
         AppEnvironmentProperties: [
-            { value: 'option1', label:  translate('OPTION')+" " + 1 },
+            { value: 'option1', label: translate('OPTION') + " " + 1 },
         ],
     }
 
@@ -93,7 +92,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
         if (name !== null) {
-            valueClone.map((data: TableI, index) => {
+            valueClone.map((data: HeaderAndQueryI, index) => {
                 if (index === currentIndex) {
                     data.name = name
                 }
@@ -101,7 +100,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             })
         }
         else {
-            valueClone.map((data: TableI, index) => {
+            valueClone.map((data: HeaderAndQueryI, index) => {
                 if (index === currentIndex) {
                     data.name = ''
                 }
@@ -174,13 +173,9 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
             if (duplicates.length > 0)
-                return toast.error(`parameter "${duplicates[0].name}" already exists`, {
-                    position: 'top-right'
-                })
+                return handleToastError(`parameter "${duplicates[0].name}" already exists`)
             if (allDuplicates().length > 0)
-                return toast.error(`parameter "${allDuplicates()[0].name}" already exists`, {
-                    position: 'top-right'
-                })
+                return handleToastError(`parameter "${allDuplicates()[0].name}" already exists`)
             if (from === 'query' && duplicates.length === 0 && allDuplicates().length === 0) {
                 valueClone.forEach((data, index) => {
                     let addData = data.name + "=" + data.value
@@ -202,9 +197,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             setValue(valueClone)
         }
         else {
-            toast.error(translate("MANDATORY_ALERT"), {
-                position: 'top-right'
-            })
+            handleToastError(translate("MANDATORY_ALERT"))
         }
     }
 
@@ -254,7 +247,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
                         <TableCell align='center'>{translate("NAME")}</TableCell>
                         <TableCell align='center'>{translate("TYPE")}</TableCell>
-                        <TableCell align='center'>{translate("TEST") + " " +translate("VALUE")}</TableCell>
+                        <TableCell align='center'>{translate("TEST") + " " + translate("VALUE")}</TableCell>
                         <TableCell align='center'>{translate("ACTIONS")}</TableCell>
                     </TableRow>
                 </TableHead>
@@ -274,7 +267,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                             }}
                                             freeSolo
                                             options={[]}
-                                            renderInput={(params) => <TextField  {...params}  InputLabelProps={{ children: '' }}/>}
+                                            renderInput={(params) => <TextField  {...params} InputLabelProps={{ children: '' }} />}
                                         /> :
                                         <Autocomplete
                                             sx={{ width: 200 }}
@@ -286,20 +279,20 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                             }}
                                             freeSolo
                                             options={selectNames.map((option) => option.label)}
-                                            renderInput={(params) => <TextField  {...params}  InputLabelProps={{ children: '' }}/>}
+                                            renderInput={(params) => <TextField  {...params} InputLabelProps={{ children: '' }} />}
                                         />}
                                 </Stack>
                             </TableCell>
                             <TableCell>
                                 <Stack className='cmnflx'>
                                     <FormControl size='small' sx={{ minWidth: 200 }}>
-                                        <InputLabel>{translate("SELECT") + " " +translate("TYPE")}</InputLabel>
+                                        <InputLabel>{translate("SELECT") + " " + translate("TYPE")}</InputLabel>
                                         <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")}>
                                             <ListSubheader>{translate("UI_TYPES")}</ListSubheader>
                                             {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                            <ListSubheader>{translate("SERVER_SIDE")+ " " + translate("PROPERTIES")}</ListSubheader>
+                                            <ListSubheader>{translate("SERVER_SIDE") + " " + translate("PROPERTIES")}</ListSubheader>
                                             {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                            <ListSubheader>{translate("APPENVIRONMENT")+ " " + translate("PROPERTIES")}</ListSubheader>
+                                            <ListSubheader>{translate("APPENVIRONMENT") + " " + translate("PROPERTIES")}</ListSubheader>
                                             {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                         </Select>
                                     </FormControl>
@@ -393,7 +386,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
         valueClone.splice(currentIndex, 1)
         setValue(valueClone)
     }
-    const { t:translate } = useTranslation();
+    const { t: translate } = useTranslation();
 
     return (
         <TableContainer component={Paper}>
@@ -402,7 +395,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
                         <TableCell align='center'>{translate('NAME')}</TableCell>
                         <TableCell align='center'>{translate('TYPE')}</TableCell>
-                        <TableCell align='center'>{translate('TEST') + " " +translate('VALUE')}</TableCell>
+                        <TableCell align='center'>{translate('TEST') + " " + translate('VALUE')}</TableCell>
                         <TableCell align='center'>{translate('ACTIONS')}</TableCell>
                     </TableRow>
                 </TableHead>
@@ -414,8 +407,8 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                             </TableCell>
                             <TableCell align='center'>
                                 <FormControl size='small' sx={{ minWidth: 200 }}>
-                                    <InputLabel>{translate('SELECT') + " "+translate('TYPE')}</InputLabel>
-                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " "+translate('TYPE')}>
+                                    <InputLabel>{translate('SELECT') + " " + translate('TYPE')}</InputLabel>
+                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')}>
                                         <MenuItem value={'file'}>{translate("FILE")}</MenuItem>
                                         <MenuItem value={'text'}>{translate("TEXT")}</MenuItem>
                                         <MenuItem value={'plaintext'}>{translate("Text(Text/Plain)")}</MenuItem>

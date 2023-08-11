@@ -79,5 +79,6 @@
   "IMPLICIT":"Implicit",
   "DELETE":"Delete",
   "MANDATORY_ALERT":"Please fill the mandatory fields",
-  "CUSTOM":"Custom"
+  "CUSTOM":"Custom",
+  "PATHPARAMSALERT":"Please provide the path parameter value"
 }
