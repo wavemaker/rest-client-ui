@@ -12,7 +12,7 @@ import MiniCssExtractPlugin from "mini-css-extract-plugin"
 export default {
   mode: "production",
   entry: {
-    "rest-import-ui": "./src/index.scss",
+    "rest-import-bundle": "./src/index.scss",
   },
   module: {
     rules: [
