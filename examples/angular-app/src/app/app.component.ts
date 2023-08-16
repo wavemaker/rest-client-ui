@@ -15,7 +15,7 @@ export class AppComponent {
 
     const reactUI = RestImport({
       dom_id: '#rest-import-ui',
-     language:"fr"
+     language:"en"
     })
 
 
