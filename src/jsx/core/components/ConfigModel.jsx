@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
@@ -6,15 +6,50 @@ import DialogTitle from '@mui/material/DialogTitle';
 import CloseIcon from '@mui/icons-material/Close';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Alert, Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-export default function ConfigModel({ handleOpen, handleClose }) {
-    const [Flow, setFlow] = useState('Authorization Code');
-    const [sendTokenAs, setsendTokenAs] = useState('Header');
-    const [PKCE, setPKCE] = useState(true);
+import clipboardCopy from 'clipboard-copy';
+import Apicall from './common/apicall';
+import toast from 'react-hot-toast';
+export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, customProvider, onSelectedProvider, onLoadProvider }) {
+    const { t: translate } = useTranslation();
+    const [customProviderList, setCustomProviderList] = useState(customProvider);
+    const [Flow, setFlow] = useState('AUTHORIZATION_CODE');
+    const [sendTokenAs, setsendTokenAs] = useState('HEADER');
+    const [PKCE, setPKCE] = useState(false);
     const [scopes, setscopes] = useState([]);
     const [scopeKey, setscopeKey] = useState('');
     const [scopeValue, setscopeValue] = useState('');
+    const [codeMethod, setCodeMethod] = useState('s256');
+    const [tooltipTitle, setTooltipTitle] = useState(translate("CLIPBOARD_TEXT"));
+    const [showErrorAlert, setShowErrorAlert] = useState(false);
+    const [providerId, setProviderID] = useState('');
+    const [authorizationUrl, setAuthorizationUrl] = useState('');
+    const [accessTokenUrl, setAccessTokenUrl] = useState('');
+    const [clientId, setClientId] = useState('');
+    const [clientSecret, setClientSecret] = useState('');
+    const [alertMsg, setAlertMsg] = useState('');
+    useEffect(() => {
+        setsendTokenAs(providerConf ? providerConf.sendAccessTokenAs : 'HEADER');
+        setProviderID(providerConf?.providerId);
+        setAuthorizationUrl(providerConf?.authorizationUrl);
+        setAccessTokenUrl(providerConf?.accessTokenUrl);
+        setCustomProviderList(customProvider);
+    }, [providerConf, customProvider]);
+    useEffect(() => {
+        setscopes([]);
+        setAlertMsg('');
+        setShowErrorAlert(false);
+        const scope_value = [];
+        providerConf?.scopes.forEach((scope) => {
+            return scope_value.push({
+                checked: true,
+                value: scope.value,
+                name: scope.name
+            });
+        });
+        setscopes(scope_value);
+    }, [handleOpen]);
     const handleChangePKCE = (event) => {
         setPKCE(event.target.checked);
     };
@@ -24,10 +59,10 @@ export default function ConfigModel({ handleOpen, handleClose }) {
     const handleChangesendTokenAs = (event) => {
         setsendTokenAs(event.target.value);
     };
-    const handleScopeChange = (event, key) => {
+    const handleScopeChange = (event, name) => {
         const scopesCopy = [...scopes];
         scopesCopy.map((scope) => {
-            if (scope.key === key) {
+            if (scope.name === name) {
                 scope.checked = event.target.checked;
             }
             return scope;
@@ -39,7 +74,7 @@ export default function ConfigModel({ handleOpen, handleClose }) {
             const scopesCopy = [...scopes];
             scopesCopy.push({
                 checked: true,
-                key: scopeKey,
+                name: scopeKey,
                 value: scopeValue
             });
             setscopes(scopesCopy);
@@ -47,38 +82,155 @@ export default function ConfigModel({ handleOpen, handleClose }) {
             setscopeValue('');
         }
     }
-    const { t } = useTranslation();
+    const handleCopyClick = (text) => {
+        clipboardCopy(text)
+            .then(() => {
+            setTooltipTitle('Copied!');
+        })
+            .catch((error) => {
+            console.error('Error copying to clipboard:', error);
+        });
+    };
+    const handleTooltipMouseLeave = () => {
+        setTooltipTitle(translate("CLIPBOARD_TEXT"));
+    };
+    const handleChangecodeMethod = (event) => {
+        setCodeMethod(event.target.value);
+    };
+    const handleProviderId = (event) => {
+        setProviderID(event.target.value);
+    };
+    const handleAuthorizationURL = (event) => {
+        setAuthorizationUrl(event.target.value);
+    };
+    const handleAccessTokenURL = (event) => {
+        setAccessTokenUrl(event.target.value);
+    };
+    const handleClientId = (event) => {
+        setClientId(event.target.value);
+    };
+    const handleClientSecret = (event) => {
+        setClientSecret(event.target.value);
+    };
+    const handleValidation = async () => {
+        setShowErrorAlert(true);
+        if (!providerId) {
+            setAlertMsg('Provider Id');
+        }
+        else if (!authorizationUrl) {
+            setAlertMsg('Authorization URL');
+        }
+        else if (!accessTokenUrl) {
+            setAlertMsg('Access Token URL');
+        }
+        else if (!clientId) {
+            setAlertMsg('Client ID');
+        }
+        else if (!clientSecret && !PKCE) {
+            setAlertMsg('Client Secret');
+        }
+        else {
+            setShowErrorAlert(false);
+            const scopes_val = scopes.filter(item => item.checked).map(({ checked, ...rest }) => rest);
+            const scope_map_obj = scopes.reduce((result, item) => {
+                result[item.name] = item.checked || false;
+                return result;
+            }, {});
+            const newProvider = {
+                accessTokenParamName: "Bearer",
+                accessTokenUrl: accessTokenUrl,
+                authorizationUrl: authorizationUrl,
+                clientId: clientId,
+                clientSecret: clientSecret,
+                oauth2Flow: Flow,
+                providerId: providerId,
+                responseType: "token",
+                scopeMap: scope_map_obj,
+                scopes: scopes_val,
+                sendAccessTokenAs: sendTokenAs,
+                ...(PKCE ? { oAuth2Pkce: { enabled: PKCE, challengeMethod: codeMethod } } : {})
+            };
+            customProviderList.push(newProvider);
+            const configWProvider = {
+                url: "http://localhost:5000/addprovider",
+                data: customProviderList,
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                withCredentials: true
+            };
+            const response = await Apicall(configWProvider);
+            if (response.status === 200) {
+                toast.success(`Saved Successfully`, {
+                    position: 'top-right',
+                    duration: 5000
+                });
+                onLoadProvider();
+                handleAuthorizationUrl();
+                onSelectedProvider(newProvider);
+                handleClose();
+                handleParentModalClose();
+            }
+        }
+    };
+    const handleAuthorizationUrl = async () => {
+        const configProvider = {
+            url: "http://localhost:5000/authorizationUrl",
+            method: "GET",
+            data: { "providerId": providerId },
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            withCredentials: true
+        };
+        const response = await Apicall(configProvider);
+        if (response.status === 200) {
+            console.log(response);
+        }
+    };
     return (<>
-            <Dialog maxWidth={'md'} open={handleOpen} onClose={handleClose}>
+            <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose}>
                 <DialogTitle sx={{ backgroundColor: 'lightgray' }}>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                        <Typography variant='h6' fontWeight={600}>{t("OAUTH") + " " + t("PROVIDER") + " " + t("CONFIGURATION")}</Typography>
+                        <Typography variant='h6' fontWeight={600}>{translate("OAUTH") + " " + translate("PROVIDER") + " " + translate("CONFIGURATION")} </Typography>
                         <Stack spacing={1} className='cmnflx' direction={'row'}>
-                            <Tooltip title={t("DELETE")}>
+                            <Tooltip title={translate("oAuth")}>
                                 <IconButton>
                                     <HelpOutlineIcon />
                                 </IconButton>
                             </Tooltip>
-                            <Link sx={{ color: 'gray' }}>{t("HELP")}</Link>
+                            <Link sx={{ color: 'gray' }}>{translate("HELP")}</Link>
                             <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleClose}/>
                         </Stack>
                     </Stack>
                 </DialogTitle>
-                <DialogContent sx={{ mt: 4 }}>
-                    <Grid spacing={2} mt={0.5} className='cmnflx' sx={{ width: '100%' }} container>
+                <DialogContent sx={{ mt: 2 }}>
+                    {showErrorAlert && (<Alert sx={{ py: 0 }} severity="error">{alertMsg} is required </Alert>)}
+                    <Grid spacing={2} mt={0.3} className='cmnflx' sx={{ width: '100%' }} container>
+
                         <Grid item md={3}>
-                            <Typography>{t('PROVIDER') + " " + t('ID')}</Typography>
+                            <Typography>{translate('PROVIDER') + " " + translate('ID')} <span className='text-danger'>*</span>
+                            </Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} fullWidth placeholder={t('PROVIDER') + " " + t('ID')} label={t('PROVIDER') + " " + t('ID')}/>
+                            <TextField sx={{ width: "30em" }} size='small' onChange={handleProviderId} defaultValue={providerConf?.providerId} InputProps={{
+            readOnly: !!providerConf,
+        }} fullWidth placeholder={translate('PROVIDER') + " " + translate('ID')} label={translate('PROVIDER') + " " + translate('ID')}/>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t('CALLBACK') + " " + t('URL')}</Typography>
+                            <Typography>{translate('CALLBACK') + " " + translate('URL')} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
                             <Stack direction={'row'}>
-                                <TextField sx={{ width: "30em" }} helperText={t("CALLBACK_iNFO")} fullWidth label={t('CALLBACK') + " " + t('URL')} placeholder={t('CALLBACK') + " " + t('URL')}/>
-                                <Tooltip sx={{ ":hover": { backgroundColor: 'transparent' } }} title={t("CLIPBOARD_TEXT")}>
+                                <TextField size='small' sx={{ width: '30em' }} value={providerConf
+            ? `https://www.wavemakeronline.com/studio/services/oauth2/${providerConf.providerId}/callback`
+            : providerId
+                ? `https://www.wavemakeronline.com/studio/services/oauth2/${providerId}/callback`
+                : `https://www.wavemakeronline.com/studio/services/oauth2/{providerId}/callback`} InputProps={{
+            readOnly: !!providerConf,
+        }} helperText={translate('CALLBACK_iNFO')} fullWidth label={translate('CALLBACK') + ' ' + translate('URL')} placeholder={translate('CALLBACK') + ' ' + translate('URL')}/>
+                                <Tooltip onMouseLeave={handleTooltipMouseLeave} onClick={() => handleCopyClick(`https://www.wavemakeronline.com/studio/services/oauth2/${providerConf?.providerId}/callback`)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
                                     <IconButton>
                                         <ContentCopyIcon />
                                     </IconButton>
@@ -86,79 +238,103 @@ export default function ConfigModel({ handleOpen, handleClose }) {
                             </Stack>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("FLOW")}</Typography>
+                            <Typography>{translate("FLOW")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <FormControl sx={{ width: "30em" }}>
+                            <FormControl sx={{ width: "30em" }} size='small' disabled={!!providerConf}>
                                 <Select value={Flow} onChange={handleChangeFlow}>
-                                    <MenuItem value={'Authorization Code'}>{t("AUTHORIZATION") + " " + t("CODE")} </MenuItem>
-                                    <MenuItem value={'Implicit'}> {t("IMPLICIT")} ({t("NOT_RECOMMENDED")}) </MenuItem>
+                                    <MenuItem value={'AUTHORIZATION_CODE'}>{translate("AUTHORIZATION") + " " + translate("CODE")} </MenuItem>
+                                    <MenuItem value={'IMPLICIT'}> {translate("IMPLICIT")} ({translate("NOT_RECOMMENDED")}) </MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item md={3}>
                             <Typography>
-                               {t("USE_PKCE")}?
+                                {translate("USE_PKCE")}?
                             </Typography>
                         </Grid>
-                        <Grid item md={9}>
+                        <Grid item md={PKCE ? 2 : 9}>
                             <Checkbox checked={PKCE} onChange={handleChangePKCE}/>
-                            <Tooltip title={t("DELETE")}>
+                            <Tooltip title={translate("PKCE")}>
                                 <IconButton>
                                     <HelpOutlineIcon />
                                 </IconButton>
                             </Tooltip>
                         </Grid>
+
+                        {PKCE && (<Grid item md={7} className='cmnflx' container>
+                                <Grid item md={5}>
+                                    <Typography>Code Challenge Method </Typography>
+                                </Grid>
+                                <Grid item md={7}>
+                                    <FormControl size='small'>
+                                        <Select value={codeMethod} onChange={handleChangecodeMethod}>
+                                            <MenuItem value={'s256'}>s256</MenuItem>
+                                            <MenuItem value={'Basic'}>Basic</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
+                            </Grid>)}
+
                         <Grid item md={3}>
-                            <Typography>{t("AUTHORIZATION") + " " + t("URL")}  </Typography>
+                            <Typography>{translate("AUTHORIZATION") + " " + translate("URL")}  <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder={t("AUTHORIZATION") + " " + t("URL")} label={t("AUTHORIZATION") + " " + t("URL")}/>
+                            <TextField sx={{ width: "30em" }} size='small' onChange={handleAuthorizationURL} defaultValue={providerConf ? providerConf.authorizationUrl : ''} InputProps={{
+            readOnly: !!providerConf,
+        }} placeholder={translate("AUTHORIZATION") + " " + translate("URL")} label={translate("AUTHORIZATION") + " " + translate("URL")}/>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("ACCESS_TOKEN") + " " + t("URL")}</Typography>
+                            <Typography>{translate("ACCESS_TOKEN") + " " + translate("URL")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder={t("ACCESS_TOKEN") + " " + t("URL")} label={t("ACCESS_TOKEN") + " " + t("URL")}/>
+                            <TextField sx={{ width: "30em" }} size='small' onChange={handleAccessTokenURL} defaultValue={providerConf ? providerConf.accessTokenUrl : ''} InputProps={{
+            readOnly: !!providerConf,
+        }} placeholder={translate("ACCESS_TOKEN") + " " + translate("URL")} label={translate("ACCESS_TOKEN") + " " + translate("URL")}/>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("CLIENT") + " " + t("ID")}</Typography>
+                            <Typography>{translate("CLIENT") + " " + translate("ID")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder={t("CLIENT") + " " + t("ID")} label={t("CLIENT") + " " + t("ID")}/>
+                            <TextField sx={{ width: "30em" }} size='small' onChange={handleClientId} placeholder={translate("CLIENT") + " " + translate("ID")} label={translate("CLIENT") + " " + translate("ID")}/>
                         </Grid>
+                        {!PKCE && (<Grid item md={12} container className='cmnflx' spacing={2}>
+                                <Grid item md={3}>
+                                    <Typography>{translate("CLIENT") + " " + translate("SECRET")} <span className='text-danger'>*</span></Typography>
+                                </Grid>
+
+                                <Grid item md={9}>
+                                    <TextField sx={{ width: "30em" }} size='small' onChange={handleClientSecret} placeholder={translate("CLIENT") + " " + translate("SECRET")} label={translate("CLIENT") + " " + translate("SECRET")}/>
+                                </Grid>
+                            </Grid>)}
                         <Grid item md={3}>
-                            <Typography>{t("CLIENT") + " " + t("SECRET")}</Typography>
+                            <Typography>{translate("SEND_ACCESSTOKEN")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} placeholder={t("CLIENT") + " " + t("SECRET")} label={t("CLIENT") + " " + t("SECRET")}/>
-                        </Grid>
-                        <Grid item md={3}>
-                            <Typography>{t("SEND_ACCESSTOKEN")}</Typography>
-                        </Grid>
-                        <Grid item md={9}>
-                            <FormControl sx={{ width: "30em" }}>
+                            <FormControl sx={{ width: "30em" }} size='small'>
                                 <Select value={sendTokenAs} onChange={handleChangesendTokenAs}>
-                                    <MenuItem value={'Header'}>{t("HEADER")}</MenuItem>
-                                    <MenuItem value={'Query'}>{t("QUERY")}</MenuItem>
+                                    <MenuItem value={'HEADER'}>{translate("HEADER")}</MenuItem>
+                                    <MenuItem value={'QUERY'}>{translate("QUERY")}</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
                         <Grid item md={3}>
-                            <Typography>{t("SCOPE")}</Typography>
+                            <Typography>{translate("SCOPE")}</Typography>
                         </Grid>
                         <Grid item md={9}>
+
                             <Grid className='cmnflx' spacing={1} container>
                                 <Grid item md={12}>
                                     <Stack>
-                                        {scopes.map(scope => <FormControlLabel key={scope.key} control={<Checkbox checked={scope.checked} onChange={(e) => handleScopeChange(e, scope.key)}/>} label={scope.value}/>)}
+                                        {scopes.map(scope => <FormControlLabel key={scope.name} control={<Checkbox checked={scope.checked} onChange={(e) => handleScopeChange(e, scope.name)}/>} label={scope.name}/>)}
                                     </Stack>
                                 </Grid>
                                 <Grid item md={4}>
-                                    <Typography>{t("SCOPE") + " " + t("KEY")}</Typography>
+                                    <Typography>{translate("SCOPE") + " " + translate("KEY")}</Typography>
                                 </Grid>
                                 <Grid item md={4}>
-                                    <Typography>{t("SCOPE") + " " + t("VALUE")}</Typography>
+                                    <Typography>{translate("SCOPE") + " " + translate("VALUE")}</Typography>
                                 </Grid>
                                 <Grid item md={4}>
                                 </Grid>
@@ -166,13 +342,13 @@ export default function ConfigModel({ handleOpen, handleClose }) {
                                     <hr />
                                 </Grid>
                                 <Grid item md={4}>
-                                    <TextField value={scopeKey} onChange={(e) => setscopeKey(e.target.value)} placeholder={t("SCOPE") + " " + t("KEY")} label={t("SCOPE") + " " + t("KEY")}/>
+                                    <TextField size='small' value={scopeKey} onChange={(e) => setscopeKey(e.target.value)} placeholder={translate("SCOPE") + " " + translate("KEY")} label={translate("SCOPE") + " " + translate("KEY")}/>
                                 </Grid>
                                 <Grid item md={4}>
-                                    <TextField value={scopeValue} onChange={(e) => setscopeValue(e.target.value)} placeholder={t("SCOPE") + " " + t("VALUE")} label={t("SCOPE") + " " + t("VALUE")}/>
+                                    <TextField size='small' value={scopeValue} onChange={(e) => setscopeValue(e.target.value)} placeholder={translate("SCOPE") + " " + translate("VALUE")} label={translate("SCOPE") + " " + translate("VALUE")}/>
                                 </Grid>
                                 <Grid className='cmnflx' item md={4}>
-                                    <Button onClick={handleAddScope} variant='contained'>{t("ADD")}</Button>
+                                    <Button onClick={handleAddScope} variant='contained'>{translate("ADD")}</Button>
                                 </Grid>
                             </Grid>
                         </Grid>
@@ -181,10 +357,10 @@ export default function ConfigModel({ handleOpen, handleClose }) {
                 <hr />
                 <DialogActions sx={{ p: 2 }}>
                     <Button variant='contained' color='warning' onClick={handleClose}>
-                        {t("CLOSE")}
+                        {translate("CLOSE")}
                     </Button>
-                    <Button variant='contained' onClick={handleClose}>
-                        {t("SAVE")}
+                    <Button variant='contained' onClick={handleValidation}>
+                        {translate("SAVE")}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -5,7 +5,7 @@ import {
     TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button,
     TextareaAutosize
 } from '@mui/material'
-import ProviderModal from './ProviderModal'
+import ProviderModal, { ProviderI } from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, TableI, TableRowStyled } from './Table'
 import { findDuplicateObjects, findDuplicatesAcrossArrays, getSubstring, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, removeDuplicatesKeepFirst } from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
@@ -72,11 +72,11 @@ const defaultContentTypes = [
     {
         label: 'text/plain', value: 'text/plain'
     },
-] 
+]
 
-export default function WebServiceModal({language}:{language:string}) {
-  
-    const { t:translate, i18n } = useTranslation(); 
+export default function WebServiceModal({ language }: { language: string }) {
+
+    const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState('')
     const [httpMethod, sethttpMethod] = useState('GET')
     const [useProxy, setuseProxy] = useState(true)
@@ -98,12 +98,25 @@ export default function WebServiceModal({language}:{language:string}) {
     const [userName, setuserName] = useState('')
     const [userPassword, setuserPassword] = useState('')
     const [loading, setloading] = useState(false)
+    const [selectedProvider, setSelectedProvider] = useState()
+    const [providerId, setProviderId] = useState('')
+
 
     useEffect(() => {
         i18n.changeLanguage(language);
         handleChangeResponseTabs(null, responseTabValue)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
+
+    const handleSelectedProvider = (data: React.SetStateAction<undefined>) => {
+        setSelectedProvider(data)
+    }
+
+    useEffect(() => {
+        if (selectedProvider) {
+            setProviderId((selectedProvider as ProviderI).providerId);
+        }
+    }, [selectedProvider]);
 
 
     const getPathParams = () => {
@@ -359,7 +372,7 @@ export default function WebServiceModal({language}:{language:string}) {
 
     function handleResponse(response: any): void {
         let responseValue;
-        if (useProxy) { 
+        if (useProxy) {
             if (response.status >= 200 && response.status < 300)
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
                     responseValue = { data: response.data.responseBody !== "" ? JSON.parse(response.data.responseBody) : response.data.responseBody, status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
@@ -445,16 +458,16 @@ export default function WebServiceModal({language}:{language:string}) {
                                 <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                     <Tabs value={requestTabValue} onChange={handleChangeHeaderTabs}>
                                         <Tab label={translate("AUTHORIZATION")} />
-                                        <Tab label={translate("HEADER") + " "+ translate("PARAMS")} />
-                                        <Tab label={translate("BODY") + " " +translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
-                                        <Tab label={translate("QUERY") + " " +translate("PARAMS")} />
-                                        <Tab label={translate("PATH") + " " +translate("PARAMS")} />
+                                        <Tab label={translate("HEADER") + " " + translate("PARAMS")} />
+                                        <Tab label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
+                                        <Tab label={translate("QUERY") + " " + translate("PARAMS")} />
+                                        <Tab label={translate("PATH") + " " + translate("PARAMS")} />
                                     </Tabs>
                                 </Box>
                                 <CustomTabPanel value={requestTabValue} index={0}>
                                     <Grid spacing={2} mt={2} className='cmnflx' container>
                                         <Grid item md={3}>
-                                            <Typography>{translate('HTTP') + " "+ translate("AUTHENTICATION")}</Typography>
+                                            <Typography>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
                                         </Grid>
                                         <Grid item md={9}>
                                             <FormControl size='small' >
@@ -474,7 +487,7 @@ export default function WebServiceModal({language}:{language:string}) {
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack direction={'row'}>
-                                                    <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")}  />
+                                                    <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
                                                     <Tooltip title={translate("DELETE")}>
                                                         <IconButton>
                                                             <HelpOutlineIcon />
@@ -498,12 +511,12 @@ export default function WebServiceModal({language}:{language:string}) {
                                         </>}
                                         {httpAuth === "OAuth 2.0" && <>
                                             <Grid item md={3}>
-                                                <Typography>{translate("OAuth") +" " +translate("PROVIDER")}</Typography>
+                                                <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack spacing={2} direction={'row'}>
-                                                    <TextField disabled size='small' label={translate("NO")+ " "+ translate("PROVIDER")+ " "+  translate("SELECTED_YET")} />
-                                                    <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT")+ "/"+ translate("ADD") + " "+ translate("PROVIDER")}</Button>
+                                                    <TextField disabled size='small' value={providerId} label={translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET")} />
+                                                    <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
                                                 </Stack>
                                             </Grid>
                                         </>}
@@ -515,7 +528,7 @@ export default function WebServiceModal({language}:{language:string}) {
                                 <CustomTabPanel value={requestTabValue} index={2}>
                                     <Stack spacing={1} mt={2} ml={1}>
                                         <Stack spacing={10} display={'flex'} alignItems={'center'} direction={'row'}>
-                                            <Typography>{translate("CONTENT") + " " +translate("TYPE")}</Typography>
+                                            <Typography>{translate("CONTENT") + " " + translate("TYPE")}</Typography>
                                             <Stack spacing={3} display={'flex'} alignItems={'center'} direction={'row'}>
                                                 <FormControl size='small' sx={{ width: "20em" }}>
                                                     <Select
@@ -546,7 +559,7 @@ export default function WebServiceModal({language}:{language:string}) {
                                             </Stack>
                                         </Stack>
                                         {contentType === 'multipart/form-data' ? <MultipartTable value={multipartParams} setValue={handlemultipartParams} /> :
-                                            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') +" " + translate('BODY') + ":"+ translate('REQUEST_BODY_PLACEHOLDER')} />
+                                            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
                                         }
                                     </Stack>
                                 </CustomTabPanel>
@@ -584,7 +597,7 @@ export default function WebServiceModal({language}:{language:string}) {
                                             <InfoIcon sx={{ height: 18, width: 18, color: '#31708f', mt: 0.5 }} />
                                             <Stack>
                                                 <Typography>
-                                                    {translate('NO_PATH_PARAMS')} 
+                                                    {translate('NO_PATH_PARAMS')}
                                                     {translate('NO_PATH_PARAMS_DESC')}
                                                 </Typography>
                                                 <Typography>
@@ -600,9 +613,9 @@ export default function WebServiceModal({language}:{language:string}) {
                             <Box sx={{ width: '100%' }}>
                                 <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                     <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
-                                        <Tab label={translate("RESPONSE")+" "+ translate("BODY")} />
-                                        <Tab label={translate("RESPONSE")+" "+ translate("HEADER")} />
-                                        <Tab label={translate("RESPONSE")+" "+ translate("STATUS")} />
+                                        <Tab label={translate("RESPONSE") + " " + translate("BODY")} />
+                                        <Tab label={translate("RESPONSE") + " " + translate("HEADER")} />
+                                        <Tab label={translate("RESPONSE") + " " + translate("STATUS")} />
                                     </Tabs>
                                 </Box>
                             </Box>
@@ -617,7 +630,7 @@ export default function WebServiceModal({language}:{language:string}) {
                             />
                         </Grid>
                     </Grid>
-                    <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} />
+                    <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider} />
                 </Stack>}
         </>
     );
