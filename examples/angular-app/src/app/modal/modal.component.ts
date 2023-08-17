@@ -46,13 +46,13 @@ export class ModalComponent implements OnInit {
           },
           default_proxy_state: 'ON',
           oAuthConfig: {
-            base_path: 'https://www.wavemakeronline.com/studio/services',
+            base_path: "https://www.wavemakeronline.com/studio/services",
             list_provider:
-              'https://www.wavemakeronline.com/studio/services/oauth2/providers/default',
+              "/oauth2/providers/default",
             getprovider:
-              'https://www.wavemakeronline.com/studio/services/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers',
+              "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers",
             addprovider:
-              'https://www.wavemakeronline.com/studio/services/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers',
+              "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers",
           },
         },
       });
@@ -70,13 +70,13 @@ export class ModalComponent implements OnInit {
           },
           default_proxy_state: 'ON',
           oAuthConfig: {
-            base_path: 'https://www.wavemakeronline.com/studio/services',
+            base_path: "https://www.wavemakeronline.com/studio/services",
             list_provider:
-              'https://www.wavemakeronline.com/studio/services/oauth2/providers/default',
+              "/oauth2/providers/default",
             getprovider:
-              'https://www.wavemakeronline.com/studio/services/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers',
+              "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers",
             addprovider:
-              'https://www.wavemakeronline.com/studio/services/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers',
+              "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers",
           },
         },
       });
