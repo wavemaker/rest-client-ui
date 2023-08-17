@@ -5,7 +5,7 @@ window.onload = function () {
   // Build a system
   const ui = RestImportBundle({
     dom_id: "#rest-import-ui",
-    language: 'zh',
+    language: 'en',
     config: {
       url: 'https://jsonplaceholder.typicode.com/posts/{id}?test=true',
       httpMethod: 'POST',

@@ -5,7 +5,7 @@
 /.pnp
 .pnp.js
 /dist
-src/jsx/
+/src/jsx/
 
 # testing
 /coverage

@@ -26,7 +26,7 @@
             ],
             "styles": [
               "src/styles.css",
-              "src/assets/plugins/rest-import-ui.css"
+              "src/assets/plugins/rest-import-bundle.css"
             ],
             "scripts": [
               "src/assets/plugins/rest-import-bundle.js"
@@ -91,7 +91,7 @@
             ],
             "styles": [
               "src/styles.css",
-              "src/assets/plugins/rest-import-ui.css"
+              "src/assets/plugins/rest-import-bundle.css"
             ],
             "scripts": [
               "src/assets/plugins/rest-import-bundle.js"

@@ -15,7 +15,7 @@ export class AppComponent {
 
     const reactUI = RestImport({
       dom_id: '#rest-import-ui',
-     language:"fr",
+     language:"en",
      config: {
       url: 'https://jsonplaceholder.typicode.com/posts/{id}?test=true',
       httpMethod: 'POST',
