@@ -9,11 +9,12 @@ import React, { useEffect, useState } from 'react';
 import ConfigModel from './ConfigModel';
 import { useTranslation } from 'react-i18next';
 import Apicall from './common/apicall';
-export default function ProviderModal({ handleOpen, handleClose, onSelectedProvider }) {
+export default function ProviderModal({ handleOpen, handleClose, onSelectedProvider, proxyObj }) {
     const [openConfig, setopenConfig] = useState(false);
     const [providers, setProviders] = useState([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] }]);
     const [currentProvider, setcurrentProvider] = useState({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] });
     const [allProvider, setAllProvider] = useState([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] }]);
+    const [defaultProviderIds, setDefaultProviderId] = useState([]);
     const handleSelectedProvider = (data) => {
         onSelectedProvider(data);
     };
@@ -31,8 +32,9 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
         setopenConfig(false);
     };
     const handleProviderList = async () => {
+        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.getprovider;
         const configProvider = {
-            url: "http://localhost:5000/getprovider",
+            url: url,
             method: "GET",
             headers: {
                 'Content-Type': 'application/json',
@@ -49,8 +51,9 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
         }
     };
     const handleDefaultProviderList = async () => {
+        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.list_provider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.list_provider;
         const configProvider = {
-            url: "http://localhost:5000/get-default-provider",
+            url: url,
             method: "GET",
             headers: {
                 'Content-Type': 'application/json',
@@ -60,6 +63,8 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
         const response = await Apicall(configProvider);
         if (response.status === 200) {
             const default_providers = response.data;
+            const default_provider_id = default_providers.map((item) => item.providerId).filter((providerId) => providerId);
+            setDefaultProviderId(default_provider_id);
             const allProvidersArray = providers.concat(default_providers);
             const filtered_provider = allProvidersArray.reduce((filtered, current) => {
                 const existing = filtered.find((item) => item.providerId === current.providerId);
@@ -117,11 +122,10 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
                         {allProvider.map((provider) => <Grid item md={3} key={provider.providerId}>
                                 <Card title={provider.providerId} onClick={() => handleOpenConfig(provider)} sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
                                     <CardMedia sx={{ height: "35px", width: "35px", mt: 2 }}>
-                                        <img src={`https://dh2dw20653ig1.cloudfront.net/studio/11.3.6.111/editor/styles/images/oauth2providers/${provider.providerId}.svg`} alt={provider.providerId} style={{ height: "35px" }} onError={(e) => {
-                const imgElement = e.target;
-                imgElement.onerror = null;
-                imgElement.src = 'https://dh2dw20653ig1.cloudfront.net/studio/11.3.6.111/editor/generated/styles/images/logo.png';
-            }}/>
+                                        <img src={defaultProviderIds.includes(provider.providerId)
+                ? `https://dh2dw20653ig1.cloudfront.net/studio/11.3.6.111/editor/styles/images/oauth2providers/${provider.providerId}.svg`
+                : 'https://dh2dw20653ig1.cloudfront.net/studio/11.3.6.111/editor/generated/styles/images/logo.png'} alt={provider.providerId} style={{ height: "35px" }}/>
+
 
                                     </CardMedia>
                                     <CardContent>
@@ -143,7 +147,7 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
                 </DialogContent>
             </Dialog>
 
-            {!currentProvider?.responseType && (<ConfigModel handleOpen={openConfig} handleClose={handleCloseConfig} handleParentModalClose={handleClose} providerConf={currentProvider} customProvider={providers} onSelectedProvider={handleSelectedProvider} onLoadProvider={handleProviderList}/>)}
+            {!currentProvider?.responseType && (<ConfigModel handleOpen={openConfig} handleClose={handleCloseConfig} handleParentModalClose={handleClose} providerConf={currentProvider} customProvider={providers} onSelectedProvider={handleSelectedProvider} onLoadProvider={handleProviderList} proxyObj={proxyObj}/>)}
 
 
         </>);

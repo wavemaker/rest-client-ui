@@ -202,18 +202,22 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         setValue(valueClone);
     }
     const handleOnBlurTestValue = () => {
-        if (from === 'query') {
-            let createQueryString = '';
-            const valueClone = [...value];
-            valueClone.forEach((data, index) => {
-                if (index === 0)
-                    createQueryString = `?${data.name}=${data.value}`;
-                else if (index !== valueClone.length - 1)
-                    createQueryString += `&${data.name}=${data.value}`;
-            });
-            const originalURL = apiURL.split('?')[0];
-            changeapiURL(originalURL + createQueryString);
-        }
+        const headerParamsClone = [...headerParams];
+        const pathParamsClone = [...pathParams];
+        const valueClone = [...value];
+        const allDuplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), valueClone, pathParamsClone], "name");
+        if (allDuplicates.length === 0)
+            if (from === 'query') {
+                let createQueryString = '';
+                valueClone.forEach((data, index) => {
+                    if (index === 0)
+                        createQueryString = `?${data.name}=${data.value}`;
+                    else if (index !== valueClone.length - 1)
+                        createQueryString += `&${data.name}=${data.value}`;
+                });
+                const originalURL = apiURL.split('?')[0];
+                changeapiURL(originalURL + createQueryString);
+            }
     };
     return (<TableContainer component={Paper}>
             <Table>

@@ -47,10 +47,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/bundle.babel.js",
+    "build": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/stylesheets.babel.js &&  webpack --color --config webpack/bundle.babel.js ",
     "build:bundle": "webpack --color --config webpack/bundle.babel.js",
-    "dev": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack serve --config webpack/dev.babel.js",
-    "build-stylesheets": "webpack --color --config webpack/stylesheets.babel.js"
+    "dev": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack serve --config webpack/dev.babel.js"
   },
   "eslintConfig": {
     "extends": [

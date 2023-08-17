@@ -21,6 +21,7 @@ import { encode } from 'js-base64';
 import toast, { Toaster } from 'react-hot-toast'
 import FallbackSpinner from './common/loader'
 import { useTranslation } from 'react-i18next';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'; import ConfigModel from './ConfigModel'
 interface TabPanelProps {
     children?: ReactNode
     index: number
@@ -73,8 +74,21 @@ const defaultContentTypes = [
         label: 'text/plain', value: 'text/plain'
     },
 ]
+export interface proxyConfigI {
+    proxy_conf: APII,
+    default_proxy_state: string,
+    oAuthConfig: APII
+}
 
-export default function WebServiceModal({ language }: { language: string }) {
+
+interface APII {
+    base_path: string,
+    proxy_path?: string,
+    list_provider: string,
+    getprovider: string,
+    addprovider: string,
+}
+export default function WebServiceModal({ language, proxyConfig }: { language: string, proxyConfig: proxyConfigI }) {
 
     const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState('')
@@ -100,7 +114,8 @@ export default function WebServiceModal({ language }: { language: string }) {
     const [loading, setloading] = useState(false)
     const [selectedProvider, setSelectedProvider] = useState()
     const [providerId, setProviderId] = useState('')
-
+    const [configOpen, setConfigOpen] = useState(false)
+    const [initialState, setInitialState] = useState(false)
 
     useEffect(() => {
         i18n.changeLanguage(language);
@@ -118,6 +133,10 @@ export default function WebServiceModal({ language }: { language: string }) {
         }
     }, [selectedProvider]);
 
+
+  useEffect(() => {
+    setInitialState(true)
+    }, []);
 
     const getPathParams = () => {
         let paths = getSubstring(apiURL.split("?")[0], "{", "}")
@@ -340,8 +359,9 @@ export default function WebServiceModal({ language }: { language: string }) {
                 method: httpMethod,
                 data: body
             }
+            const url = proxyConfig?.default_proxy_state === 'ON' ? proxyConfig?.proxy_conf?.base_path + proxyConfig?.proxy_conf?.proxy_path : '';
             const configWProxy: AxiosRequestConfig = {
-                url: "http://localhost:5000/restimport",
+                url: url,
                 data: {
                     "endpointAddress": requestAPI,
                     "method": httpMethod,
@@ -389,6 +409,9 @@ export default function WebServiceModal({ language }: { language: string }) {
                 responseValue = { data: response.message, status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
         }
         setresponse(responseValue as any)
+    }
+    const handleCloseConfig = () => {
+        setConfigOpen(false)
     }
 
     return (
@@ -514,8 +537,18 @@ export default function WebServiceModal({ language }: { language: string }) {
                                                 <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
                                             </Grid>
                                             <Grid item md={9}>
-                                                <Stack spacing={2} direction={'row'}>
+                                                <Stack spacing={2} direction={'row'} alignItems={'center'}>
                                                     <TextField disabled size='small' value={providerId} label={translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET")} />
+                                                    {
+                                                        providerId && (
+                                                            <Tooltip title={translate("Edit Provider")}>
+                                                                <IconButton>
+                                                                    <EditOutlinedIcon onClick={() => setConfigOpen(true)} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        )
+                                                    }
+
                                                     <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
                                                 </Stack>
                                             </Grid>
@@ -630,8 +663,22 @@ export default function WebServiceModal({ language }: { language: string }) {
                             />
                         </Grid>
                     </Grid>
-                    <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider} />
-                </Stack>}
+                                                    
+                    <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider} proxyObj={proxyConfig} />
+
+                    <ConfigModel
+                        handleOpen={configOpen}
+                        handleClose={handleCloseConfig}
+                        handleParentModalClose={handleCloseProvider}
+                        providerConf={selectedProvider}
+                        customProvider={[]}
+                        onSelectedProvider={handleSelectedProvider}
+                        onLoadProvider={handleCloseProvider}
+                        proxyObj={proxyConfig}
+                    />
+                </Stack>
+
+            }
         </>
     );
 }

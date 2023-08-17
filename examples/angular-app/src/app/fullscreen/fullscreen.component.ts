@@ -1,16 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+
 declare const RestImport: any;
 
 @Component({
-  selector: 'app-modal',
-  templateUrl: './modal.component.html',
+  selector: 'app-fullscreen',
+  templateUrl: './fullscreen.component.html'
 })
-export class ModalComponent implements OnInit {
-  constructor(public activeModal: NgbActiveModal) {}
+export class FullscreenComponent implements OnInit {
   ngOnInit(): void {
     const reactUI = RestImport({
-      dom_id: '#rest-import-ui-modal',
+      dom_id: '#rest-import-ui',
       language: 'en',
       proxy_config: {
         proxy_conf: {

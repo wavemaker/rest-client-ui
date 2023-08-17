@@ -26,6 +26,7 @@ export default function RestImport(opts) {
     spec: {},
     url: "",
     language: window.navigator.language,
+    proxy_config:{},
     objval:{},
     value:"",
     urls: null,
@@ -92,6 +93,7 @@ export default function RestImport(opts) {
         value: constructorConfig.value,
         objval:constructorConfig.objval,
         language:constructorConfig.language,
+        proxy_config:constructorConfig.proxy_config,
         
       },
     }, constructorConfig.initialState)

@@ -13,9 +13,10 @@ import { ProviderI, ScopeI } from './ProviderModal';
 import Apicall from './common/apicall';
 import { AxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast'
+import { proxyConfigI } from './WebServiceModal'
 
 
-export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, customProvider, onSelectedProvider, onLoadProvider }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose: () => void, providerConf: ProviderI | null, customProvider: ProviderI[], onSelectedProvider: any, onLoadProvider: () => void }) {
+export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, customProvider, onSelectedProvider, onLoadProvider, proxyObj }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose: () => void, providerConf?: ProviderI | null, customProvider: ProviderI[], onSelectedProvider: any, onLoadProvider: () => void, proxyObj: proxyConfigI }) {
     const { t: translate } = useTranslation();
     const [customProviderList, setCustomProviderList] = useState<ProviderI[]>(customProvider)
     const [Flow, setFlow] = useState('AUTHORIZATION_CODE')
@@ -41,6 +42,10 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         setAuthorizationUrl(providerConf?.authorizationUrl as string)
         setAccessTokenUrl(providerConf?.accessTokenUrl as string)
         setCustomProviderList(customProvider)
+        setPKCE(providerConf?.oAuth2Pkce?.enabled || false);
+        setCodeMethod(providerConf?.oAuth2Pkce?.challengeMethod || "s256")
+        setClientId(providerConf?.clientId || "")
+
     }, [providerConf, customProvider])
 
     useEffect(() => {
@@ -163,8 +168,9 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 ...(PKCE ? { oAuth2Pkce: { enabled: PKCE, challengeMethod: codeMethod } } : {})
             }
             customProviderList.push(newProvider)
+            const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.addprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.addprovider;
             const configWProvider: AxiosRequestConfig = {
-                url: "http://localhost:5000/addprovider",
+                url: url,
                 data: customProviderList,
                 method: "POST",
                 headers: {
@@ -185,26 +191,25 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 handleClose()
                 handleParentModalClose()
             }
-
         }
 
     }
 
-    const handleAuthorizationUrl = async () => {
-        const configProvider = {
-            url: "http://localhost:5000/authorizationUrl",
-            method: "GET",
-            data: { "providerId": providerId },
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            withCredentials: true
-        };
-        const response: any = await Apicall(configProvider);
-        if (response.status === 200) {
-            console.log(response)
-        }
-    }
+    // const handleAuthorizationUrl = async () => {
+    //     const configProvider = {
+    //         url: "http://localhost:5000/authorizationUrl",
+    //         method: "GET",
+    //         data: { "providerId": providerId },
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //         },
+    //         withCredentials: true
+    //     };
+    //     const response: any = await Apicall(configProvider);
+    //     if (response.status === 200) {
+    //         console.log(response)
+    //     }
+    // }
 
     return (
         <>
@@ -324,23 +329,19 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             <Typography>{translate("AUTHORIZATION") + " " + translate("URL")}  <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' onChange={handleAuthorizationURL} defaultValue={providerConf ? providerConf.authorizationUrl : ''} InputProps={{
-                                readOnly: !!providerConf,
-                            }} placeholder={translate("AUTHORIZATION") + " " + translate("URL")} label={translate("AUTHORIZATION") + " " + translate("URL")} />
+                            <TextField sx={{ width: "30em" }} size='small' onChange={handleAuthorizationURL} defaultValue={providerConf?.authorizationUrl} placeholder={translate("AUTHORIZATION") + " " + translate("URL")} label={translate("AUTHORIZATION") + " " + translate("URL")} />
                         </Grid>
                         <Grid item md={3}>
                             <Typography>{translate("ACCESS_TOKEN") + " " + translate("URL")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' onChange={handleAccessTokenURL} defaultValue={providerConf ? providerConf.accessTokenUrl : ''} InputProps={{
-                                readOnly: !!providerConf,
-                            }} placeholder={translate("ACCESS_TOKEN") + " " + translate("URL")} label={translate("ACCESS_TOKEN") + " " + translate("URL")} />
+                            <TextField sx={{ width: "30em" }} size='small' onChange={handleAccessTokenURL} defaultValue={providerConf?.accessTokenUrl} placeholder={translate("ACCESS_TOKEN") + " " + translate("URL")} label={translate("ACCESS_TOKEN") + " " + translate("URL")} />
                         </Grid>
                         <Grid item md={3}>
                             <Typography>{translate("CLIENT") + " " + translate("ID")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' onChange={handleClientId} placeholder={translate("CLIENT") + " " + translate("ID")} label={translate("CLIENT") + " " + translate("ID")} />
+                            <TextField sx={{ width: "30em" }} size='small' defaultValue={providerConf?.clientId} onChange={handleClientId} placeholder={translate("CLIENT") + " " + translate("ID")} label={translate("CLIENT") + " " + translate("ID")} />
                         </Grid>
                         {!PKCE && (
                             <Grid item md={12} container className='cmnflx' spacing={2}>
@@ -349,7 +350,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                 </Grid>
 
                                 <Grid item md={9}>
-                                    <TextField sx={{ width: "30em" }} size='small' onChange={handleClientSecret} placeholder={translate("CLIENT") + " " + translate("SECRET")} label={translate("CLIENT") + " " + translate("SECRET")} />
+                                    <TextField sx={{ width: "30em" }} defaultValue={providerConf?.clientSecret} size='small' onChange={handleClientSecret} placeholder={translate("CLIENT") + " " + translate("SECRET")} label={translate("CLIENT") + " " + translate("SECRET")} />
                                 </Grid>
                             </Grid>
                         )}

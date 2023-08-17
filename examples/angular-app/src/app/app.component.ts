@@ -9,18 +9,15 @@ declare const RestImport: any;
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
-
-
 export class AppComponent {
-
-  constructor(private modalService: NgbModal, public activeModal: NgbActiveModal) {}
-
-  // ngAfterViewInit(): void {
-  //   const reactUI = RestImport({
-  //     dom_id: '#rest-import-ui',
-  //     language: 'fr',
-  //   });
-  // }
+  constructor(
+    private modalService: NgbModal,
+    public activeModal: NgbActiveModal
+  ) {}
+  public fullScreen: boolean = false;
+  enableFullScreen() {
+    this.fullScreen = !this.fullScreen;
+  }
 
   openModal() {
     const modalRef = this.modalService.open(ModalComponent, {

@@ -5,6 +5,7 @@ function App() {
     if (typeof window !== undefined) {
       window.RestImport({
         dom_id: "#reactImport",
+        language:"en"
       });
     }
   }, []);

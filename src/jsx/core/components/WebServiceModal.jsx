@@ -16,6 +16,8 @@ import { encode } from 'js-base64';
 import toast, { Toaster } from 'react-hot-toast';
 import FallbackSpinner from './common/loader';
 import { useTranslation } from 'react-i18next';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import ConfigModel from './ConfigModel';
 function CustomTabPanel(props) {
     const { children, value, index, ...other } = props;
     return (<div role="tabpanel" hidden={value !== index} {...other}>
@@ -50,7 +52,7 @@ const defaultContentTypes = [
         label: 'text/plain', value: 'text/plain'
     },
 ];
-export default function WebServiceModal({ language }) {
+export default function WebServiceModal({ language, proxyConfig }) {
     const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState('');
     const [httpMethod, sethttpMethod] = useState('GET');
@@ -75,6 +77,7 @@ export default function WebServiceModal({ language }) {
     const [loading, setloading] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState();
     const [providerId, setProviderId] = useState('');
+    const [configOpen, setConfigOpen] = useState(false);
     useEffect(() => {
         i18n.changeLanguage(language);
         handleChangeResponseTabs(null, responseTabValue);
@@ -312,8 +315,9 @@ export default function WebServiceModal({ language }) {
                 method: httpMethod,
                 data: body
             };
+            const url = proxyConfig?.default_proxy_state === 'ON' ? proxyConfig?.proxy_conf?.base_path + proxyConfig?.proxy_conf?.proxy_path : '';
             const configWProxy = {
-                url: "http://localhost:5000/restimport",
+                url: url,
                 data: {
                     "endpointAddress": requestAPI,
                     "method": httpMethod,
@@ -362,6 +366,9 @@ export default function WebServiceModal({ language }) {
         }
         setresponse(responseValue);
     }
+    const handleCloseConfig = () => {
+        setConfigOpen(false);
+    };
     return (<>
             {loading ? <FallbackSpinner /> :
             <Stack className='rest-import-ui'>
@@ -478,8 +485,14 @@ export default function WebServiceModal({ language }) {
                                                 <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
                                             </Grid>
                                             <Grid item md={9}>
-                                                <Stack spacing={2} direction={'row'}>
+                                                <Stack spacing={2} direction={'row'} alignItems={'center'}>
                                                     <TextField disabled size='small' value={providerId} label={translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET")}/>
+                                                    {providerId && (<Tooltip title={translate("Edit Provider")}>
+                                                                <IconButton>
+                                                                    <EditOutlinedIcon onClick={() => setConfigOpen(true)}/>
+                                                                </IconButton>
+                                                            </Tooltip>)}
+
                                                     <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
                                                 </Stack>
                                             </Grid>
@@ -580,7 +593,10 @@ export default function WebServiceModal({ language }) {
                             <AceEditor setOptions={{ useWorker: false, printMargin: false, wrap: true }} mode="json" theme="dracula" editorProps={{ $blockScrolling: true }} style={{ height: "20em", width: "100%" }} value={responseEditorValue} onChange={handleResponseEditorChange}/>
                         </Grid>
                     </Grid>
-                    <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider}/>
+                                                    
+                    <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider} proxyObj={proxyConfig}/>
+
+                    <ConfigModel handleOpen={configOpen} handleClose={handleCloseConfig} handleParentModalClose={handleCloseProvider} providerConf={selectedProvider} customProvider={[]} onSelectedProvider={handleSelectedProvider} onLoadProvider={handleCloseProvider} proxyObj={proxyConfig}/>
                 </Stack>}
         </>);
 }
