@@ -11,7 +11,7 @@ export class FullscreenComponent implements OnInit {
     const reactUI = RestImport({
       dom_id: '#rest-import-ui',
       language: 'en',
-      proxy_config: {
+      config: {
         proxy_conf: {
           base_path: 'http://localhost:5000',
           proxy_path: '/restimport',
