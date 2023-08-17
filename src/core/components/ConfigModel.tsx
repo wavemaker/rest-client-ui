@@ -13,10 +13,9 @@ import { ProviderI, ScopeI } from './ProviderModal';
 import Apicall from './common/apicall';
 import { AxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast'
-import { proxyConfigI } from './WebServiceModal'
+import { restImportConfigI } from './WebServiceModal'
 
-
-export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, customProvider, onSelectedProvider, onLoadProvider, proxyObj }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose: () => void, providerConf?: ProviderI | null, customProvider: ProviderI[], onSelectedProvider: any, onLoadProvider: () => void, proxyObj: proxyConfigI }) {
+export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, customProvider, onSelectedProvider, onLoadProvider, proxyObj }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose: () => void, providerConf?: ProviderI | null, customProvider: ProviderI[], onSelectedProvider: any, onLoadProvider: () => void, proxyObj: restImportConfigI }) {
     const { t: translate } = useTranslation();
     const [customProviderList, setCustomProviderList] = useState<ProviderI[]>(customProvider)
     const [Flow, setFlow] = useState('AUTHORIZATION_CODE')

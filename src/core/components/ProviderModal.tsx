@@ -9,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import ConfigModel from './ConfigModel';
 import { useTranslation } from 'react-i18next';
 import Apicall from './common/apicall';
-import { proxyConfigI } from './WebServiceModal'
+import { restImportConfigI } from './WebServiceModal'
 export interface ProviderI {
     providerId: string
     authorizationUrl: string
@@ -33,7 +33,9 @@ export interface ScopeI {
     checked?: boolean;
 }
 
-export default function ProviderModal({ handleOpen, handleClose, onSelectedProvider, proxyObj }: { handleOpen: boolean, handleClose: () => void, onSelectedProvider: any, proxyObj: proxyConfigI }) {
+export default function ProviderModal({ handleOpen, handleClose, onSelectedProvider, proxyObj }: { handleOpen: boolean, handleClose: () => void, onSelectedProvider: any, proxyObj: restImportConfigI }) {
+    const { t: translate } = useTranslation();
+
     const [openConfig, setopenConfig] = useState(false)
     const [providers, setProviders] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] }])
     const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] })
@@ -125,7 +127,6 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
         handleDefaultProviderList()
     }, [providers])
 
-    const { t: translate } = useTranslation();
     return (
         <>
             <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose}>
@@ -147,7 +148,7 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
                     <Grid spacing={5} sx={{ width: '100%', ml: 0, mt: 0, mb: 2 }} container>
                         <Grid item md={3}>
                             <Card onClick={() => handleOpenConfig(null)} sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
-                                <CardMedia
+                                   <CardMedia
                                     sx={{ height: "35px", width: "35px", mt: 2 }}
                                     title={translate("ADD") + " " + translate("CUSTOM") + " " + translate("PROVIDER")}
                                 >   <AddCircleOutlineIcon
@@ -219,3 +220,4 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
         </>
     );
 }
+

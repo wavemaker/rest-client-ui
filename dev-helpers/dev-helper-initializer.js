@@ -7,7 +7,29 @@ window.onload = function () {
   const ui = RestImportBundle({
     dom_id: "#rest-import-ui",
     language: "en",
-    proxy_config :{
+    config: {
+      url: 'https://jsonplaceholder.typicode.com/posts/{id}?test=false',
+      httpMethod: 'POST',
+      useProxy: true,
+      httpAuth: "BASIC",
+      bodyParams: "{userName:password}",
+      userName: "userName",
+      userPassword: "userPassword",
+      headerParams: [
+        {
+          name: 'New',
+          type: 'string',
+          value: 'application'
+        }
+      ],
+      multipartParams: [
+        {
+          name: "post",
+          type: "file",
+          value: "fe"
+        }
+      ],
+      contentType: 'multipart/form-data',
       proxy_conf: {
         base_path: "http://localhost:5000",
         proxy_path: "/restimport",

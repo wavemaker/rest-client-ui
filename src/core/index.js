@@ -26,9 +26,7 @@ export default function RestImport(opts) {
     spec: {},
     url: "",
     language: window.navigator.language,
-    proxy_config:{},
-    objval:{},
-    value:"",
+    config: {},
     urls: null,
     layout: "BaseLayout",
     maxDisplayedTags: null,
@@ -57,11 +55,11 @@ export default function RestImport(opts) {
     },
 
     // Initial state
-    initialState: { },
+    initialState: {},
 
     // Inline Plugin
-    fn: { },
-    components: { },
+    fn: {},
+    components: {},
 
     syntaxHighlight: {
       activated: true,
@@ -75,7 +73,7 @@ export default function RestImport(opts) {
   delete opts.domNode
 
   const constructorConfig = deepExtend({}, defaults, opts, queryConfig)
-  
+
   const storeConfigs = {
     system: {
       configs: constructorConfig.configs
@@ -91,20 +89,19 @@ export default function RestImport(opts) {
         spec: "",
         url: constructorConfig.url,
         value: constructorConfig.value,
-        objval:constructorConfig.objval,
-        language:constructorConfig.language,
-        proxy_config:constructorConfig.proxy_config,
-        
+        objval: constructorConfig.objval,
+        language: constructorConfig.language,
+        config : constructorConfig.config
       },
     }, constructorConfig.initialState)
   }
 
-  if(constructorConfig.initialState) {
+  if (constructorConfig.initialState) {
     // if the user sets a key as `undefined`, that signals to us that we
     // should delete the key entirely.
     // known usage: rest-import-Editor validate plugin tests
     for (var key in constructorConfig.initialState) {
-      if(
+      if (
         Object.prototype.hasOwnProperty.call(constructorConfig.initialState, key)
         && constructorConfig.initialState[key] === undefined
       ) {
@@ -113,7 +110,7 @@ export default function RestImport(opts) {
     }
   }
 
-  let inlinePlugin = ()=> {
+  let inlinePlugin = () => {
     return {
       fn: constructorConfig.fn,
       components: constructorConfig.components,
@@ -131,7 +128,7 @@ export default function RestImport(opts) {
     let mergedConfig = deepExtend({}, localConfig, constructorConfig, fetchedConfig || {}, queryConfig)
 
     // deep extend mangles domNode, we need to set it manually
-    if(domNode) {
+    if (domNode) {
       mergedConfig.domNode = domNode
     }
 
@@ -148,12 +145,12 @@ export default function RestImport(opts) {
       }
     }
 
-    if(mergedConfig.domNode) {
+    if (mergedConfig.domNode) {
       system.render(mergedConfig.domNode, "App")
-    } else if(mergedConfig.dom_id) {
+    } else if (mergedConfig.dom_id) {
       let domNode = document.querySelector(mergedConfig.dom_id)
       system.render(domNode, "App")
-    } else if(mergedConfig.dom_id === null || mergedConfig.domNode === null) {
+    } else if (mergedConfig.dom_id === null || mergedConfig.domNode === null) {
       // do nothing
       // this is useful for testing that does not need to do any rendering
     } else {

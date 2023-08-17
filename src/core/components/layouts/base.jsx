@@ -20,11 +20,12 @@ export default class BaseLayout extends React.Component {
     const { specSelectors, getComponent } = this.props;
     const WebServiceModal = getComponent('WebServiceModal')
     const language = specSelectors.language();
-    const proxy_config = specSelectors.proxy_config();
+    const config = specSelectors.config()
+    
     return (
       <div className="rest-import-ui">
         <div className="information-container">
-            <WebServiceModal  language={language} proxyConfig={proxy_config}/>
+          <WebServiceModal language={language} restImportConfig={config} />
         </div>
       </div>
     );

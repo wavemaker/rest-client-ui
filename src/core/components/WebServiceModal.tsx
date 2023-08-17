@@ -6,8 +6,11 @@ import {
     TextareaAutosize
 } from '@mui/material'
 import ProviderModal, { ProviderI } from './ProviderModal'
-import { BodyParamsI, HeaderAndQueryTable, MultipartTable, TableI, TableRowStyled } from './Table'
-import { findDuplicateObjects, findDuplicatesAcrossArrays, getSubstring, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, removeDuplicatesKeepFirst } from './common/common'
+import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
+import {
+    findDuplicateObjects, findDuplicatesAcrossArrays, getSubstring, httpStatusCodes, isValidUrl, removeDuplicatesByComparison,
+    removeDuplicatesKeepFirst
+} from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
 import DoneIcon from '@mui/icons-material/Done'
@@ -21,7 +24,8 @@ import { encode } from 'js-base64';
 import toast, { Toaster } from 'react-hot-toast'
 import FallbackSpinner from './common/loader'
 import { useTranslation } from 'react-i18next';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'; import ConfigModel from './ConfigModel'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import ConfigModel from './ConfigModel'
 interface TabPanelProps {
     children?: ReactNode
     index: number
@@ -30,6 +34,29 @@ interface TabPanelProps {
 export interface PathParamsI {
     name: string
     value: string
+}
+export interface restImportConfigI {
+    url?: string
+    httpMethod?: "GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT"
+    useProxy?: boolean
+    httpAuth?: "NONE" | "BASIC" | "OAUTH2.0"
+    headerParams?: HeaderAndQueryI[]
+    bodyParams?: string
+    userName?: string
+    userPassword?: string
+    multipartParams?: BodyParamsI[]
+    contentType?: string,
+    proxy_conf: APII,
+    default_proxy_state: string,
+    oAuthConfig: APII
+}
+
+interface APII {
+    base_path: string,
+    proxy_path?: string,
+    list_provider: string,
+    getprovider: string,
+    addprovider: string,
 }
 function CustomTabPanel(props: TabPanelProps) {
     const { children, value, index, ...other } = props
@@ -74,48 +101,38 @@ const defaultContentTypes = [
         label: 'text/plain', value: 'text/plain'
     },
 ]
-export interface proxyConfigI {
-    proxy_conf: APII,
-    default_proxy_state: string,
-    oAuthConfig: APII
+
+export function handleToastError(message: string) {
+    toast.error(message)
 }
 
-
-interface APII {
-    base_path: string,
-    proxy_path?: string,
-    list_provider: string,
-    getprovider: string,
-    addprovider: string,
-}
-export default function WebServiceModal({ language, proxyConfig }: { language: string, proxyConfig: proxyConfigI }) {
-
+export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
+    const defaultValueforHandQParams = { name: '', value: '', type: '' }
     const { t: translate, i18n } = useTranslation();
-    const [apiURL, setapiURL] = useState('')
-    const [httpMethod, sethttpMethod] = useState('GET')
-    const [useProxy, setuseProxy] = useState(true)
+    const [apiURL, setapiURL] = useState<string>(restImportConfig?.url || '')
+    const [httpMethod, sethttpMethod] = useState<"GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT">(restImportConfig?.httpMethod || 'GET')
+    const [useProxy, setuseProxy] = useState<boolean>(restImportConfig?.useProxy === true ? true : false)
     const [requestTabValue, setrequestTabValue] = useState(0)
     const [responseTabValue, setresponseTabValue] = useState(0)
-    const [httpAuth, sethttpAuth] = useState('None')
+    const [httpAuth, sethttpAuth] = useState<"NONE" | "BASIC" | "OAUTH2.0">(restImportConfig?.httpAuth || 'NONE')
     const [providerOpen, setproviderOpen] = useState(false)
-    const [headerParams, setheaderParams] = useState<TableI[]>([{ name: '', value: '', type: '' }])
-    const [queryParams, setqueryParams] = useState<TableI[]>([{ name: '', value: '', type: '' }])
-    const [bodyParams, setbodyParams] = useState('')
-    const [multipartParams, setmultipartParams] = useState<BodyParamsI[]>([{ name: '', value: '', type: 'file', filename: '' }])
+    const [headerParams, setheaderParams] = useState<HeaderAndQueryI[]>(restImportConfig?.headerParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
+    const [queryParams, setqueryParams] = useState<HeaderAndQueryI[]>([defaultValueforHandQParams])
+    const [bodyParams, setbodyParams] = useState<string>(restImportConfig?.bodyParams || '')
+    const [multipartParams, setmultipartParams] = useState<BodyParamsI[]>(restImportConfig?.multipartParams?.concat({ name: '', value: '', type: 'file', filename: '' }) || [{ name: '', value: '', type: 'file', filename: '' }])
     const [pathParams, setpathParams] = useState<PathParamsI[]>([])
-    const [contentType, setcontentType] = useState('application/json')
+    const [contentType, setcontentType] = useState(restImportConfig?.contentType || 'application/json')
     const [addCustomType, setaddCustomType] = useState(false)
     const [contentTypes, setcontentTypes] = useState(defaultContentTypes)
     const [newContentType, setnewContentType] = useState('')
     const [responseEditorValue, setresponseEditorValue] = useState('')
     const [response, setresponse] = useState<AxiosResponse>()
-    const [userName, setuserName] = useState('')
-    const [userPassword, setuserPassword] = useState('')
+    const [userName, setuserName] = useState(restImportConfig?.userName || '')
+    const [userPassword, setuserPassword] = useState(restImportConfig?.userPassword || '')
     const [loading, setloading] = useState(false)
     const [selectedProvider, setSelectedProvider] = useState()
     const [providerId, setProviderId] = useState('')
     const [configOpen, setConfigOpen] = useState(false)
-    const [initialState, setInitialState] = useState(false)
 
     useEffect(() => {
         i18n.changeLanguage(language);
@@ -134,9 +151,6 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
     }, [selectedProvider]);
 
 
-    useEffect(() => {
-        setInitialState(true)
-    }, []);
 
     const getPathParams = () => {
         let paths = getSubstring(apiURL.split("?")[0], "{", "}")
@@ -166,9 +180,7 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
             const queryParamsClone = [...queryParams]
             const duplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), queryParamsClone.slice(0, queryParamsClone.length - 1), newPathParams], "name")
             if (duplicates.length > 0) {
-                toast.error(`Parameter "${duplicates[0].name}" already exists`, {
-                    position: 'top-right'
-                })
+                handleToastError(`Parameter "${duplicates[0].name}" already exists`)
                 setpathParams(removeDuplicatesByComparison(newPathParams, duplicates, "name"))
             } else
                 setpathParams(newPathParams)
@@ -185,23 +197,25 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
         })
         setpathParams(pathParamsClone)
     }
+
     const handleCloseProvider = () => {
         setproviderOpen(false)
     }
+
     const handleChangeapiURL = (value: string) => {
         setapiURL(value)
     }
-    const handleChangeHeaderParams = (data: TableI[]) => {
+    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => {
         setheaderParams(data)
     }
-    const handleChangeQueryParams = (data: TableI[]) => {
+    const handleChangeQueryParams = (data: HeaderAndQueryI[]) => {
         setqueryParams(data)
     }
     const handlemultipartParams = (data: BodyParamsI[]) => {
         setmultipartParams(data)
     }
     const handleChangehttpAuth = (event: SelectChangeEvent) => {
-        sethttpAuth(event.target.value as string)
+        sethttpAuth(event.target.value as any)
     }
     const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => {
         setrequestTabValue(newValue);
@@ -221,7 +235,7 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
         setresponseTabValue(newValue);
     };
     const handleChangehttpMethod = (event: SelectChangeEvent) => {
-        sethttpMethod(event.target.value as string)
+        sethttpMethod(event.target.value as any)
     }
     const handleChangecontentType = (event: SelectChangeEvent) => {
         setcontentType(event.target.value as string)
@@ -241,7 +255,7 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
                     }
                     return data
                 })
-                const newQueryParams: TableI[] = []
+                const newQueryParams: HeaderAndQueryI[] = []
                 const queryParamsClone = [...queryParams]
                 const checkQuery = (name: string, value: string): boolean => {
                     let returnBool = false
@@ -270,18 +284,14 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
                 const allDuplicates = findDuplicatesAcrossArrays([nonDuplicate, headerParamsClone.slice(0, headerParamsClone.length - 1), pathParamsClone], "name")
                 if (duplicates.length > 0) {
                     let apiURLCopy = apiURL
-                    toast.error("Queries cannot have duplicates, removed the dupicates", {
-                        position: 'top-right'
-                    })
+                    handleToastError("Queries cannot have duplicates, removed the dupicates")
                     duplicates.forEach((data) => {
                         apiURLCopy = apiURLCopy.replace(`&${data.name}=${data.value}`, '')
                     })
                     setapiURL(apiURLCopy)
                 }
                 if (allDuplicates.length > 0) {
-                    return toast.error(`parameter "${allDuplicates[0].name}" already exists`, {
-                        position: 'top-right'
-                    })
+                    return handleToastError(`parameter "${allDuplicates[0].name}" already exists`)
                 } else {
                     nonDuplicate.forEach((data) => {
                         const key = data.name
@@ -325,32 +335,66 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
         setresponseEditorValue(newValue)
     }
     const handleTestClick = async () => {
-        if (apiURL.length > 0 && isValidUrl(apiURL)) {
-            if (httpAuth === "Basic") {
-                if (userName.trim() === "")
-                    return toast.error("Please enter a username for basic authentication")
-                if (userPassword.trim() === "")
-                    return toast.error("Please enter a password for basic authentication")
-            }
+        if (apiURL.length > 0) {
             let header: any = {}, body;
             let requestAPI = apiURL
             pathParams.forEach((params) => {
-                requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
+                if (params.value.trim() !== "")
+                    requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
+                else
+                    return handleToastError(translate("PATHPARAMSALERT"))
             })
-            headerParams.forEach((data, index) => {
-                if (headerParams.length - 1 !== index)
-                    header[data.name] = data.value
-                if (httpAuth === "Basic" && index === 0) {
-                    header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
+            if (isValidUrl(requestAPI)) {
+                if (httpAuth === "BASIC") {
+                    if (userName.trim() === "")
+                        return handleToastError("Please enter a username for basic authentication")
+                    if (userPassword.trim() === "")
+                        return handleToastError("Please enter a password for basic authentication")
                 }
-            })
-            if (contentType === 'multipart/form-data') {
-                const formData = new FormData()
-                multipartParams.forEach((data, index) => {
-                    if (multipartParams.length - 1 !== index)
-                        formData.append(data.name, data.value)
+                headerParams.forEach((data, index) => {
+                    if (httpAuth === "BASIC" && index === 0)
+                        header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
+                    if (headerParams.length - 1 !== index)
+                        header[data.name] = data.value
                 })
-                body = formData
+                if (contentType === 'multipart/form-data') {
+                    const formData = new FormData()
+                    multipartParams.forEach((data, index) => {
+                        if (multipartParams.length - 1 !== index)
+                            formData.append(data.name, data.value)
+                    })
+                    body = formData
+                } else
+                    body = bodyParams
+                const configWOProxy: AxiosRequestConfig = {
+                    url: requestAPI,
+                    headers: header,
+                    method: httpMethod,
+                    data: body
+                }
+                const configWProxy: AxiosRequestConfig = {
+                    url: "http://localhost:5000/restimport",
+                    data: {
+                        "endpointAddress": requestAPI,
+                        "method": httpMethod,
+                        "contentType": contentType,
+                        "requestBody": body,
+                        "headers": header,
+                        "authDetails": null
+                    },
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    withCredentials: true
+                }
+                setloading(true)
+                const config = useProxy ? configWProxy : configWOProxy
+                console.log(config)
+                const response: any = await Apicall(config)
+                console.log(response)
+                handleResponse(response)
+                setloading(false)
             } else
                 body = bodyParams
             const configWOProxy: AxiosRequestConfig = {
@@ -359,7 +403,7 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
                 method: httpMethod,
                 data: body
             }
-            const url = proxyConfig?.default_proxy_state === 'ON' ? proxyConfig?.proxy_conf?.base_path + proxyConfig?.proxy_conf?.proxy_path : '';
+            const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : '';
             const configWProxy: AxiosRequestConfig = {
                 url: url,
                 data: {
@@ -383,13 +427,11 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
             console.log(response)
             handleResponse(response)
             setloading(false)
+            handleToastError(translate("VALID_URL_ALERT"))
         }
         else
-            toast.error(translate("VALID_URL_ALERT"), {
-                position: 'top-right'
-            })
+            handleToastError(translate("VALID_URL_ALERT"))
     }
-
     function handleResponse(response: any): void {
         let responseValue;
         if (useProxy) {
@@ -408,6 +450,9 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
             else
                 responseValue = { data: response.message, status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
         }
+        if (responseValue.data === undefined || responseValue.headers === undefined) {
+            responseValue = { data: response.message, status: response.code, headers: {} }
+        }
         setresponse(responseValue as any)
     }
     const handleCloseConfig = () => {
@@ -416,267 +461,266 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
 
     return (
         <>
-            <Stack className='rest-import-ui'>
-                {loading && <FallbackSpinner />}
-                <Toaster position='top-right' />
-                <Grid gap={5} p={2} className='cmnflx' container>
-                    <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
-                        <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                            <Typography variant='h6' fontWeight={600}>{translate('WEB_SERVICE')}</Typography>
-                            <Stack spacing={1} className='cmnflx' direction={'row'}>
-                                <Tooltip title={translate("DELETE")}>
-                                    <IconButton>
-                                        <HelpOutlineIcon />
-                                    </IconButton>
-                                </Tooltip>
-                                <Link sx={{ color: 'gray' }}>{translate('HELP')}</Link>
-                            </Stack>
-                        </Stack>
-                    </Grid>
-                    <Grid item md={12}>
-                        <Stack spacing={5} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                            <FormControl sx={{ minWidth: 120 }} size='small'>
-                                <Select
-                                    value={httpMethod}
-                                    onChange={handleChangehttpMethod}
-                                >
-                                    <MenuItem value={'GET'}>{'GET'}</MenuItem>
-                                    <MenuItem value={'POST'}>{'POST'}</MenuItem>
-                                    <MenuItem value={'PUT'}>{'PUT'}</MenuItem>
-                                    <MenuItem value={'HEAD'}>{'HEAD'}</MenuItem>
-                                    <MenuItem value={'PATCH'}>{'PATCH'}</MenuItem>
-                                    <MenuItem value={'DELETE'}>{'DELETE'}</MenuItem>
-                                </Select>
-                            </FormControl>
-                            <TextField onBlur={() => {
-                                getPathParams()
-                                handleQueryChange()
-                            }} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
-                            <Button onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
-                        </Stack>
-                    </Grid>
-                    <Grid item md={12}>
-                        <Grid container>
-                            <Grid item md={6}>
-                                <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
-                                    <Typography>{translate('SERVICE_NAME')}</Typography>
-                                    <TextField disabled size='small' />
-                                </Stack>
-                            </Grid>
-                            <Grid item md={6}>
-                                <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
-                                    <Typography>{translate('USE_PROXY')}</Typography>
-                                    <Switch checked={useProxy} onChange={handleChangeProxy} />
+            {loading ? <FallbackSpinner /> :
+                <Stack className='rest-import-ui'>
+                    <Toaster position='top-right' />
+                    <Grid gap={5} p={2} className='cmnflx' container>
+                        <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
+                            <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+                                <Typography variant='h6' fontWeight={600}>{translate('WEB_SERVICE')}</Typography>
+                                <Stack spacing={1} className='cmnflx' direction={'row'}>
                                     <Tooltip title={translate("DELETE")}>
                                         <IconButton>
                                             <HelpOutlineIcon />
                                         </IconButton>
                                     </Tooltip>
+                                    <Link sx={{ color: 'gray' }}>{translate('HELP')}</Link>
                                 </Stack>
+                            </Stack>
+                        </Grid>
+                        <Grid item md={12}>
+                            <Stack spacing={5} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+                                <FormControl sx={{ minWidth: 120 }} size='small'>
+                                    <Select
+                                        value={httpMethod}
+                                        onChange={handleChangehttpMethod}
+                                    >
+                                        <MenuItem value={'GET'}>{'GET'}</MenuItem>
+                                        <MenuItem value={'POST'}>{'POST'}</MenuItem>
+                                        <MenuItem value={'PUT'}>{'PUT'}</MenuItem>
+                                        <MenuItem value={'HEAD'}>{'HEAD'}</MenuItem>
+                                        <MenuItem value={'PATCH'}>{'PATCH'}</MenuItem>
+                                        <MenuItem value={'DELETE'}>{'DELETE'}</MenuItem>
+                                    </Select>
+                                </FormControl>
+                                <TextField onBlur={() => {
+                                    getPathParams()
+                                    handleQueryChange()
+                                }} autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
+                                <Button onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
+                            </Stack>
+                        </Grid>
+                        <Grid item md={12}>
+                            <Grid container>
+                                <Grid item md={6}>
+                                    <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                                        <Typography>{translate('SERVICE_NAME')}</Typography>
+                                        <TextField disabled size='small' />
+                                    </Stack>
+                                </Grid>
+                                <Grid item md={6}>
+                                    <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                                        <Typography>{translate('USE_PROXY')}</Typography>
+                                        <Switch checked={useProxy} onChange={handleChangeProxy} />
+                                        <Tooltip title={translate("DELETE")}>
+                                            <IconButton>
+                                                <HelpOutlineIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Stack>
+                                </Grid>
                             </Grid>
                         </Grid>
-                    </Grid>
-                    <Grid item md={12}>
-                        <Box sx={{ width: '100%' }}>
-                            <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
-                                <Tabs value={requestTabValue} onChange={handleChangeHeaderTabs}>
-                                    <Tab label={translate("AUTHORIZATION")} />
-                                    <Tab label={translate("HEADER") + " " + translate("PARAMS")} />
-                                    <Tab label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
-                                    <Tab label={translate("QUERY") + " " + translate("PARAMS")} />
-                                    <Tab label={translate("PATH") + " " + translate("PARAMS")} />
-                                </Tabs>
-                            </Box>
-                            <CustomTabPanel value={requestTabValue} index={0}>
-                                <Grid spacing={2} mt={2} className='cmnflx' container>
-                                    <Grid item md={3}>
-                                        <Typography>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
-                                    </Grid>
-                                    <Grid item md={9}>
-                                        <FormControl size='small' >
-                                            <Select
-                                                value={httpAuth}
-                                                onChange={handleChangehttpAuth}
-                                            >
-                                                <MenuItem value={'None'}>{translate("NONE")}</MenuItem>
-                                                <MenuItem value={'Basic'}>{translate("BASIC")}</MenuItem>
-                                                <MenuItem value={'OAuth 2.0'}>{translate("OAUTH")} 2.0</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    {httpAuth === "Basic" && <>
+                        <Grid item md={12}>
+                            <Box sx={{ width: '100%' }}>
+                                <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
+                                    <Tabs value={requestTabValue} onChange={handleChangeHeaderTabs}>
+                                        <Tab label={translate("AUTHORIZATION")} />
+                                        <Tab label={translate("HEADER") + " " + translate("PARAMS")} />
+                                        <Tab label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
+                                        <Tab label={translate("QUERY") + " " + translate("PARAMS")} />
+                                        <Tab label={translate("PATH") + " " + translate("PARAMS")} />
+                                    </Tabs>
+                                </Box>
+                                <CustomTabPanel value={requestTabValue} index={0}>
+                                    <Grid spacing={2} mt={2} className='cmnflx' container>
                                         <Grid item md={3}>
-                                            <Typography>{translate("USER_NAME")}</Typography>
+                                            <Typography>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
                                         </Grid>
                                         <Grid item md={9}>
-                                            <Stack direction={'row'}>
-                                                <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
-                                                <Tooltip title={translate("DELETE")}>
-                                                    <IconButton>
-                                                        <HelpOutlineIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Stack>
-                                        </Grid>
-                                        <Grid item md={3}>
-                                            <Typography>{translate("PASSWORD")}</Typography>
-                                        </Grid>
-                                        <Grid item md={9}>
-                                            <Stack direction={'row'}>
-                                                <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
-                                                <Tooltip title={translate("DELETE")}>
-                                                    <IconButton>
-                                                        <HelpOutlineIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Stack>
-                                        </Grid>
-                                    </>}
-                                    {httpAuth === "OAuth 2.0" && <>
-                                        <Grid item md={3}>
-                                            <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
-                                        </Grid>
-                                        <Grid item md={9}>
-                                            <Stack spacing={2} direction={'row'} alignItems={'center'}>
-                                                <TextField disabled size='small' value={providerId} label={translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET")} />
-                                                {
-                                                    providerId && (
-                                                        <Tooltip title={translate("Edit Provider")}>
-                                                            <IconButton>
-                                                                <EditOutlinedIcon onClick={() => setConfigOpen(true)} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    )
-                                                }
-
-                                                <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
-                                            </Stack>
-                                        </Grid>
-                                    </>}
-                                </Grid>
-                            </CustomTabPanel>
-                            <CustomTabPanel value={requestTabValue} index={1}>
-                                <HeaderAndQueryTable from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
-                            </CustomTabPanel>
-                            <CustomTabPanel value={requestTabValue} index={2}>
-                                <Stack spacing={1} mt={2} ml={1}>
-                                    <Stack spacing={10} display={'flex'} alignItems={'center'} direction={'row'}>
-                                        <Typography>{translate("CONTENT") + " " + translate("TYPE")}</Typography>
-                                        <Stack spacing={3} display={'flex'} alignItems={'center'} direction={'row'}>
-                                            <FormControl size='small' sx={{ width: "20em" }}>
+                                            <FormControl size='small' >
                                                 <Select
-                                                    value={contentType}
-                                                    onChange={handleChangecontentType}
+                                                    value={httpAuth}
+                                                    onChange={handleChangehttpAuth}
                                                 >
-                                                    {contentTypes.map((data) => <MenuItem key={data.value} value={data.value}>{translate(data.label)}</MenuItem>)}
+                                                    <MenuItem value={'NONE'}>{translate("NONE")}</MenuItem>
+                                                    <MenuItem value={'BASIC'}>{translate("BASIC")}</MenuItem>
+                                                    <MenuItem value={'OAUTH2.0'}>{translate("OAUTH")} 2.0</MenuItem>
                                                 </Select>
                                             </FormControl>
-                                            <Tooltip title={translate("DELETE")}>
-                                                <IconButton>
-                                                    <HelpOutlineIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                            {addCustomType ? <Stack direction={'row'}>
-                                                <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' />
-                                                <Tooltip title={translate("ADD")}>
+                                        </Grid>
+                                        {httpAuth === "BASIC" && <>
+                                            <Grid item md={3}>
+                                                <Typography>{translate("USER_NAME")}</Typography>
+                                            </Grid>
+                                            <Grid item md={9}>
+                                                <Stack direction={'row'}>
+                                                    <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
+                                                    <Tooltip title={translate("DELETE")}>
+                                                        <IconButton>
+                                                            <HelpOutlineIcon />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Stack>
+                                            </Grid>
+                                            <Grid item md={3}>
+                                                <Typography>{translate("PASSWORD")}</Typography>
+                                            </Grid>
+                                            <Grid item md={9}>
+                                                <Stack direction={'row'}>
+                                                    <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
+                                                    <Tooltip title={translate("DELETE")}>
+                                                        <IconButton>
+                                                            <HelpOutlineIcon />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Stack>
+                                            </Grid>
+                                        </>}
+                                        {httpAuth === "OAUTH2.0" && <>
+                                            <Grid item md={3}>
+                                                <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
+                                            </Grid>
+                                            <Grid item md={9}>
+                                                <Stack spacing={2} direction={'row'}>
+                                                    <TextField disabled size='small' value={providerId} label={translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET")} />
+                                                    {
+                                                        providerId && (
+                                                            <Tooltip title={translate("Edit Provider")}>
+                                                                <IconButton>
+                                                                    <EditOutlinedIcon onClick={() => setConfigOpen(true)} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        )
+                                                    }
+                                                    <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
+                                                </Stack>
+                                            </Grid>
+                                        </>}
+                                    </Grid>
+                                </CustomTabPanel>
+                                <CustomTabPanel value={requestTabValue} index={1}>
+                                    <HeaderAndQueryTable from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                </CustomTabPanel>
+                                <CustomTabPanel value={requestTabValue} index={2}>
+                                    <Stack spacing={1} mt={2} ml={1}>
+                                        <Stack spacing={10} display={'flex'} alignItems={'center'} direction={'row'}>
+                                            <Typography>{translate("CONTENT") + " " + translate("TYPE")}</Typography>
+                                            <Stack spacing={3} display={'flex'} alignItems={'center'} direction={'row'}>
+                                                <FormControl size='small' sx={{ width: "20em" }}>
+                                                    <Select
+                                                        value={contentType}
+                                                        onChange={handleChangecontentType}
+                                                    >
+                                                        {contentTypes.map((data) => <MenuItem key={data.value} value={data.value}>{translate(data.label)}</MenuItem>)}
+                                                    </Select>
+                                                </FormControl>
+                                                <Tooltip title={translate("DELETE")}>
                                                     <IconButton>
-                                                        <DoneIcon onClick={() => handleAddCustomContentType()} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                        <HelpOutlineIcon />
                                                     </IconButton>
                                                 </Tooltip>
-                                            </Stack> :
-                                                <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
-                                                    <IconButton>
-                                                        <AddIcon onClick={() => setaddCustomType(true)} sx={{ cursor: 'pointer', color: 'black' }} />
-                                                    </IconButton>
-                                                </Tooltip>}
+                                                {addCustomType ? <Stack direction={'row'}>
+                                                    <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' />
+                                                    <Tooltip title={translate("ADD")}>
+                                                        <IconButton>
+                                                            <DoneIcon onClick={() => handleAddCustomContentType()} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Stack> :
+                                                    <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
+                                                        <IconButton>
+                                                            <AddIcon onClick={() => setaddCustomType(true)} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                        </IconButton>
+                                                    </Tooltip>}
+                                            </Stack>
                                         </Stack>
+                                        {contentType === 'multipart/form-data' ? <MultipartTable value={multipartParams} setValue={handlemultipartParams} /> :
+                                            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
+                                        }
                                     </Stack>
-                                    {contentType === 'multipart/form-data' ? <MultipartTable value={multipartParams} setValue={handlemultipartParams} /> :
-                                        <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
-                                    }
-                                </Stack>
-                            </CustomTabPanel>
-                            <CustomTabPanel value={requestTabValue} index={3}>
-                                <HeaderAndQueryTable from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
-                            </CustomTabPanel>
-                            <CustomTabPanel value={requestTabValue} index={4}>
-                                {pathParams.length > 0 ? <TableContainer component={Paper}>
-                                    <Table>
-                                        <TableHead>
-                                            <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
-                                                <TableCell align='center'>{translate("NAME")}</TableCell>
-                                                <TableCell align='center'>{translate("TYPE")}</TableCell>
-                                                <TableCell align='center'>{translate("VALUE")}</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {pathParams.map((data, index) =>
-                                                <TableRowStyled key={index}>
-                                                    <TableCell align='center'>
-                                                        <FormLabel>{data.name}</FormLabel>
-                                                    </TableCell>
-                                                    <TableCell align='center'>
-                                                        <FormLabel>{translate("String")}</FormLabel>
-                                                    </TableCell>
-                                                    <TableCell align='center'>
-                                                        <TextField value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
-                                                    </TableCell>
-                                                </TableRowStyled>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer> :
-                                    <Stack p={2} spacing={1} direction={'row'} sx={{ backgroundColor: "#d9edf7" }}>
-                                        <InfoIcon sx={{ height: 18, width: 18, color: '#31708f', mt: 0.5 }} />
-                                        <Stack>
-                                            <Typography>
-                                                {translate('NO_PATH_PARAMS')}
-                                                {translate('NO_PATH_PARAMS_DESC')}
-                                            </Typography>
-                                            <Typography>
-                                                {`e.g. For URL "http:wavemaker.com/projects/{pid}/?mode=json", "pid" is the path param.`}
-                                                (<a href='https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/'>{translate("MORE_INFO")}</a>)
-                                            </Typography>
-                                        </Stack>
-                                    </Stack>}
-                            </CustomTabPanel>
-                        </Box>
-                    </Grid>
-                    <Grid item md={12}>
-                        <Box sx={{ width: '100%' }}>
-                            <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
-                                <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
-                                    <Tab label={translate("RESPONSE") + " " + translate("BODY")} />
-                                    <Tab label={translate("RESPONSE") + " " + translate("HEADER")} />
-                                    <Tab label={translate("RESPONSE") + " " + translate("STATUS")} />
-                                </Tabs>
+                                </CustomTabPanel>
+                                <CustomTabPanel value={requestTabValue} index={3}>
+                                    <HeaderAndQueryTable from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                </CustomTabPanel>
+                                <CustomTabPanel value={requestTabValue} index={4}>
+                                    {pathParams.length > 0 ? <TableContainer component={Paper}>
+                                        <Table>
+                                            <TableHead>
+                                                <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
+                                                    <TableCell align='center'>{translate("NAME")}</TableCell>
+                                                    <TableCell align='center'>{translate("TYPE")}</TableCell>
+                                                    <TableCell align='center'>{translate("VALUE")}</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {pathParams.map((data, index) =>
+                                                    <TableRowStyled key={index}>
+                                                        <TableCell align='center'>
+                                                            <FormLabel>{data.name}</FormLabel>
+                                                        </TableCell>
+                                                        <TableCell align='center'>
+                                                            <FormLabel>{translate("String")}</FormLabel>
+                                                        </TableCell>
+                                                        <TableCell align='center'>
+                                                            <TextField value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
+                                                        </TableCell>
+                                                    </TableRowStyled>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer> :
+                                        <Stack p={2} spacing={1} direction={'row'} sx={{ backgroundColor: "#d9edf7" }}>
+                                            <InfoIcon sx={{ height: 18, width: 18, color: '#31708f', mt: 0.5 }} />
+                                            <Stack>
+                                                <Typography>
+                                                    {translate('NO_PATH_PARAMS')}
+                                                    {translate('NO_PATH_PARAMS_DESC')}
+                                                </Typography>
+                                                <Typography>
+                                                    {`e.g. For URL "http:wavemaker.com/projects/{pid}/?mode=json", "pid" is the path param.`}
+                                                    (<a href='https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/'>{translate("MORE_INFO")}</a>)
+                                                </Typography>
+                                            </Stack>
+                                        </Stack>}
+                                </CustomTabPanel>
                             </Box>
-                        </Box>
-                        <AceEditor
-                            setOptions={{ useWorker: false, printMargin: false, wrap: true }}
-                            mode="json"
-                            theme="dracula"
-                            editorProps={{ $blockScrolling: true }}
-                            style={{ height: "20em", width: "100%" }}
-                            value={responseEditorValue}
-                            onChange={handleResponseEditorChange}
-                        />
+                        </Grid>
+                        <Grid item md={12}>
+                            <Box sx={{ width: '100%' }}>
+                                <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
+                                    <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
+                                        <Tab label={translate("RESPONSE") + " " + translate("BODY")} />
+                                        <Tab label={translate("RESPONSE") + " " + translate("HEADER")} />
+                                        <Tab label={translate("RESPONSE") + " " + translate("STATUS")} />
+                                    </Tabs>
+                                </Box>
+                            </Box>
+                            <AceEditor
+                                setOptions={{ useWorker: false, printMargin: false, wrap: true }}
+                                mode="json"
+                                theme="dracula"
+                                editorProps={{ $blockScrolling: true }}
+                                style={{ height: "20em", width: "100%" }}
+                                value={responseEditorValue}
+                                onChange={handleResponseEditorChange}
+                            />
+                        </Grid>
                     </Grid>
-                </Grid>
 
-                <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider} proxyObj={proxyConfig} />
+                    <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider} proxyObj={restImportConfig} />
 
-                <ConfigModel
-                    handleOpen={configOpen}
-                    handleClose={handleCloseConfig}
-                    handleParentModalClose={handleCloseProvider}
-                    providerConf={selectedProvider}
-                    customProvider={[]}
-                    onSelectedProvider={handleSelectedProvider}
-                    onLoadProvider={handleCloseProvider}
-                    proxyObj={proxyConfig}
-                />
-            </Stack>
+                    <ConfigModel
+                        handleOpen={configOpen}
+                        handleClose={handleCloseConfig}
+                        handleParentModalClose={handleCloseProvider}
+                        providerConf={selectedProvider}
+                        customProvider={[]}
+                        onSelectedProvider={handleSelectedProvider}
+                        onLoadProvider={handleCloseProvider}
+                        proxyObj={restImportConfig}
+                    />
+                </Stack>}
         </>
     );
 }

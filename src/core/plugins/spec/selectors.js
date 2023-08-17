@@ -33,7 +33,14 @@ export const language = createSelector(
   spec => spec.get("language")
 )
 
-export const proxy_config = createSelector(
+export const config = createSelector(
+  state,
+  spec =>{
+    return spec.get("config").toJS()
+  }
+)
+
+export const objval = createSelector(
   state,
   spec =>{
     return spec.get("proxy_config").toJS()
