@@ -19,10 +19,15 @@ export class AppComponent {
     this.fullScreen = !this.fullScreen;
   }
 
-  openModal() {
+  openModal(type: number) {
     const modalRef = this.modalService.open(ModalComponent, {
       size: 'xl',
       centered: true,
     });
+    if (type == 1) {
+      modalRef.componentInstance.configtype = false;
+    } else {
+      modalRef.componentInstance.configtype = true;
+    }
   }
 }

@@ -370,8 +370,8 @@ export default function WebServiceModal({ language, proxyConfig }) {
         setConfigOpen(false);
     };
     return (<>
-            {loading ? <FallbackSpinner /> :
-            <Stack className='rest-import-ui'>
+                <Stack className='rest-import-ui'>
+                    {loading && <FallbackSpinner />}
                     <Toaster position='top-right'/>
                     <Grid gap={5} p={2} className='cmnflx' container>
                         <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
@@ -400,9 +400,9 @@ export default function WebServiceModal({ language, proxyConfig }) {
                                     </Select>
                                 </FormControl>
                                 <TextField onBlur={() => {
-                    getPathParams();
-                    handleQueryChange();
-                }} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')}/>
+            getPathParams();
+            handleQueryChange();
+        }} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')}/>
                                 <Button onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
                             </Stack>
                         </Grid>
@@ -525,7 +525,7 @@ export default function WebServiceModal({ language, proxyConfig }) {
                                                         </IconButton>
                                                     </Tooltip>
                                                 </Stack> :
-                    <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
+            <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
                                                         <IconButton>
                                                             <AddIcon onClick={() => setaddCustomType(true)} sx={{ cursor: 'pointer', color: 'black' }}/>
                                                         </IconButton>
@@ -533,7 +533,7 @@ export default function WebServiceModal({ language, proxyConfig }) {
                                             </Stack>
                                         </Stack>
                                         {contentType === 'multipart/form-data' ? <MultipartTable value={multipartParams} setValue={handlemultipartParams}/> :
-                    <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')}/>}
+            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')}/>}
                                     </Stack>
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={3}>
@@ -564,7 +564,7 @@ export default function WebServiceModal({ language, proxyConfig }) {
                                             </TableBody>
                                         </Table>
                                     </TableContainer> :
-                    <Stack p={2} spacing={1} direction={'row'} sx={{ backgroundColor: "#d9edf7" }}>
+            <Stack p={2} spacing={1} direction={'row'} sx={{ backgroundColor: "#d9edf7" }}>
                                             <InfoIcon sx={{ height: 18, width: 18, color: '#31708f', mt: 0.5 }}/>
                                             <Stack>
                                                 <Typography>
@@ -597,6 +597,7 @@ export default function WebServiceModal({ language, proxyConfig }) {
                     <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider} proxyObj={proxyConfig}/>
 
                     <ConfigModel handleOpen={configOpen} handleClose={handleCloseConfig} handleParentModalClose={handleCloseProvider} providerConf={selectedProvider} customProvider={[]} onSelectedProvider={handleSelectedProvider} onLoadProvider={handleCloseProvider} proxyObj={proxyConfig}/>
-                </Stack>}
+                </Stack>
+
         </>);
 }

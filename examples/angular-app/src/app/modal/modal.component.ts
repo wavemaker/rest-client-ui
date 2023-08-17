@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 declare const RestImport: any;
 
@@ -7,6 +7,7 @@ declare const RestImport: any;
   templateUrl: './modal.component.html',
 })
 export class ModalComponent implements OnInit {
+  @Input() configtype :boolean | undefined;
   constructor(public activeModal: NgbActiveModal) {}
   ngOnInit(): void {
     const reactUI = RestImport({
@@ -32,5 +33,6 @@ export class ModalComponent implements OnInit {
         },
       },
     });
+    console.log(this.configtype)
   }
 }

@@ -134,8 +134,8 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
     }, [selectedProvider]);
 
 
-  useEffect(() => {
-    setInitialState(true)
+    useEffect(() => {
+        setInitialState(true)
     }, []);
 
     const getPathParams = () => {
@@ -416,269 +416,267 @@ export default function WebServiceModal({ language, proxyConfig }: { language: s
 
     return (
         <>
-            {loading ? <FallbackSpinner /> :
-                <Stack className='rest-import-ui'>
-                    <Toaster position='top-right' />
-                    <Grid gap={5} p={2} className='cmnflx' container>
-                        <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
-                            <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                                <Typography variant='h6' fontWeight={600}>{translate('WEB_SERVICE')}</Typography>
-                                <Stack spacing={1} className='cmnflx' direction={'row'}>
+            <Stack className='rest-import-ui'>
+                {loading && <FallbackSpinner />}
+                <Toaster position='top-right' />
+                <Grid gap={5} p={2} className='cmnflx' container>
+                    <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
+                        <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+                            <Typography variant='h6' fontWeight={600}>{translate('WEB_SERVICE')}</Typography>
+                            <Stack spacing={1} className='cmnflx' direction={'row'}>
+                                <Tooltip title={translate("DELETE")}>
+                                    <IconButton>
+                                        <HelpOutlineIcon />
+                                    </IconButton>
+                                </Tooltip>
+                                <Link sx={{ color: 'gray' }}>{translate('HELP')}</Link>
+                            </Stack>
+                        </Stack>
+                    </Grid>
+                    <Grid item md={12}>
+                        <Stack spacing={5} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+                            <FormControl sx={{ minWidth: 120 }} size='small'>
+                                <Select
+                                    value={httpMethod}
+                                    onChange={handleChangehttpMethod}
+                                >
+                                    <MenuItem value={'GET'}>{'GET'}</MenuItem>
+                                    <MenuItem value={'POST'}>{'POST'}</MenuItem>
+                                    <MenuItem value={'PUT'}>{'PUT'}</MenuItem>
+                                    <MenuItem value={'HEAD'}>{'HEAD'}</MenuItem>
+                                    <MenuItem value={'PATCH'}>{'PATCH'}</MenuItem>
+                                    <MenuItem value={'DELETE'}>{'DELETE'}</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <TextField onBlur={() => {
+                                getPathParams()
+                                handleQueryChange()
+                            }} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
+                            <Button onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
+                        </Stack>
+                    </Grid>
+                    <Grid item md={12}>
+                        <Grid container>
+                            <Grid item md={6}>
+                                <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                                    <Typography>{translate('SERVICE_NAME')}</Typography>
+                                    <TextField disabled size='small' />
+                                </Stack>
+                            </Grid>
+                            <Grid item md={6}>
+                                <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                                    <Typography>{translate('USE_PROXY')}</Typography>
+                                    <Switch checked={useProxy} onChange={handleChangeProxy} />
                                     <Tooltip title={translate("DELETE")}>
                                         <IconButton>
                                             <HelpOutlineIcon />
                                         </IconButton>
                                     </Tooltip>
-                                    <Link sx={{ color: 'gray' }}>{translate('HELP')}</Link>
                                 </Stack>
-                            </Stack>
-                        </Grid>
-                        <Grid item md={12}>
-                            <Stack spacing={5} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                                <FormControl sx={{ minWidth: 120 }} size='small'>
-                                    <Select
-                                        value={httpMethod}
-                                        onChange={handleChangehttpMethod}
-                                    >
-                                        <MenuItem value={'GET'}>{'GET'}</MenuItem>
-                                        <MenuItem value={'POST'}>{'POST'}</MenuItem>
-                                        <MenuItem value={'PUT'}>{'PUT'}</MenuItem>
-                                        <MenuItem value={'HEAD'}>{'HEAD'}</MenuItem>
-                                        <MenuItem value={'PATCH'}>{'PATCH'}</MenuItem>
-                                        <MenuItem value={'DELETE'}>{'DELETE'}</MenuItem>
-                                    </Select>
-                                </FormControl>
-                                <TextField onBlur={() => {
-                                    getPathParams()
-                                    handleQueryChange()
-                                }} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
-                                <Button onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
-                            </Stack>
-                        </Grid>
-                        <Grid item md={12}>
-                            <Grid container>
-                                <Grid item md={6}>
-                                    <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
-                                        <Typography>{translate('SERVICE_NAME')}</Typography>
-                                        <TextField disabled size='small' />
-                                    </Stack>
-                                </Grid>
-                                <Grid item md={6}>
-                                    <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
-                                        <Typography>{translate('USE_PROXY')}</Typography>
-                                        <Switch checked={useProxy} onChange={handleChangeProxy} />
-                                        <Tooltip title={translate("DELETE")}>
-                                            <IconButton>
-                                                <HelpOutlineIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </Stack>
-                                </Grid>
                             </Grid>
                         </Grid>
-                        <Grid item md={12}>
-                            <Box sx={{ width: '100%' }}>
-                                <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
-                                    <Tabs value={requestTabValue} onChange={handleChangeHeaderTabs}>
-                                        <Tab label={translate("AUTHORIZATION")} />
-                                        <Tab label={translate("HEADER") + " " + translate("PARAMS")} />
-                                        <Tab label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
-                                        <Tab label={translate("QUERY") + " " + translate("PARAMS")} />
-                                        <Tab label={translate("PATH") + " " + translate("PARAMS")} />
-                                    </Tabs>
-                                </Box>
-                                <CustomTabPanel value={requestTabValue} index={0}>
-                                    <Grid spacing={2} mt={2} className='cmnflx' container>
+                    </Grid>
+                    <Grid item md={12}>
+                        <Box sx={{ width: '100%' }}>
+                            <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
+                                <Tabs value={requestTabValue} onChange={handleChangeHeaderTabs}>
+                                    <Tab label={translate("AUTHORIZATION")} />
+                                    <Tab label={translate("HEADER") + " " + translate("PARAMS")} />
+                                    <Tab label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
+                                    <Tab label={translate("QUERY") + " " + translate("PARAMS")} />
+                                    <Tab label={translate("PATH") + " " + translate("PARAMS")} />
+                                </Tabs>
+                            </Box>
+                            <CustomTabPanel value={requestTabValue} index={0}>
+                                <Grid spacing={2} mt={2} className='cmnflx' container>
+                                    <Grid item md={3}>
+                                        <Typography>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
+                                    </Grid>
+                                    <Grid item md={9}>
+                                        <FormControl size='small' >
+                                            <Select
+                                                value={httpAuth}
+                                                onChange={handleChangehttpAuth}
+                                            >
+                                                <MenuItem value={'None'}>{translate("NONE")}</MenuItem>
+                                                <MenuItem value={'Basic'}>{translate("BASIC")}</MenuItem>
+                                                <MenuItem value={'OAuth 2.0'}>{translate("OAUTH")} 2.0</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    {httpAuth === "Basic" && <>
                                         <Grid item md={3}>
-                                            <Typography>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
+                                            <Typography>{translate("USER_NAME")}</Typography>
                                         </Grid>
                                         <Grid item md={9}>
-                                            <FormControl size='small' >
-                                                <Select
-                                                    value={httpAuth}
-                                                    onChange={handleChangehttpAuth}
-                                                >
-                                                    <MenuItem value={'None'}>{translate("NONE")}</MenuItem>
-                                                    <MenuItem value={'Basic'}>{translate("BASIC")}</MenuItem>
-                                                    <MenuItem value={'OAuth 2.0'}>{translate("OAUTH")} 2.0</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Grid>
-                                        {httpAuth === "Basic" && <>
-                                            <Grid item md={3}>
-                                                <Typography>{translate("USER_NAME")}</Typography>
-                                            </Grid>
-                                            <Grid item md={9}>
-                                                <Stack direction={'row'}>
-                                                    <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
-                                                    <Tooltip title={translate("DELETE")}>
-                                                        <IconButton>
-                                                            <HelpOutlineIcon />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Stack>
-                                            </Grid>
-                                            <Grid item md={3}>
-                                                <Typography>{translate("PASSWORD")}</Typography>
-                                            </Grid>
-                                            <Grid item md={9}>
-                                                <Stack direction={'row'}>
-                                                    <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
-                                                    <Tooltip title={translate("DELETE")}>
-                                                        <IconButton>
-                                                            <HelpOutlineIcon />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Stack>
-                                            </Grid>
-                                        </>}
-                                        {httpAuth === "OAuth 2.0" && <>
-                                            <Grid item md={3}>
-                                                <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
-                                            </Grid>
-                                            <Grid item md={9}>
-                                                <Stack spacing={2} direction={'row'} alignItems={'center'}>
-                                                    <TextField disabled size='small' value={providerId} label={translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET")} />
-                                                    {
-                                                        providerId && (
-                                                            <Tooltip title={translate("Edit Provider")}>
-                                                                <IconButton>
-                                                                    <EditOutlinedIcon onClick={() => setConfigOpen(true)} />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                        )
-                                                    }
-
-                                                    <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
-                                                </Stack>
-                                            </Grid>
-                                        </>}
-                                    </Grid>
-                                </CustomTabPanel>
-                                <CustomTabPanel value={requestTabValue} index={1}>
-                                    <HeaderAndQueryTable from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
-                                </CustomTabPanel>
-                                <CustomTabPanel value={requestTabValue} index={2}>
-                                    <Stack spacing={1} mt={2} ml={1}>
-                                        <Stack spacing={10} display={'flex'} alignItems={'center'} direction={'row'}>
-                                            <Typography>{translate("CONTENT") + " " + translate("TYPE")}</Typography>
-                                            <Stack spacing={3} display={'flex'} alignItems={'center'} direction={'row'}>
-                                                <FormControl size='small' sx={{ width: "20em" }}>
-                                                    <Select
-                                                        value={contentType}
-                                                        onChange={handleChangecontentType}
-                                                    >
-                                                        {contentTypes.map((data) => <MenuItem key={data.value} value={data.value}>{translate(data.label)}</MenuItem>)}
-                                                    </Select>
-                                                </FormControl>
+                                            <Stack direction={'row'}>
+                                                <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
                                                 <Tooltip title={translate("DELETE")}>
                                                     <IconButton>
                                                         <HelpOutlineIcon />
                                                     </IconButton>
                                                 </Tooltip>
-                                                {addCustomType ? <Stack direction={'row'}>
-                                                    <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' />
-                                                    <Tooltip title={translate("ADD")}>
-                                                        <IconButton>
-                                                            <DoneIcon onClick={() => handleAddCustomContentType()} sx={{ cursor: 'pointer', color: 'black' }} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Stack> :
-                                                    <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
-                                                        <IconButton>
-                                                            <AddIcon onClick={() => setaddCustomType(true)} sx={{ cursor: 'pointer', color: 'black' }} />
-                                                        </IconButton>
-                                                    </Tooltip>}
                                             </Stack>
+                                        </Grid>
+                                        <Grid item md={3}>
+                                            <Typography>{translate("PASSWORD")}</Typography>
+                                        </Grid>
+                                        <Grid item md={9}>
+                                            <Stack direction={'row'}>
+                                                <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
+                                                <Tooltip title={translate("DELETE")}>
+                                                    <IconButton>
+                                                        <HelpOutlineIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Stack>
+                                        </Grid>
+                                    </>}
+                                    {httpAuth === "OAuth 2.0" && <>
+                                        <Grid item md={3}>
+                                            <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
+                                        </Grid>
+                                        <Grid item md={9}>
+                                            <Stack spacing={2} direction={'row'} alignItems={'center'}>
+                                                <TextField disabled size='small' value={providerId} label={translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET")} />
+                                                {
+                                                    providerId && (
+                                                        <Tooltip title={translate("Edit Provider")}>
+                                                            <IconButton>
+                                                                <EditOutlinedIcon onClick={() => setConfigOpen(true)} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )
+                                                }
+
+                                                <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
+                                            </Stack>
+                                        </Grid>
+                                    </>}
+                                </Grid>
+                            </CustomTabPanel>
+                            <CustomTabPanel value={requestTabValue} index={1}>
+                                <HeaderAndQueryTable from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                            </CustomTabPanel>
+                            <CustomTabPanel value={requestTabValue} index={2}>
+                                <Stack spacing={1} mt={2} ml={1}>
+                                    <Stack spacing={10} display={'flex'} alignItems={'center'} direction={'row'}>
+                                        <Typography>{translate("CONTENT") + " " + translate("TYPE")}</Typography>
+                                        <Stack spacing={3} display={'flex'} alignItems={'center'} direction={'row'}>
+                                            <FormControl size='small' sx={{ width: "20em" }}>
+                                                <Select
+                                                    value={contentType}
+                                                    onChange={handleChangecontentType}
+                                                >
+                                                    {contentTypes.map((data) => <MenuItem key={data.value} value={data.value}>{translate(data.label)}</MenuItem>)}
+                                                </Select>
+                                            </FormControl>
+                                            <Tooltip title={translate("DELETE")}>
+                                                <IconButton>
+                                                    <HelpOutlineIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                            {addCustomType ? <Stack direction={'row'}>
+                                                <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' />
+                                                <Tooltip title={translate("ADD")}>
+                                                    <IconButton>
+                                                        <DoneIcon onClick={() => handleAddCustomContentType()} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Stack> :
+                                                <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
+                                                    <IconButton>
+                                                        <AddIcon onClick={() => setaddCustomType(true)} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                    </IconButton>
+                                                </Tooltip>}
                                         </Stack>
-                                        {contentType === 'multipart/form-data' ? <MultipartTable value={multipartParams} setValue={handlemultipartParams} /> :
-                                            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
-                                        }
                                     </Stack>
-                                </CustomTabPanel>
-                                <CustomTabPanel value={requestTabValue} index={3}>
-                                    <HeaderAndQueryTable from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
-                                </CustomTabPanel>
-                                <CustomTabPanel value={requestTabValue} index={4}>
-                                    {pathParams.length > 0 ? <TableContainer component={Paper}>
-                                        <Table>
-                                            <TableHead>
-                                                <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
-                                                    <TableCell align='center'>{translate("NAME")}</TableCell>
-                                                    <TableCell align='center'>{translate("TYPE")}</TableCell>
-                                                    <TableCell align='center'>{translate("VALUE")}</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {pathParams.map((data, index) =>
-                                                    <TableRowStyled key={index}>
-                                                        <TableCell align='center'>
-                                                            <FormLabel>{data.name}</FormLabel>
-                                                        </TableCell>
-                                                        <TableCell align='center'>
-                                                            <FormLabel>{translate("String")}</FormLabel>
-                                                        </TableCell>
-                                                        <TableCell align='center'>
-                                                            <TextField value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
-                                                        </TableCell>
-                                                    </TableRowStyled>
-                                                )}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer> :
-                                        <Stack p={2} spacing={1} direction={'row'} sx={{ backgroundColor: "#d9edf7" }}>
-                                            <InfoIcon sx={{ height: 18, width: 18, color: '#31708f', mt: 0.5 }} />
-                                            <Stack>
-                                                <Typography>
-                                                    {translate('NO_PATH_PARAMS')}
-                                                    {translate('NO_PATH_PARAMS_DESC')}
-                                                </Typography>
-                                                <Typography>
-                                                    {`e.g. For URL "http:wavemaker.com/projects/{pid}/?mode=json", "pid" is the path param.`}
-                                                    (<a href='https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/'>{translate("MORE_INFO")}</a>)
-                                                </Typography>
-                                            </Stack>
-                                        </Stack>}
-                                </CustomTabPanel>
-                            </Box>
-                        </Grid>
-                        <Grid item md={12}>
-                            <Box sx={{ width: '100%' }}>
-                                <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
-                                    <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
-                                        <Tab label={translate("RESPONSE") + " " + translate("BODY")} />
-                                        <Tab label={translate("RESPONSE") + " " + translate("HEADER")} />
-                                        <Tab label={translate("RESPONSE") + " " + translate("STATUS")} />
-                                    </Tabs>
-                                </Box>
-                            </Box>
-                            <AceEditor
-                                setOptions={{ useWorker: false, printMargin: false, wrap: true }}
-                                mode="json"
-                                theme="dracula"
-                                editorProps={{ $blockScrolling: true }}
-                                style={{ height: "20em", width: "100%" }}
-                                value={responseEditorValue}
-                                onChange={handleResponseEditorChange}
-                            />
-                        </Grid>
+                                    {contentType === 'multipart/form-data' ? <MultipartTable value={multipartParams} setValue={handlemultipartParams} /> :
+                                        <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
+                                    }
+                                </Stack>
+                            </CustomTabPanel>
+                            <CustomTabPanel value={requestTabValue} index={3}>
+                                <HeaderAndQueryTable from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                            </CustomTabPanel>
+                            <CustomTabPanel value={requestTabValue} index={4}>
+                                {pathParams.length > 0 ? <TableContainer component={Paper}>
+                                    <Table>
+                                        <TableHead>
+                                            <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
+                                                <TableCell align='center'>{translate("NAME")}</TableCell>
+                                                <TableCell align='center'>{translate("TYPE")}</TableCell>
+                                                <TableCell align='center'>{translate("VALUE")}</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {pathParams.map((data, index) =>
+                                                <TableRowStyled key={index}>
+                                                    <TableCell align='center'>
+                                                        <FormLabel>{data.name}</FormLabel>
+                                                    </TableCell>
+                                                    <TableCell align='center'>
+                                                        <FormLabel>{translate("String")}</FormLabel>
+                                                    </TableCell>
+                                                    <TableCell align='center'>
+                                                        <TextField value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
+                                                    </TableCell>
+                                                </TableRowStyled>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer> :
+                                    <Stack p={2} spacing={1} direction={'row'} sx={{ backgroundColor: "#d9edf7" }}>
+                                        <InfoIcon sx={{ height: 18, width: 18, color: '#31708f', mt: 0.5 }} />
+                                        <Stack>
+                                            <Typography>
+                                                {translate('NO_PATH_PARAMS')}
+                                                {translate('NO_PATH_PARAMS_DESC')}
+                                            </Typography>
+                                            <Typography>
+                                                {`e.g. For URL "http:wavemaker.com/projects/{pid}/?mode=json", "pid" is the path param.`}
+                                                (<a href='https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/'>{translate("MORE_INFO")}</a>)
+                                            </Typography>
+                                        </Stack>
+                                    </Stack>}
+                            </CustomTabPanel>
+                        </Box>
                     </Grid>
-                                                    
-                    <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider} proxyObj={proxyConfig} />
+                    <Grid item md={12}>
+                        <Box sx={{ width: '100%' }}>
+                            <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
+                                <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
+                                    <Tab label={translate("RESPONSE") + " " + translate("BODY")} />
+                                    <Tab label={translate("RESPONSE") + " " + translate("HEADER")} />
+                                    <Tab label={translate("RESPONSE") + " " + translate("STATUS")} />
+                                </Tabs>
+                            </Box>
+                        </Box>
+                        <AceEditor
+                            setOptions={{ useWorker: false, printMargin: false, wrap: true }}
+                            mode="json"
+                            theme="dracula"
+                            editorProps={{ $blockScrolling: true }}
+                            style={{ height: "20em", width: "100%" }}
+                            value={responseEditorValue}
+                            onChange={handleResponseEditorChange}
+                        />
+                    </Grid>
+                </Grid>
 
-                    <ConfigModel
-                        handleOpen={configOpen}
-                        handleClose={handleCloseConfig}
-                        handleParentModalClose={handleCloseProvider}
-                        providerConf={selectedProvider}
-                        customProvider={[]}
-                        onSelectedProvider={handleSelectedProvider}
-                        onLoadProvider={handleCloseProvider}
-                        proxyObj={proxyConfig}
-                    />
-                </Stack>
+                <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider} proxyObj={proxyConfig} />
 
-            }
+                <ConfigModel
+                    handleOpen={configOpen}
+                    handleClose={handleCloseConfig}
+                    handleParentModalClose={handleCloseProvider}
+                    providerConf={selectedProvider}
+                    customProvider={[]}
+                    onSelectedProvider={handleSelectedProvider}
+                    onLoadProvider={handleCloseProvider}
+                    proxyObj={proxyConfig}
+                />
+            </Stack>
         </>
     );
 }

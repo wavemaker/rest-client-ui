@@ -13,7 +13,7 @@
 /build
 
 #jsx
-/src/jsx
+/src/jsx/
 
 # misc
 .DS_Store
