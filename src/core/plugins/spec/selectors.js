@@ -33,6 +33,13 @@ export const language = createSelector(
   spec => spec.get("language")
 )
 
+export const config = createSelector(
+  state,
+  spec =>{
+    return spec.get("config").toJS()
+  }
+)
+
 export const objval = createSelector(
   state,
   spec =>{

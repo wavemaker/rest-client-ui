@@ -26,10 +26,10 @@
             ],
             "styles": [
               "src/styles.css",
-              "src/assets/plugins/rest-import.css"
+              "src/assets/plugins/rest-import-ui.css"
             ],
             "scripts": [
-              "src/assets/plugins/rest-import.js"
+              "src/assets/plugins/rest-import-bundle.js"
             ]
           },
           "configurations": {
@@ -91,14 +91,17 @@
             ],
             "styles": [
               "src/styles.css",
-              "src/assets/plugins/rest-import.css"
+              "src/assets/plugins/rest-import-ui.css"
             ],
             "scripts": [
-              "src/assets/plugins/rest-import.js"
+              "src/assets/plugins/rest-import-bundle.js"
             ]
           }
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }
