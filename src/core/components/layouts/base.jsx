@@ -19,7 +19,6 @@ export default class BaseLayout extends React.Component {
   render() {
     const { specSelectors, getComponent } = this.props;
     const WebServiceModal = getComponent('WebServiceModal')
-    const value = specSelectors.value();
     const language = specSelectors.language();
     const config = specSelectors.config()
     

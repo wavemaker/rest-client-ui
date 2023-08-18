@@ -26,8 +26,6 @@ export default function RestImport(opts) {
     spec: {},
     url: "",
     language: window.navigator.language,
-    objval: {},
-    value: "",
     config: {},
     urls: null,
     layout: "BaseLayout",
@@ -94,7 +92,6 @@ export default function RestImport(opts) {
         objval: constructorConfig.objval,
         language: constructorConfig.language,
         config : constructorConfig.config
-
       },
     }, constructorConfig.initialState)
   }

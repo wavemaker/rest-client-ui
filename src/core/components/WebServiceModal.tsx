@@ -5,7 +5,7 @@ import {
     TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button,
     TextareaAutosize
 } from '@mui/material'
-import ProviderModal from './ProviderModal'
+import ProviderModal, { ProviderI } from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
 import {
     findDuplicateObjects, findDuplicatesAcrossArrays, getSubstring, httpStatusCodes, isValidUrl, removeDuplicatesByComparison,
@@ -24,7 +24,8 @@ import { encode } from 'js-base64';
 import toast, { Toaster } from 'react-hot-toast'
 import FallbackSpinner from './common/loader'
 import { useTranslation } from 'react-i18next';
-import { restImportConfigI } from '../../App'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import ConfigModel from './ConfigModel'
 interface TabPanelProps {
     children?: ReactNode
     index: number
@@ -33,6 +34,29 @@ interface TabPanelProps {
 export interface PathParamsI {
     name: string
     value: string
+}
+export interface restImportConfigI {
+    url?: string
+    httpMethod?: "GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT"
+    useProxy?: boolean
+    httpAuth?: "NONE" | "BASIC" | "OAUTH2.0"
+    headerParams?: HeaderAndQueryI[]
+    bodyParams?: string
+    userName?: string
+    userPassword?: string
+    multipartParams?: BodyParamsI[]
+    contentType?: string,
+    proxy_conf: APII,
+    default_proxy_state: string,
+    oAuthConfig: APII
+}
+
+interface APII {
+    base_path: string,
+    proxy_path?: string,
+    list_provider: string,
+    getprovider: string,
+    addprovider: string,
 }
 function CustomTabPanel(props: TabPanelProps) {
     const { children, value, index, ...other } = props
@@ -82,7 +106,7 @@ export function handleToastError(message: string) {
     toast.error(message)
 }
 
-export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig?: restImportConfigI }) {
+export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const defaultValueforHandQParams = { name: '', value: '', type: '' }
     const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState<string>(restImportConfig?.url || '')
@@ -106,12 +130,26 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const [userName, setuserName] = useState(restImportConfig?.userName || '')
     const [userPassword, setuserPassword] = useState(restImportConfig?.userPassword || '')
     const [loading, setloading] = useState(false)
+    const [selectedProvider, setSelectedProvider] = useState()
+    const [providerId, setProviderId] = useState('')
+    const [configOpen, setConfigOpen] = useState(false)
 
     useEffect(() => {
         i18n.changeLanguage(language);
         handleChangeResponseTabs(null, responseTabValue)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
+
+    const handleSelectedProvider = (data: React.SetStateAction<undefined>) => {
+        setSelectedProvider(data)
+    }
+
+    useEffect(() => {
+        if (selectedProvider) {
+            setProviderId((selectedProvider as ProviderI).providerId);
+        }
+    }, [selectedProvider]);
+
 
 
     const getPathParams = () => {
@@ -159,9 +197,11 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         })
         setpathParams(pathParamsClone)
     }
+
     const handleCloseProvider = () => {
         setproviderOpen(false)
     }
+
     const handleChangeapiURL = (value: string) => {
         setapiURL(value)
     }
@@ -356,7 +396,38 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                 handleResponse(response)
                 setloading(false)
             } else
-                handleToastError(translate("VALID_URL_ALERT"))
+                body = bodyParams
+            const configWOProxy: AxiosRequestConfig = {
+                url: requestAPI,
+                headers: header,
+                method: httpMethod,
+                data: body
+            }
+            const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : '';
+            const configWProxy: AxiosRequestConfig = {
+                url: url,
+                data: {
+                    "endpointAddress": requestAPI,
+                    "method": httpMethod,
+                    "contentType": contentType,
+                    "requestBody": body,
+                    "headers": header,
+                    "authDetails": null
+                },
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                withCredentials: true
+            }
+            setloading(true)
+            const config = useProxy ? configWProxy : configWOProxy
+            console.log(config)
+            const response: any = await Apicall(config)
+            console.log(response)
+            handleResponse(response)
+            setloading(false)
+            handleToastError(translate("VALID_URL_ALERT"))
         }
         else
             handleToastError(translate("VALID_URL_ALERT"))
@@ -383,6 +454,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             responseValue = { data: response.message, status: response.code, headers: {} }
         }
         setresponse(responseValue as any)
+    }
+    const handleCloseConfig = () => {
+        setConfigOpen(false)
     }
 
     return (
@@ -509,7 +583,16 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack spacing={2} direction={'row'}>
-                                                    <TextField disabled size='small' label={translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET")} />
+                                                    <TextField disabled size='small' value={providerId} label={translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET")} />
+                                                    {
+                                                        providerId && (
+                                                            <Tooltip title={translate("Edit Provider")}>
+                                                                <IconButton>
+                                                                    <EditOutlinedIcon onClick={() => setConfigOpen(true)} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        )
+                                                    }
                                                     <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
                                                 </Stack>
                                             </Grid>
@@ -624,7 +707,19 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             />
                         </Grid>
                     </Grid>
-                    <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} />
+
+                    <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} onSelectedProvider={handleSelectedProvider} proxyObj={restImportConfig} />
+
+                    <ConfigModel
+                        handleOpen={configOpen}
+                        handleClose={handleCloseConfig}
+                        handleParentModalClose={handleCloseProvider}
+                        providerConf={selectedProvider}
+                        customProvider={[]}
+                        onSelectedProvider={handleSelectedProvider}
+                        onLoadProvider={handleCloseProvider}
+                        proxyObj={restImportConfig}
+                    />
                 </Stack>}
         </>
     );

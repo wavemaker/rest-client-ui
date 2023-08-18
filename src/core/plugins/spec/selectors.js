@@ -43,7 +43,7 @@ export const config = createSelector(
 export const objval = createSelector(
   state,
   spec =>{
-    return spec.get("objval").toJS()
+    return spec.get("proxy_config").toJS()
   }
 )
 

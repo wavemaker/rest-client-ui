@@ -1,47 +1,33 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
-
+import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ModalComponent } from './modal/modal.component';
 declare const RestImport: any;
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
-  title = 'angular-app';
+  constructor(
+    private modalService: NgbModal,
+    public activeModal: NgbActiveModal
+  ) {}
+  public fullScreen: boolean = false;
+  enableFullScreen() {
+    this.fullScreen = !this.fullScreen;
+  }
 
-  ngAfterViewInit(): void {
-
-    const reactUI = RestImport({
-      dom_id: '#rest-import-ui',
-     language:"en",
-     config: {
-      url: 'https://jsonplaceholder.typicode.com/posts/{id}?test=true',
-      httpMethod: 'POST',
-      useProxy: true,
-      httpAuth: "BASIC",
-      bodyParams: "{userName:password}",
-      userName: "userName",
-      userPassword: "userPassword",
-      headerParams: [
-        {
-          name: 'New',
-          type: 'string',
-          value: 'application'
-        }
-      ],
-      multipartParams: [
-        {
-          name: "post",
-          type: "file",
-          value: "fe"
-        }
-      ],
-      contentType: 'multipart/form-data'
-    },
-    })
-
-
+  openModal(type: number) {
+    const modalRef = this.modalService.open(ModalComponent, {
+      size: 'xl',
+      centered: true,
+    });
+    if (type == 1) {
+      modalRef.componentInstance.configtype = false;
+    } else {
+      modalRef.componentInstance.configtype = true;
+    }
   }
 }
