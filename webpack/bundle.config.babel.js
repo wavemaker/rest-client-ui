@@ -24,7 +24,7 @@ const result = configBuilder(
   },
   {
     entry: {
-      "config-bundle": [
+      "config-import-bundle": [
         "./src/root-config.js",
       ],
     },
