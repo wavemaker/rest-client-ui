@@ -7,7 +7,6 @@ window.onload = function () {
   const ui = RestImportBundle({
     dom_id: "#rest-import-ui",
     language: "en",
-    configModal: true,
     providerConf: {
       accessTokenParamName: "Bearer",
       accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
@@ -67,7 +66,7 @@ window.onload = function () {
       default_proxy_state: "ON",
       oAuthConfig: {
         base_path: "https://www.wavemakeronline.com/studio/services",
-        project_id:"WMPRJ2c91808888f5252401896880222516b1",
+        project_id: "WMPRJ2c91808888f5252401896880222516b1",
         list_provider: "/oauth2/providers/default",
         getprovider:
           "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers",
@@ -79,7 +78,7 @@ window.onload = function () {
     },
     presets: [RestImportBundle.presets.apis, RestImportStandalonePreset],
     plugins: [RestImportBundle.plugins.DownloadUrl],
-    layout: "BaseLayout",
+    layout: "ConfigLayout",
   });
 
   window.ui = ui;
