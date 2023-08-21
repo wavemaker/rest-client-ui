@@ -10,14 +10,18 @@ import { Alert, Checkbox, DialogActions, FormControl, FormControlLabel, Grid, Ic
 import { useTranslation } from 'react-i18next';
 import clipboardCopy from 'clipboard-copy';
 import { ProviderI, ScopeI } from './ProviderModal';
-import Apicall from './common/apicall';
+import Apicall, { getProviderList } from './common/apicall';
 import { AxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast'
 import { restImportConfigI } from './WebServiceModal'
+import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
+import { useDispatch, useSelector } from 'react-redux';
+import FallbackSpinner from './common/loader';
 
-export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, customProvider, onSelectedProvider, onLoadProvider, proxyObj }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose: () => void, providerConf?: ProviderI | null, customProvider: ProviderI[], onSelectedProvider: any, onLoadProvider: () => void, proxyObj: restImportConfigI }) {
+export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI }) {
+    const dispatch = useDispatch();
     const { t: translate } = useTranslation();
-    const [customProviderList, setCustomProviderList] = useState<ProviderI[]>(customProvider)
+    // const [customProviderList, setCustomProviderList] = useState<ProviderI[]>(customProvider)
     const [Flow, setFlow] = useState('AUTHORIZATION_CODE')
     const [sendTokenAs, setsendTokenAs] = useState('HEADER')
     const [PKCE, setPKCE] = useState(false)
@@ -33,19 +37,25 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [clientId, setClientId] = useState('')
     const [clientSecret, setClientSecret] = useState('')
     const [alertMsg, setAlertMsg] = useState('')
+    const [provider_auth_url, setProviderAuthURL] = useState('')
+    const [loading, setloading] = useState(false)
 
+    const customProviderList = useSelector((store: any) => store.slice.providerList)
+
+    useEffect(() => {
+        dispatch(setProviderAuthorizationUrl(provider_auth_url))
+    }, [provider_auth_url])
 
     useEffect(() => {
         setsendTokenAs(providerConf ? providerConf.sendAccessTokenAs : 'HEADER' as string)
         setProviderID(providerConf?.providerId as string)
         setAuthorizationUrl(providerConf?.authorizationUrl as string)
         setAccessTokenUrl(providerConf?.accessTokenUrl as string)
-        setCustomProviderList(customProvider)
         setPKCE(providerConf?.oAuth2Pkce?.enabled || false);
         setCodeMethod(providerConf?.oAuth2Pkce?.challengeMethod || "s256")
         setClientId(providerConf?.clientId || "")
-
-    }, [providerConf, customProvider])
+        setClientSecret(providerConf?.clientSecret || "")
+    }, [providerConf])
 
     useEffect(() => {
         setscopes([])
@@ -103,7 +113,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             .then(() => {
                 setTooltipTitle('Copied!');
             })
-            .catch((error) => {
+            .catch((error: any) => {
                 console.error('Error copying to clipboard:', error);
             });
     };
@@ -145,6 +155,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         } else if (!clientSecret && !PKCE) {
             setAlertMsg('Client Secret')
         } else {
+            setloading(true)
             setShowErrorAlert(false);
             const scopes_val: { name: string; value: string }[] = scopes.filter(item => item.checked).map(({ checked, ...rest }) => rest);
             const scope_map_obj: { [key: string]: boolean } = scopes.reduce((result, item) => {
@@ -166,11 +177,11 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 sendAccessTokenAs: sendTokenAs,
                 ...(PKCE ? { oAuth2Pkce: { enabled: PKCE, challengeMethod: codeMethod } } : {})
             }
-            customProviderList.push(newProvider)
+            const newProviderList = [...customProviderList, newProvider];
             const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.addprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.addprovider;
             const configWProvider: AxiosRequestConfig = {
                 url: url,
-                data: customProviderList,
+                data: newProviderList,
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json',
@@ -179,40 +190,54 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             }
             const response: any = await Apicall(configWProvider)
             if (response.status === 200) {
-
+                setloading(false)
                 toast.success(`Saved Successfully`, {
                     position: 'top-right',
                     duration: 5000
                 })
-                onLoadProvider()
-                // handleAuthorizationUrl()
-                onSelectedProvider(newProvider)
+                handleProviderList()
+                handleAuthorizationUrl()
+                dispatch(setSelectedProvider(newProvider))
                 handleClose()
-                handleParentModalClose()
+                handleParentModalClose?.()
+            } else {
+                setloading(false)
             }
         }
-
     }
 
-    // const handleAuthorizationUrl = async () => {
-    //     const configProvider = {
-    //         url: "http://localhost:5000/authorizationUrl",
-    //         method: "GET",
-    //         data: { "providerId": providerId },
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //         },
-    //         withCredentials: true
-    //     };
-    //     const response: any = await Apicall(configProvider);
-    //     if (response.status === 200) {
-    //         console.log(response)
-    //     }
-    // }
+    const handleProviderList = async () => {
+        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.getprovider;
+        try {
+            const response = await getProviderList(url);
+            const sortedProviders = response.data;
+            dispatch(setproviderList(sortedProviders))
+        } catch (error) {
+            console.error('Error fetching provider list:', error);
+        }
+    }
+
+    const handleAuthorizationUrl = async () => {
+        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.authorizationUrl;
+        const configProvider = {
+            url: url + '/' + providerId,
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            withCredentials: true
+        };
+        const response: any = await Apicall(configProvider);
+        if (response.status === 200) {
+            const authorization_url = response.data
+            setProviderAuthURL(authorization_url)
+        }
+    }
 
     return (
         <>
             <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose} >
+                {loading && <FallbackSpinner />}
                 <DialogTitle sx={{ backgroundColor: 'lightgray' }}>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                         <Typography variant='h6' fontWeight={600}>{translate("OAUTH") + " " + translate("PROVIDER") + " " + translate("CONFIGURATION")} </Typography>
@@ -248,7 +273,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             <Typography>{translate('CALLBACK') + " " + translate('URL')} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <Stack direction={'row'}>
+                            <Stack direction={'row'} alignItems={"flex-start"}>
                                 <TextField size='small'
                                     sx={{ width: '30em' }}
                                     value={
@@ -266,7 +291,11 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     label={translate('CALLBACK') + ' ' + translate('URL')}
                                     placeholder={translate('CALLBACK') + ' ' + translate('URL')}
                                 />
-                                <Tooltip onMouseLeave={handleTooltipMouseLeave} onClick={() => handleCopyClick(`https://www.wavemakeronline.com/studio/services/oauth2/${providerConf?.providerId}/callback`)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
+                                <Tooltip onMouseLeave={handleTooltipMouseLeave} onClick={() => handleCopyClick(providerConf
+                                    ? `https://www.wavemakeronline.com/studio/services/oauth2/${providerConf.providerId}/callback`
+                                    : providerId
+                                        ? `https://www.wavemakeronline.com/studio/services/oauth2/${providerId}/callback`
+                                        : `https://www.wavemakeronline.com/studio/services/oauth2/{providerId}/callback`)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
                                     <IconButton>
                                         <ContentCopyIcon />
                                     </IconButton>

@@ -7,9 +7,35 @@ window.onload = function () {
   const ui = RestImportBundle({
     dom_id: "#rest-import-ui",
     language: "en",
+    configModal: true,
+    providerConf: {
+      accessTokenParamName: "Bearer",
+      accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
+      authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
+      clientId:
+        "238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com",
+      clientSecret: "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",
+      oAuth2Pkce: null,
+      oauth2Flow: "AUTHORIZATION_CODE",
+      providerId: "google",
+      responseType: "token",
+      scopes: [
+        {
+          name: "Calendar",
+          value:
+            "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.readonly",
+        },
+        {
+          name: "Google Drive",
+          value:
+            "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.photos.readonly",
+        },
+      ],
+      sendAccessTokenAs: "HEADER",
+    },
     config: {
-      url: 'https://jsonplaceholder.typicode.com/posts/{id}?test=false',
-      httpMethod: 'POST',
+      url: "https://jsonplaceholder.typicode.com/posts/{id}?test=false",
+      httpMethod: "POST",
       useProxy: true,
       httpAuth: "BASIC",
       bodyParams: "{userName:password}",
@@ -17,36 +43,39 @@ window.onload = function () {
       userPassword: "userPassword",
       headerParams: [
         {
-          name: 'New',
-          type: 'string',
-          value: 'application'
-        }
+          name: "New",
+          type: "string",
+          value: "application",
+        },
       ],
       multipartParams: [
         {
           name: "post",
           type: "file",
-          value: "fe"
-        }
+          value: "fe",
+        },
       ],
-      contentType: 'multipart/form-data',
+      contentType: "multipart/form-data",
       proxy_conf: {
         base_path: "http://localhost:5000",
         proxy_path: "/restimport",
         list_provider: "/get-default-provider",
         getprovider: "/getprovider",
         addprovider: "/addprovider",
+        authorizationUrl: "/authorizationUrl",
       },
       default_proxy_state: "ON",
       oAuthConfig: {
         base_path: "https://www.wavemakeronline.com/studio/services",
-        list_provider:
-          "/oauth2/providers/default",
+        project_id:"WMPRJ2c91808888f5252401896880222516b1",
+        list_provider: "/oauth2/providers/default",
         getprovider:
           "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers",
         addprovider:
           "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers",
-      }
+        authorizationUrl:
+          "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/google/authorizationUrl",
+      },
     },
     presets: [RestImportBundle.presets.apis, RestImportStandalonePreset],
     plugins: [RestImportBundle.plugins.DownloadUrl],

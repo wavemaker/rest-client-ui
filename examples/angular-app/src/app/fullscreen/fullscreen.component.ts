@@ -10,7 +10,7 @@ export class FullscreenComponent implements OnInit {
   ngOnInit(): void {
     const reactUI = RestImport({
       dom_id: '#rest-import-ui',
-      language: 'en',
+     language: 'en',
       config: {
         proxy_conf: {
           base_path: 'http://localhost:5000',
@@ -22,6 +22,7 @@ export class FullscreenComponent implements OnInit {
         default_proxy_state: 'ON',
         oAuthConfig: {
           base_path: "https://www.wavemakeronline.com/studio/services",
+          project_id: "WMPRJ2c91808888f5252401896880222516b1",
           list_provider:
             "/oauth2/providers/default",
           getprovider:
@@ -30,6 +31,6 @@ export class FullscreenComponent implements OnInit {
             "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers",
         },
       },
-    });
+    }); 
   }
 }

@@ -7,7 +7,10 @@
             <button class="btn btn-lg btn-outline-primary btn-sm" (click)="openModal(1)">Popup Modal</button>
         </div>
         <div class="col-md-3 mx-auto my-3">
-            <button class="btn btn-lg btn-outline-primary btn-sm" (click)="openModal(2)">Pre Populate  Screen</button>
+            <button class="btn btn-lg btn-outline-primary btn-sm" (click)="openModal(2)">Pre Populate Screen</button>
+        </div>
+        <div class="col-md-3 mx-auto my-3">
+            <button class="btn btn-lg btn-outline-primary btn-sm" (click)="openConfigModal()">Config Modal</button>
         </div>
     </div>
     <div class="row" *ngIf="fullScreen">
@@ -15,4 +18,5 @@
             <app-fullscreen></app-fullscreen>
         </div>
     </div>
+    <div id="configModalUI"></div>
 </div>

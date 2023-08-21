@@ -27,6 +27,8 @@ export default function RestImport(opts) {
     url: "",
     language: window.navigator.language,
     config: {},
+    configModal:false,
+    providerConf: {},
     urls: null,
     layout: "BaseLayout",
     maxDisplayedTags: null,
@@ -91,7 +93,10 @@ export default function RestImport(opts) {
         value: constructorConfig.value,
         objval: constructorConfig.objval,
         language: constructorConfig.language,
-        config : constructorConfig.config
+        config : constructorConfig.config,
+        configModal: constructorConfig.configModal,
+        providerConf: constructorConfig.providerConf
+
       },
     }, constructorConfig.initialState)
   }
