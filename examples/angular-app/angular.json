@@ -29,7 +29,8 @@
               "src/assets/plugins/rest-import-bundle.css"
             ],
             "scripts": [
-              "src/assets/plugins/rest-import-bundle.js"
+              "src/assets/plugins/rest-import-bundle.js",
+              "src/assets/plugins/config-import.bundle.js"
             ]
           },
           "configurations": {
@@ -94,7 +95,9 @@
               "src/assets/plugins/rest-import-bundle.css"
             ],
             "scripts": [
-              "src/assets/plugins/rest-import-bundle.js"
+              "src/assets/plugins/rest-import-bundle.js",
+              "src/assets/plugins/config-import.bundle.js"
+
             ]
           }
         }

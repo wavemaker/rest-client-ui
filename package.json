@@ -9,16 +9,22 @@
     "@emotion/styled": "^11.11.0",
     "@fontsource/roboto": "^5.0.5",
     "@mui/icons-material": "^5.14.3",
-    "@mui/material": "^5.14.2",
+    "@mui/material": "^5.14.5",
+    "@reduxjs/toolkit": "^1.9.5",
     "@types/jest": "^29.5.3",
     "@types/node": "^20.4.5",
     "@types/react": "^18.2.18",
     "@types/react-dom": "^18.2.7",
     "axios": "^1.4.0",
+    "body-parser": "^1.20.2",
     "classnames": "^2.3.1",
     "clipboard-copy": "^4.0.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
     "css.escape": "1.5.1",
     "deep-extend": "0.6.0",
+    "express": "^4.18.2",
+    "http-server": "^14.1.1",
     "i18next": "^23.4.2",
     "immutable": "^3.x.x",
     "js-base64": "^3.7.5",
@@ -38,18 +44,12 @@
     "reselect": "^4.1.8",
     "serialize-error": "^8.1.0",
     "sha.js": "^2.4.11",
-    "url-parse": "^1.5.10",
-    "body-parser": "^1.20.2",
-    "cookie-parser": "^1.4.6",
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "http-server": "^14.1.1"
+    "url-parse": "^1.5.10"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/stylesheets.babel.js &&  webpack --color --config webpack/bundle.babel.js && cp -f dist/rest-import-bundle.js examples/angular-app/src/assets/plugins/rest-import-bundle.js && cp -f dist/rest-import-bundle.css examples/angular-app/src/assets/plugins/rest-import-bundle.css && cp -f dist/rest-import-bundle.js examples/react-app/public/assets/rest-import-bundle.js && cp -f dist/rest-import-bundle.css examples/react-app/public/assets/rest-import-bundle.css",
-    "build:bundle": "webpack --color --config webpack/bundle.babel.js",
-    "dev": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack serve --config webpack/dev.babel.js"
+    "dev": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack serve --config webpack/dev.babel.js",
+    "build": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/stylesheets.babel.js &&  webpack --color --config webpack/bundle.babel.js && webpack --color --config webpack/bundle.config.babel.js && cp -f dist/rest-import-bundle.js examples/angular-app/src/assets/plugins/rest-import-bundle.js && cp -f dist/rest-import-bundle.css examples/angular-app/src/assets/plugins/rest-import-bundle.css && cp -f dist/rest-import-bundle.js examples/angular-app/src/assets/plugins/config-import-bundle.js && cp -f dist/rest-import-bundle.js examples/react-app/public/assets/rest-import-bundle.js && cp -f dist/rest-import-bundle.css examples/react-app/public/assets/rest-import-bundle.css && cp -f dist/rest-import-bundle.js examples/react-app/public/assets/config-import-bundle.js"
   },
   "eslintConfig": {
     "extends": [

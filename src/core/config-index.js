@@ -9,10 +9,9 @@ import win from "./window"
 // eslint-disable-next-line no-undef
 const { GIT_DIRTY, GIT_COMMIT, PACKAGE_VERSION, BUILD_TIME } = buildInfo
 
-export default function RestImport(opts) {
-
+export default function ConfigImport(opts) {
   win.versions = win.versions || {}
-  win.versions.RestImport = {
+  win.versions.ConfigImport = {
     version: PACKAGE_VERSION,
     gitRevision: GIT_COMMIT,
     gitDirty: GIT_DIRTY,
@@ -27,39 +26,25 @@ export default function RestImport(opts) {
     url: "",
     language: window.navigator.language,
     config: {},
-    configModal:false,
     providerConf: {},
-    urls: null,
-    layout: "BaseLayout",
-    maxDisplayedTags: null,
-    filter: null,
+    layout: "ConfigLayout",
     configs: {},
-    custom: {},
     requestInterceptor: (a => a),
     responseInterceptor: (a => a),
     queryConfigEnabled: false,
 
-    // Initial set of plugins ( TODO rename this, or refactor - we don't need presets _and_ plugins. Its just there for performance.
-    // Instead, we can compile the first plugin ( it can be a collection of plugins ), then batch the rest.
     presets: [
       ApisPreset
     ],
 
-    // Plugins; ( loaded after presets )
     plugins: [
     ],
 
     pluginsOptions: {
-      // Behavior during plugin registration. Can be :
-      // - legacy (default) : the current behavior for backward compatibility – last plugin takes precedence over the others
-      // - chain : chain wrapComponents when targeting the same core component
       pluginLoadType: "legacy"
     },
 
-    // Initial state
     initialState: {},
-
-    // Inline Plugin
     fn: {},
     components: {},
 
@@ -85,7 +70,6 @@ export default function RestImport(opts) {
     state: deepExtend({
       layout: {
         layout: constructorConfig.layout,
-        filter: constructorConfig.filter
       },
       spec: {
         spec: "",
@@ -182,9 +166,9 @@ export default function RestImport(opts) {
 }
 
 // Add presets
-RestImport.presets = {
+ConfigImport.presets = {
   apis: ApisPreset,
 }
 
 // All Plugins
-RestImport.plugins = AllPlugins
+ConfigImport.plugins = AllPlugins

@@ -8,8 +8,10 @@ import { Card, CardContent, CardMedia, Grid, IconButton, Link, Stack, Tooltip, T
 import React, { useEffect, useState } from 'react';
 import ConfigModel from './ConfigModel';
 import { useTranslation } from 'react-i18next';
-import Apicall from './common/apicall';
+import Apicall, { getProviderList } from './common/apicall';
 import { restImportConfigI } from './WebServiceModal'
+import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
+import { useDispatch, useSelector } from 'react-redux';
 export interface ProviderI {
     providerId: string
     authorizationUrl: string
@@ -33,38 +35,34 @@ export interface ScopeI {
     checked?: boolean;
 }
 
-export default function ProviderModal({ handleOpen, handleClose, onSelectedProvider, proxyObj }: { handleOpen: boolean, handleClose: () => void, onSelectedProvider: any, proxyObj: restImportConfigI }) {
+export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI }) {
     const { t: translate } = useTranslation();
+    const dispatch = useDispatch();
 
     const [openConfig, setopenConfig] = useState(false)
-    const [providers, setProviders] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] }])
     const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] })
     const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] }])
     const [defaultProviderIds, setDefaultProviderId] = useState([])
 
-    const handleSelectedProvider = (data: any) => {
-        onSelectedProvider(data)
-    }
+    const providers = useSelector((store: any) => store.slice.providerList)
 
     const handleOpenConfig = (provider: ProviderI | null) => {
         setcurrentProvider(provider)
         setopenConfig(true)
     }
-
     useEffect(() => {
         if (currentProvider?.accessTokenParamName) {
             handleClose()
-            onSelectedProvider(currentProvider)
+            dispatch(setSelectedProvider(currentProvider))
+            handleAuthorizationUrl()
+
         }
     }, [currentProvider])
 
-    const handleCloseConfig = () => {
-        setopenConfig(false)
-    }
-    const handleProviderList = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.getprovider;
+    const handleAuthorizationUrl = async () => {
+        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.authorizationUrl;
         const configProvider = {
-            url: url,
+            url: url + '/' + currentProvider?.providerId,
             method: "GET",
             headers: {
                 'Content-Type': 'application/json',
@@ -73,13 +71,23 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
         };
         const response: any = await Apicall(configProvider);
         if (response.status === 200) {
-            const sortedProviders = response.data.slice().sort();
-            setProviders(sortedProviders);
-
-        } else {
-            console.error("Received an unexpected response:", response);
+            const authorization_url = response.data
+            dispatch(setProviderAuthorizationUrl(authorization_url))
         }
+    }
 
+    const handleCloseConfig = () => {
+        setopenConfig(false)
+    }
+    const handleProviderList = async () => {
+        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.getprovider;
+        try {
+            const response = await getProviderList(url);
+            const sortedProviders = response.data;
+            dispatch(setproviderList(sortedProviders))
+        } catch (error) {
+            console.error('Error fetching provider list:', error);
+        }
     }
 
     const handleDefaultProviderList = async () => {
@@ -98,8 +106,7 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
             const default_provider_id = default_providers.map((item: { providerId: string; }) => item.providerId).filter((providerId: string) => providerId);
             setDefaultProviderId(default_provider_id)
             const allProvidersArray = providers.concat(default_providers);
-
-            const filtered_provider = allProvidersArray.reduce((filtered: any, current) => {
+            const filtered_provider = allProvidersArray.reduce((filtered: any, current: any) => {
                 const existing = filtered.find((item: { providerId: string; }) => item.providerId === current.providerId);
                 if (!existing || current.responseType === "token") {
                     return existing
@@ -148,7 +155,7 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
                     <Grid spacing={5} sx={{ width: '100%', ml: 0, mt: 0, mb: 2 }} container>
                         <Grid item md={3}>
                             <Card onClick={() => handleOpenConfig(null)} sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
-                                   <CardMedia
+                                <CardMedia
                                     sx={{ height: "35px", width: "35px", mt: 2 }}
                                     title={translate("ADD") + " " + translate("CUSTOM") + " " + translate("PROVIDER")}
                                 >   <AddCircleOutlineIcon
@@ -208,9 +215,6 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
                         handleClose={handleCloseConfig}
                         handleParentModalClose={handleClose}
                         providerConf={currentProvider}
-                        customProvider={providers}
-                        onSelectedProvider={handleSelectedProvider}
-                        onLoadProvider={handleProviderList}
                         proxyObj={proxyObj}
                     />
                 )
@@ -220,4 +224,6 @@ export default function ProviderModal({ handleOpen, handleClose, onSelectedProvi
         </>
     );
 }
+
+
 

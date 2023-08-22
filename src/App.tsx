@@ -1,7 +1,8 @@
 import { Stack } from '@mui/material'
 import WebServiceModal from './core/components/WebServiceModal'
 import { restImportConfigI } from './core/components/WebServiceModal'
-
+import { Provider } from 'react-redux'
+import appStore from './core/components/appStore/Store';
 
 export default function App() {
   const config: restImportConfigI = {
@@ -11,24 +12,24 @@ export default function App() {
       list_provider: "/get-default-provider",
       getprovider: "/getprovider",
       addprovider: "/addprovider",
+      authorizationUrl: "/authorizationUrl",
     },
-    default_proxy_state: "ON",
+    default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
     oAuthConfig: {
       base_path: "https://www.wavemakeronline.com/studio/services",
-      list_provider:
-        "/oauth2/providers/default",
-      getprovider:
-        "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers",
-      addprovider:
-        "/projects/WMPRJ2c91808888f5252401896880222516b1/oauth2/providers",
-    },
-  }
+      project_id: "",
+      list_provider: "/oauth2/providers/default",
+      getprovider: "", // /projects/{projectID}/oauth2/providers
+      addprovider: "", // /projects/{projectID}/oauth2/providers
+      authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+    }
+}
 
-  return (
-    <>
-      <Stack className='rest-import-ui'>
-        <WebServiceModal restImportConfig={config} language='en' />
-      </Stack>
-    </>
-  )
+return (
+  <Provider store={appStore}>
+    <Stack className='rest-import-ui'>
+      <WebServiceModal restImportConfig={config} language='en' />
+    </Stack>
+  </Provider>
+)
 }
