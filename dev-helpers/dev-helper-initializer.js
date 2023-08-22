@@ -63,14 +63,14 @@ window.onload = function () {
         addprovider: "/addprovider",
         authorizationUrl: "/authorizationUrl",
       },
-      default_proxy_state: "ON",
+      default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
       oAuthConfig: {
         base_path: "https://www.wavemakeronline.com/studio/services",
         project_id: "",
         list_provider: "/oauth2/providers/default",
-        getprovider: "",
-        addprovider: "",
-        authorizationUrl: "",
+        getprovider: "", // /projects/{projectID}/oauth2/providers
+        addprovider: "", // /projects/{projectID}/oauth2/providers
+        authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
       },
     },
     presets: [RestImportBundle.presets.apis, RestImportStandalonePreset],
