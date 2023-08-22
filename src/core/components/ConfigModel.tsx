@@ -21,7 +21,6 @@ import FallbackSpinner from './common/loader';
 export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI }) {
     const dispatch = useDispatch();
     const { t: translate } = useTranslation();
-    // const [customProviderList, setCustomProviderList] = useState<ProviderI[]>(customProvider)
     const [Flow, setFlow] = useState('AUTHORIZATION_CODE')
     const [sendTokenAs, setsendTokenAs] = useState('HEADER')
     const [PKCE, setPKCE] = useState(false)
@@ -278,10 +277,10 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     sx={{ width: '30em' }}
                                     value={
                                         providerConf
-                                            ? `https://www.wavemakeronline.com/studio/services/oauth2/${providerConf.providerId}/callback`
+                                            ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerConf.providerId}/callback`
                                             : providerId
-                                                ? `https://www.wavemakeronline.com/studio/services/oauth2/${providerId}/callback`
-                                                : `https://www.wavemakeronline.com/studio/services/oauth2/{providerId}/callback`
+                                                ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerId}/callback`
+                                                : proxyObj.oAuthConfig.base_path+`/oauth2/{providerId}/callback`
                                     }
                                     InputProps={{
                                         readOnly: !!providerConf,
@@ -292,10 +291,10 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     placeholder={translate('CALLBACK') + ' ' + translate('URL')}
                                 />
                                 <Tooltip onMouseLeave={handleTooltipMouseLeave} onClick={() => handleCopyClick(providerConf
-                                    ? `https://www.wavemakeronline.com/studio/services/oauth2/${providerConf.providerId}/callback`
+                                    ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerConf.providerId}/callback`
                                     : providerId
-                                        ? `https://www.wavemakeronline.com/studio/services/oauth2/${providerId}/callback`
-                                        : `https://www.wavemakeronline.com/studio/services/oauth2/{providerId}/callback`)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
+                                        ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerId}/callback`
+                                        : proxyObj.oAuthConfig.base_path+`/oauth2/{providerId}/callback`)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
                                     <IconButton>
                                         <ContentCopyIcon />
                                     </IconButton>

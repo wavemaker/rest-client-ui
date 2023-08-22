@@ -9,14 +9,6 @@ Rest Import UI includes a development server that provides hot module reloading 
 - git, any version
 - **Node.js >=16.13.2** and **npm >=8.1.2** are the minimum required versions that this repo runs on, but we recommend using the latest version of Node.js@16
 
-### Steps
-
-1. `git clone https://github.com/wavemaker/rest-client-ui.git`
-2. `cd rest-client-ui`
-3. `npm install`
-4. `npm start`
-5. Wait a bit
-6. Open http://localhost:3000/
 
 # Development
 
