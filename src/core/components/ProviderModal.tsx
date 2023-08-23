@@ -73,6 +73,8 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
         if (response.status === 200) {
             const authorization_url = response.data
             dispatch(setProviderAuthorizationUrl(authorization_url))
+        } else {
+            console.log("Received an unexpected response:", response);
         }
     }
 
@@ -121,7 +123,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
             const sortedProviders = filtered_provider.slice().sort((a: { providerId: string; }, b: { providerId: any; }) => a.providerId.localeCompare(b.providerId));
             setAllProvider(sortedProviders)
         } else {
-            console.error("Received an unexpected response:", response);
+            console.log("Received an unexpected response:", response);
         }
 
     }
@@ -224,6 +226,3 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
         </>
     );
 }
-
-
-
