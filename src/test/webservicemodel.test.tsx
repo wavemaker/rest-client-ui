@@ -1,4 +1,4 @@
-import { getByRole, render, screen, within, fireEvent, findByRole } from '@testing-library/react';
+import { getByRole, render, screen, within, fireEvent, findByRole, getRoles } from '@testing-library/react';
 import user from '@testing-library/user-event'
 import WebServiceModal from '../core/components/WebServiceModal'
 import '@testing-library/jest-dom';
@@ -43,7 +43,8 @@ describe("Web Service Modal", () => {
     it("Body Params enabled for POST method", async () => {
         user.setup()
         render(<Provider store={appStore}><WebServiceModal {...mockEmptyProps} /></Provider >);
-        const httpMethodDropdown = getByRole(screen.getByTestId("http-method"), "button")
+        // const httpMethodDropdown = getByRole(screen.getByTestId("http-method"), "button")
+        const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
         await user.click(httpMethodDropdown);
         const postOption = await screen.findByRole('option', { name: /post/i })
         expect(postOption).toBeInTheDocument()
@@ -69,7 +70,7 @@ describe("Web Service Modal", () => {
     it("POST request with basic authentication", async () => {
         user.setup()
         render(<Provider store={appStore}><WebServiceModal {...mockEmptyProps} /></Provider >);
-        const httpMethodDropdown = getByRole(screen.getByTestId("http-method"), "button")
+        const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
         await user.click(httpMethodDropdown);
         const postOption = await screen.findByRole('option', { name: /post/i })
         expect(postOption).toBeInTheDocument()
@@ -77,7 +78,7 @@ describe("Web Service Modal", () => {
         expect(httpMethodDropdown).toHaveTextContent("POST")
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.postLogin)
-        const httpAuthDropdown = getByRole(screen.getByTestId("http-auth"), "button")
+        const httpAuthDropdown = within(screen.getByTestId("http-auth")).getByRole("button")
         await user.click(httpAuthDropdown);
         const basicAuthOption = await screen.findByRole('option', { name: /basic/i })
         expect(basicAuthOption).toBeInTheDocument()
@@ -99,7 +100,7 @@ describe("Web Service Modal", () => {
     it("POST request with Body params", async () => {
         user.setup()
         render(<Provider store={appStore}><WebServiceModal {...mockEmptyProps} /></Provider >);
-        const httpMethodDropdown = getByRole(screen.getByTestId("http-method"), "button")
+        const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
         await user.click(httpMethodDropdown);
         const postOption = await screen.findByRole('option', { name: /post/i })
         expect(postOption).toBeInTheDocument()
@@ -126,7 +127,7 @@ describe("Web Service Modal", () => {
     it("Sending Header Parameters in the Request", async () => {
         user.setup()
         render(<Provider store={appStore}><WebServiceModal {...mockEmptyProps} /></Provider >);
-        const httpMethodDropdown = getByRole(screen.getByTestId("http-method"), "button")
+        const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
         await user.click(httpMethodDropdown);
         const postOption = await screen.findByRole('option', { name: /post/i })
         expect(postOption).toBeInTheDocument()
@@ -139,11 +140,11 @@ describe("Web Service Modal", () => {
         const combobox = await screen.findByRole('combobox')
         expect(combobox).toBeInTheDocument()
         await user.type(combobox, testData.headerParams.label)
-        const type = await findByRole(screen.getByTestId('param-type'), 'button')
+        const type = await within(screen.getByTestId('param-type')).findByRole('button')
         expect(type).toBeInTheDocument()
         await user.click(type)
         await user.click(await screen.findByText(testData.headerParams.type))
-        const paramValueTextField = await findByRole(screen.getByTestId('param-value'), 'textbox')
+        const paramValueTextField = await within(screen.getByTestId('param-value')).findByRole('textbox')
         await user.type(paramValueTextField, testData.headerParams.value)
         const bodyParams = screen.getByRole('tab', { name: /body params/i })
         expect(bodyParams).toBeEnabled()
@@ -173,14 +174,12 @@ describe("Web Service Modal", () => {
         urlTextField.focus()
         urlTextField.blur()
         await user.click(queryParams)
-        screen.logTestingPlaygroundURL()
         const queryNames = screen.getAllByRole('combobox');
         console.log("Query Name length -> " + queryNames.length)
-        screen.debug(queryNames)
         const queryValueContainer = screen.getAllByTestId("param-value")
         console.log("Container length -> " + queryValueContainer.length)
         queryValueContainer.forEach((container) => {
-            queryValueTextField.push(getByRole(container, "textbox"))
+            queryValueTextField.push(within(container).getByRole("textbox"))
         })
         console.log("Query Value field length -> " + queryValueTextField.length)
         Object.keys(testData.queryParams).forEach((key, index) => {
@@ -202,7 +201,7 @@ describe("Web Service Modal", () => {
         user.setup()
         const pathParam = "userId"
         render(<Provider store={appStore}><WebServiceModal {...mockEmptyProps} /></Provider >);
-        const httpMethodDropdown = getByRole(screen.getByTestId("http-method"), "button")
+        const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
         await user.click(httpMethodDropdown);
         const putOption = await screen.findByRole('option', { name: /put/i })
         expect(putOption).toBeInTheDocument()
@@ -217,7 +216,7 @@ describe("Web Service Modal", () => {
         await user.click(pathParams)
         const pathParamLabelField = await screen.findByTestId('path-param-label')
         expect(pathParamLabelField).toHaveTextContent(pathParam)
-        const pathParamValueField = await findByRole(screen.getByTestId('path-param-value'), 'textbox')
+        const pathParamValueField = await within(screen.getByTestId('path-param-value')).findByRole('textbox')
         fireEvent.change(pathParamValueField, { target: { value: testData.user.id } })
         const bodyParams = screen.getByRole('tab', { name: /body params/i })
         expect(bodyParams).toBeEnabled()
@@ -238,7 +237,7 @@ describe("Web Service Modal", () => {
         user.setup()
         const pathParam = "userId"
         render(<Provider store={appStore}><WebServiceModal {...mockEmptyProps} /></Provider >);
-        const httpMethodDropdown = getByRole(screen.getByTestId("http-method"), "button")
+        const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
         await user.click(httpMethodDropdown);
         const putOption = await screen.findByRole('option', { name: /delete/i })
         expect(putOption).toBeInTheDocument()
@@ -253,7 +252,7 @@ describe("Web Service Modal", () => {
         await user.click(pathParams)
         const pathParamLabelField = await screen.findByTestId('path-param-label')
         expect(pathParamLabelField).toHaveTextContent(pathParam)
-        const pathParamValueField = await findByRole(screen.getByTestId('path-param-value'), 'textbox')
+        const pathParamValueField = await within(screen.getByTestId('path-param-value')).findByRole('textbox')
         fireEvent.change(pathParamValueField, { target: { value: testData.user.id } })
         const testBtn = screen.getByRole('button', { name: /test/i })
         expect(testBtn).toBeInTheDocument()
