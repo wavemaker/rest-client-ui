@@ -359,7 +359,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                 }
                 if (httpAuth === "OAUTH2.0") {
                     const clientId = selectedProvider.clientId;
-                    const redirectUri = `http://localhost:4000/oauth2/${selectedProvider.providerId}/callback`;
+                    const redirectUri = restImportConfig?.proxy_conf?.base_path+`/oauth2/${selectedProvider.providerId}/callback`;
                     const responseType = "code";
                     const state = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExODA5MTE1MzI2ZGYifQ==";
                     const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
