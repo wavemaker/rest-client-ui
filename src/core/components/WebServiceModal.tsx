@@ -5,7 +5,7 @@ import {
     TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button,
     TextareaAutosize
 } from '@mui/material'
-import ProviderModal, { ProviderI } from './ProviderModal'
+import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
 import {
     findDuplicateObjects, findDuplicatesAcrossArrays, getSubstring, httpStatusCodes, isValidUrl, removeDuplicatesByComparison,
@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ConfigModel from './ConfigModel'
 import { useSelector } from 'react-redux'
+
 interface TabPanelProps {
     children?: ReactNode
     index: number
@@ -54,12 +55,13 @@ export interface restImportConfigI {
 
 interface APII {
     base_path: string,
-    proxy_path?: string,
+    proxy_path: string,
     list_provider: string,
     getprovider: string,
     addprovider: string,
     authorizationUrl: string,
-    project_id?: string
+    project_id?: string,
+    restservices: string
 }
 function CustomTabPanel(props: TabPanelProps) {
     const { children, value, index, ...other } = props
@@ -135,14 +137,15 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const [loading, setloading] = useState(false)
     const [providerId, setProviderId] = useState('')
     const [configOpen, setConfigOpen] = useState(false)
+    const [btnDisable, setBtnDisable] = useState(false)
 
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
 
 
     useEffect(() => {
-        console.log(selectedProvider)
         setProviderId(selectedProvider.providerId)
+        setBtnDisable(false)
     }, [selectedProvider])
 
     useEffect(() => {
@@ -215,6 +218,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         setmultipartParams(data)
     }
     const handleChangehttpAuth = (event: SelectChangeEvent) => {
+        if (event.target.value == 'OAUTH2.0') {
+            setBtnDisable(true)
+        }
         sethttpAuth(event.target.value as any)
     }
     const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => {
@@ -352,8 +358,41 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                         return handleToastError("Please enter a password for basic authentication")
                 }
                 if (httpAuth === "OAUTH2.0") {
-                    window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600")
+                    const clientId = selectedProvider.clientId;
+                    const redirectUri = `http://localhost:4000/oauth2/${selectedProvider.providerId}/callback`;
+                    const responseType = "code";
+                    const state = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExODA5MTE1MzI2ZGYifQ==";
+                    const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
+                    const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
+                    console.log(authUrl);
+                    // providerAuthURL
                     setloading(true)
+                    const childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                    if (childWindow) {
+                        const interval = setInterval(() => {
+                            if (childWindow.closed) {
+                                clearInterval(interval);
+                                handleRestAPI(null)
+                            }
+                        }, 1000);
+
+                        window.addEventListener('message', async event => {
+                            const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
+                            if (event.origin === basePath && event.data.accessToken) {
+                                clearInterval(interval);
+                                const token = event.data.accessToken
+                                setTimeout(() => {
+                                    handleRestAPI(token);
+                                }, 100);
+
+                            } else {
+                                console.log(event.data.error)
+                                setloading(false)
+                            }
+                        });
+                    }
+
+                    return
                 }
                 headerParams.forEach((data, index) => {
                     if (httpAuth === "BASIC" && index === 0)
@@ -376,8 +415,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     method: httpMethod,
                     data: body
                 }
+                const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
                 const configWProxy: AxiosRequestConfig = {
-                    url: "http://localhost:5000/restimport",
+                    url: url,
                     data: {
                         "endpointAddress": requestAPI,
                         "method": httpMethod,
@@ -398,41 +438,15 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                 handleResponse(response)
                 setloading(false)
             } else
-                body = bodyParams
-            const configWOProxy: AxiosRequestConfig = {
-                url: requestAPI,
-                headers: header,
-                method: httpMethod,
-                data: body
-            }
-            const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : '';
-            const configWProxy: AxiosRequestConfig = {
-                url: url,
-                data: {
-                    "endpointAddress": requestAPI,
-                    "method": httpMethod,
-                    "contentType": contentType,
-                    "requestBody": body,
-                    "headers": header,
-                    "authDetails": null
-                },
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                withCredentials: true
-            }
-            setloading(true)
-            const config = useProxy ? configWProxy : configWOProxy
-            const response: any = await Apicall(config)
-            handleResponse(response)
-            setloading(false)
+                handleToastError(translate("VALID_URL_ALERT"))
         }
         else
             handleToastError(translate("VALID_URL_ALERT"))
     }
     function handleResponse(response: any): void {
         let responseValue;
+        console.log(useProxy)
+        console.log(response.status)
         if (useProxy) {
             if (response.status >= 200 && response.status < 300)
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
@@ -452,11 +466,48 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         if (responseValue.data === undefined || responseValue.headers === undefined) {
             responseValue = { data: response.message, status: response.code, headers: {} }
         }
+        console.log(responseValue)
         setresponse(responseValue as any)
     }
     const handleCloseConfig = () => {
         setConfigOpen(false)
     }
+
+    const handleRestAPI = async (token: string | null) => {
+        const configWOProxy: AxiosRequestConfig = {
+            url: apiURL,
+            headers: {
+                Authorization: `Bearer ` + token,
+            },
+            method: httpMethod,
+            data: bodyParams
+        }
+        const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
+        const configWProxy: AxiosRequestConfig = {
+            url: url,
+            data: {
+                "endpointAddress": apiURL,
+                "method": httpMethod,
+                "contentType": contentType,
+                "requestBody": bodyParams,
+                "headers": {
+                    Authorization: `Bearer ` + token,
+                },
+                "authDetails": null
+            },
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            withCredentials: true
+        }
+        const config = useProxy ? configWProxy : configWOProxy
+        const response: any = await Apicall(config)
+        handleResponse(response)
+        setloading(false)
+    }
+
+
 
     return (
         <>
@@ -497,7 +548,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 getPathParams()
                                 handleQueryChange()
                             }} autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
-                            <Button onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
+                            <Button onClick={handleTestClick} disabled={btnDisable} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
                     </Grid>
                     <Grid item md={12}>

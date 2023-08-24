@@ -18,7 +18,7 @@ import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } fro
 import { useDispatch, useSelector } from 'react-redux';
 import FallbackSpinner from './common/loader';
 
-export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI }) {
+export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj, configModel }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean }) {
     const dispatch = useDispatch();
     const { t: translate } = useTranslation();
     const [Flow, setFlow] = useState('AUTHORIZATION_CODE')
@@ -38,8 +38,13 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [alertMsg, setAlertMsg] = useState('')
     const [provider_auth_url, setProviderAuthURL] = useState('')
     const [loading, setloading] = useState(false)
+    const [basePath, setBasePath] = useState('')
 
     const customProviderList = useSelector((store: any) => store.slice.providerList)
+    useEffect(() => {
+        const base_path = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path: proxyObj?.oAuthConfig?.base_path
+        setBasePath(base_path)
+    }, [proxyObj])
 
     useEffect(() => {
         dispatch(setProviderAuthorizationUrl(provider_auth_url))
@@ -142,18 +147,24 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     }
 
     const handleValidation = async () => {
+       
+        const providerExists = customProviderList.some((provider: { providerId: string; }) => provider.providerId === providerId);
+
         setShowErrorAlert(true);
         if (!providerId) {
-            setAlertMsg('Provider Id')
-        } else if (!authorizationUrl) {
-            setAlertMsg('Authorization URL')
+            setAlertMsg('Provider Id is required')
+        } else if (providerExists && !providerConf) {
+            setAlertMsg(`Provider ("${providerId}") already exists!`)
+        }  else if (!authorizationUrl) {
+            setAlertMsg('Authorization URL is required')
         } else if (!accessTokenUrl) {
-            setAlertMsg('Access Token URL')
+            setAlertMsg('Access Token URL is required')
         } else if (!clientId) {
-            setAlertMsg('Client ID')
+            setAlertMsg('Client ID is required')
         } else if (!clientSecret && !PKCE) {
-            setAlertMsg('Client Secret')
+            setAlertMsg('Client Secret is required')
         } else {
+            
             setloading(true)
             setShowErrorAlert(false);
             const scopes_val: { name: string; value: string }[] = scopes.filter(item => item.checked).map(({ checked, ...rest }) => rest);
@@ -176,7 +187,9 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 sendAccessTokenAs: sendTokenAs,
                 ...(PKCE ? { oAuth2Pkce: { enabled: PKCE, challengeMethod: codeMethod } } : {})
             }
-            const newProviderList = [...customProviderList, newProvider];
+            const filteredProviders = customProviderList.filter((provider: { providerId: string; }) => provider.providerId !== providerId);
+            console.log(filteredProviders)
+            const newProviderList = [...filteredProviders, newProvider];
             const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.addprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.addprovider;
             const configWProvider: AxiosRequestConfig = {
                 url: url,
@@ -194,7 +207,9 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                     position: 'top-right',
                     duration: 5000
                 })
-                handleProviderList()
+                if(!configModel){
+                    handleProviderList()
+                }
                 handleAuthorizationUrl()
                 dispatch(setSelectedProvider(newProvider))
                 handleClose()
@@ -253,7 +268,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
                     {showErrorAlert && (
-                        <Alert sx={{ py: 0 }} severity="error">{alertMsg} is required </Alert>
+                        <Alert sx={{ py: 0 }} severity="error">{alertMsg} </Alert>
                     )}
                     <Grid spacing={2} mt={0.3} className='cmnflx' sx={{ width: '100%' }} container>
 
@@ -277,10 +292,10 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     sx={{ width: '30em' }}
                                     value={
                                         providerConf
-                                            ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerConf.providerId}/callback`
+                                            ? basePath + `/oauth2/${providerConf.providerId}/callback`
                                             : providerId
-                                                ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerId}/callback`
-                                                : proxyObj.oAuthConfig.base_path+`/oauth2/{providerId}/callback`
+                                                ? basePath + `/oauth2/${providerId}/callback`
+                                                : basePath + `/oauth2/{providerId}/callback`
                                     }
                                     InputProps={{
                                         readOnly: !!providerConf,
@@ -291,10 +306,10 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     placeholder={translate('CALLBACK') + ' ' + translate('URL')}
                                 />
                                 <Tooltip onMouseLeave={handleTooltipMouseLeave} onClick={() => handleCopyClick(providerConf
-                                    ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerConf.providerId}/callback`
+                                    ? basePath + `/oauth2/${providerConf.providerId}/callback`
                                     : providerId
-                                        ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerId}/callback`
-                                        : proxyObj.oAuthConfig.base_path+`/oauth2/{providerId}/callback`)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
+                                        ? basePath + `/oauth2/${providerId}/callback`
+                                        : basePath + `/oauth2/{providerId}/callback`)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
                                     <IconButton>
                                         <ContentCopyIcon />
                                     </IconButton>
