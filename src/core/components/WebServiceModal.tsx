@@ -3,9 +3,10 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, Link, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table,
     TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button,
-    TextareaAutosize
+    TextareaAutosize,
+    Alert
 } from '@mui/material'
-import ProviderModal, { ProviderI } from './ProviderModal'
+import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
 import {
     findDuplicateObjects, findDuplicatesAcrossArrays, getSubstring, httpStatusCodes, isValidUrl, removeDuplicatesByComparison,
@@ -49,7 +50,11 @@ export interface restImportConfigI {
     contentType?: string,
     proxy_conf: APII,
     default_proxy_state: string,
-    oAuthConfig: APII
+    oAuthConfig: APII,
+    error: {
+        errorMethod: "default" | "toast" | "customFunction",
+        errorFunction: (msg: string) => void
+    }
 }
 
 interface APII {
@@ -105,10 +110,6 @@ const defaultContentTypes = [
     },
 ]
 
-export function handleToastError(message: string) {
-    toast.error(message)
-}
-
 export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const defaultValueforHandQParams = { name: '', value: '', type: '' }
     const { t: translate, i18n } = useTranslation();
@@ -135,7 +136,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const [loading, setloading] = useState(false)
     const [providerId, setProviderId] = useState('')
     const [configOpen, setConfigOpen] = useState(false)
-
+    const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
 
@@ -151,6 +152,18 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
 
+    function handleToastError(message: string) {
+        if (restImportConfig.error.errorMethod === 'default') {
+            setAlertMsg(message)
+            return setTimeout(() => {
+                setAlertMsg(false)
+            }, 5000);
+        }
+        if (restImportConfig.error.errorMethod === 'toast')
+            return toast.error(message)
+        if (restImportConfig.error.errorMethod === 'customFunction')
+            return restImportConfig.error.errorFunction(message)
+    }
 
     const getPathParams = () => {
         let paths = getSubstring(apiURL.split("?")[0], "{", "}")
@@ -460,7 +473,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
 
     return (
         <>
-
             <Stack className='rest-import-ui'>
                 {loading && <FallbackSpinner />}
                 <Toaster position='top-right' />
@@ -477,6 +489,11 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 <Link sx={{ color: 'gray' }}>{translate('HELP')}</Link>
                             </Stack>
                         </Stack>
+                    </Grid>
+                    <Grid item md={12}>
+                        {alertMsg && (
+                            <Alert sx={{ py: 0 }} severity="error">{alertMsg} is required </Alert>
+                        )}
                     </Grid>
                     <Grid item md={12}>
                         <Stack spacing={5} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
@@ -600,7 +617,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 </Grid>
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={1}>
-                                <HeaderAndQueryTable from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                <HeaderAndQueryTable handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={2}>
                                 <Stack spacing={1} mt={2} ml={1}>
@@ -641,7 +658,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 </Stack>
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={3}>
-                                <HeaderAndQueryTable from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                <HeaderAndQueryTable handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={4}>
                                 {pathParams.length > 0 ? <TableContainer component={Paper}>

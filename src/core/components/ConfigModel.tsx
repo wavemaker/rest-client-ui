@@ -43,6 +43,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     useEffect(() => {
         dispatch(setProviderAuthorizationUrl(provider_auth_url))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [provider_auth_url])
 
     useEffect(() => {
@@ -69,6 +70,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             });
         })
         setscopes(scope_value)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleOpen])
 
     const handleChangePKCE = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,7 +258,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         <Alert sx={{ py: 0 }} severity="error">{alertMsg} is required </Alert>
                     )}
                     <Grid spacing={2} mt={0.3} className='cmnflx' sx={{ width: '100%' }} container>
-
                         <Grid item md={3}>
                             <Typography>{translate('PROVIDER') + " " + translate('ID')} <span className='text-danger'>*</span>
                             </Typography>
@@ -277,10 +278,10 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     sx={{ width: '30em' }}
                                     value={
                                         providerConf
-                                            ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerConf.providerId}/callback`
+                                            ? proxyObj.oAuthConfig.base_path + `/oauth2/${providerConf.providerId}/callback`
                                             : providerId
-                                                ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerId}/callback`
-                                                : proxyObj.oAuthConfig.base_path+`/oauth2/{providerId}/callback`
+                                                ? proxyObj.oAuthConfig.base_path + `/oauth2/${providerId}/callback`
+                                                : proxyObj.oAuthConfig.base_path + `/oauth2/{providerId}/callback`
                                     }
                                     InputProps={{
                                         readOnly: !!providerConf,
@@ -291,10 +292,10 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     placeholder={translate('CALLBACK') + ' ' + translate('URL')}
                                 />
                                 <Tooltip onMouseLeave={handleTooltipMouseLeave} onClick={() => handleCopyClick(providerConf
-                                    ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerConf.providerId}/callback`
+                                    ? proxyObj.oAuthConfig.base_path + `/oauth2/${providerConf.providerId}/callback`
                                     : providerId
-                                        ? proxyObj.oAuthConfig.base_path+`/oauth2/${providerId}/callback`
-                                        : proxyObj.oAuthConfig.base_path+`/oauth2/{providerId}/callback`)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
+                                        ? proxyObj.oAuthConfig.base_path + `/oauth2/${providerId}/callback`
+                                        : proxyObj.oAuthConfig.base_path + `/oauth2/{providerId}/callback`)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
                                     <IconButton>
                                         <ContentCopyIcon />
                                     </IconButton>

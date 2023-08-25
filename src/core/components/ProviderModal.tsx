@@ -38,12 +38,10 @@ export interface ScopeI {
 export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI }) {
     const { t: translate } = useTranslation();
     const dispatch = useDispatch();
-
     const [openConfig, setopenConfig] = useState(false)
     const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] })
     const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] }])
     const [defaultProviderIds, setDefaultProviderId] = useState([])
-
     const providers = useSelector((store: any) => store.slice.providerList)
 
     const handleOpenConfig = (provider: ProviderI | null) => {
@@ -55,8 +53,8 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
             handleClose()
             dispatch(setSelectedProvider(currentProvider))
             handleAuthorizationUrl()
-
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentProvider])
 
     const handleAuthorizationUrl = async () => {
@@ -75,7 +73,6 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
             dispatch(setProviderAuthorizationUrl(authorization_url))
         }
     }
-
     const handleCloseConfig = () => {
         setopenConfig(false)
     }
@@ -89,7 +86,6 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
             console.error('Error fetching provider list:', error);
         }
     }
-
     const handleDefaultProviderList = async () => {
         const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.list_provider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.list_provider;
         const configProvider = {
@@ -116,22 +112,22 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                         : [...filtered, current];
                 }
                 return filtered;
-            }, []);
-
+            }, [])
             const sortedProviders = filtered_provider.slice().sort((a: { providerId: string; }, b: { providerId: any; }) => a.providerId.localeCompare(b.providerId));
             setAllProvider(sortedProviders)
         } else {
             console.error("Received an unexpected response:", response);
         }
-
     }
 
     useEffect(() => {
         handleProviderList()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
         handleDefaultProviderList()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [providers])
 
     return (
@@ -170,7 +166,6 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                             </Card>
                         </Grid>
                         {allProvider.map((provider) =>
-
                             <Grid item md={3} key={provider.providerId}>
                                 <Card title={provider.providerId} onClick={() => handleOpenConfig(provider)} sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
                                     <CardMedia
@@ -184,8 +179,6 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                                             alt={provider.providerId}
                                             style={{ height: "35px" }}
                                         />
-
-
                                     </CardMedia>
                                     <CardContent>
                                         <Typography
@@ -200,14 +193,12 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                                         >
                                             {provider.providerId}
                                         </Typography>
-
                                     </CardContent>
                                 </Card>
                             </Grid>)}
                     </Grid>
                 </DialogContent>
             </Dialog>
-
             {
                 !currentProvider?.responseType && (
                     <ConfigModel
@@ -219,8 +210,6 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                     />
                 )
             }
-
-
         </>
     );
 }

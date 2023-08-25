@@ -22,14 +22,20 @@ export default function App() {
       getprovider: "", // /projects/{projectID}/oauth2/providers
       addprovider: "", // /projects/{projectID}/oauth2/providers
       authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+    },
+    error: {
+      errorFunction: (msg: string) => {
+        alert(msg)
+      },
+      errorMethod: "default",
     }
-}
+  }
 
-return (
-  <Provider store={appStore}>
-    <Stack className='rest-import-ui'>
-      <WebServiceModal restImportConfig={config} language='en' />
-    </Stack>
-  </Provider>
-)
+  return (
+    <Provider store={appStore}>
+      <Stack className='rest-import-ui'>
+        <WebServiceModal restImportConfig={config} language='en' />
+      </Stack>
+    </Provider>
+  )
 }
