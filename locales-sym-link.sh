@@ -1,5 +1,5 @@
-mkdir src/jsx/locales
-cd src/jsx/locales
+mkdir -p ./src/jsx/locales
+cd ./src/jsx/locales
 
 ln -s ../../../locales/da.json da.json
 ln -s ../../../locales/de.json de.json
