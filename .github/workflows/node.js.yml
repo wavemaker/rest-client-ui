@@ -27,7 +27,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Create Symbolic Link For Locales
       run: |
-        .locales-sym-link.sh
+        ./locales-sym-link.sh
       shell: bash 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
