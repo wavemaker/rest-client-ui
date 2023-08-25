@@ -1,4 +1,4 @@
-md -p src/jsx/locales
+mkdir src/jsx/locales
 cd src/jsx/locales
 
 ln -s ../../../locales/da.json da.json
