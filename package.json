@@ -47,8 +47,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "dev": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack serve --config webpack/dev.babel.js",
-    "build": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/stylesheets.babel.js &&  webpack --color --config webpack/bundle.babel.js && webpack --color --config webpack/bundle.config.babel.js && cp -f dist/rest-import-bundle.js examples/angular-app/src/assets/plugins/rest-import-bundle.js && cp -f dist/rest-import-bundle.css examples/angular-app/src/assets/plugins/rest-import-bundle.css && cp -f dist/rest-import-bundle.js examples/angular-app/src/assets/plugins/config-import-bundle.js && cp -f dist/rest-import-bundle.js examples/react-app/public/assets/rest-import-bundle.js && cp -f dist/rest-import-bundle.css examples/react-app/public/assets/rest-import-bundle.css && cp -f dist/rest-import-bundle.js examples/react-app/public/assets/config-import-bundle.js",
+    "dev": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && cp -r src/locales src/jsx && webpack serve --config webpack/dev.babel.js",
+    "build": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && cp -r src/locales src/jsx && webpack --color --config webpack/stylesheets.babel.js &&  webpack --color --config webpack/bundle.babel.js && webpack --color --config webpack/bundle.config.babel.js && cp -f dist/rest-import-bundle.js examples/angular-app/src/assets/plugins/rest-import-bundle.js && cp -f dist/rest-import-bundle.css examples/angular-app/src/assets/plugins/rest-import-bundle.css && cp -f dist/rest-import-bundle.js examples/angular-app/src/assets/plugins/config-import-bundle.js && cp -f dist/rest-import-bundle.js examples/react-app/public/assets/rest-import-bundle.js && cp -f dist/rest-import-bundle.css examples/react-app/public/assets/rest-import-bundle.css && cp -f dist/rest-import-bundle.js examples/react-app/public/assets/config-import-bundle.js",
     "test": "jest src/test"
   },
   "eslintConfig": {
