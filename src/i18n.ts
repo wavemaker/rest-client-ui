@@ -3,19 +3,19 @@ import { initReactI18next } from "react-i18next";
 
 export const resources = {
   da: {
-    translation: require('../locales/da.json')
+    translation: require('./locales/da.json')
   },
   de: {
-    translation: require('../locales/de.json')
+    translation: require('./locales/de.json')
   },
   en: {
-    translation: require('../locales/en.json')
+    translation: require('./locales/en.json')
   },
   es: {
-    translation: require('../locales/es.json')
+    translation: require('./locales/es.json')
   },
   fr: {
-    translation: require('../locales/fr.json')
+    translation: require('./locales/fr.json')
   },
 };
 const defaultLanguage = 'en';
