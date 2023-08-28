@@ -4,7 +4,6 @@
 /node_modules
 /.pnp
 .pnp.js
-/src/jsx/
 
 # testing
 /coverage
@@ -14,7 +13,9 @@
 
 #jsx
 /src/jsx/core/
-/src/jsx/*.json
+/src/jsx/*.js
+/src/jsx/*.jsx
+/src/jsx/test/
 
 # misc
 .DS_Store
