@@ -145,7 +145,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
 
     useEffect(() => {
         console.log(selectedProvider)
-        setProviderId(selectedProvider.providerId)
+        setProviderId(selectedProvider.providerId) 
     }, [selectedProvider])
 
     useEffect(() => {
