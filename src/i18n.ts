@@ -1,7 +1,7 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
-const resources = {
+export const resources = {
   da: {
     translation: require('./locales/da.json')
   },
@@ -18,7 +18,7 @@ const resources = {
     translation: require('./locales/fr.json')
   },
 };
-const defaultLanguage = 'en'; 
+const defaultLanguage = 'en';
 i18n
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
@@ -26,8 +26,8 @@ i18n
     lng: window.navigator.language, // default language
     fallbackLng: defaultLanguage,
     interpolation: {
-      escapeValue: false 
+      escapeValue: false
     }
   });
 
-  export default i18n;
+export default i18n;
