@@ -8,7 +8,7 @@ import Paper from '@mui/material/Paper';
 import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, Stack, TextField } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 import { findDuplicateObjects, findDuplicatesAcrossArrays, getCurrentDateTime } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
@@ -287,7 +287,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                 <Stack className='cmnflx'>
                                     <FormControl size='small' sx={{ minWidth: 200 }}>
                                         <InputLabel>{translate("SELECT") + " " + translate("TYPE")}</InputLabel>
-                                        <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")}>
+                                        <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
                                             <ListSubheader>{translate("UI_TYPES")}</ListSubheader>
                                             {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                             <ListSubheader>{translate("SERVER_SIDE") + " " + translate("PROPERTIES")}</ListSubheader>
@@ -299,7 +299,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                 </Stack>
                             </TableCell>
                             <TableCell align='center'>
-                                <TextField size='small' onBlur={() => handleOnBlurTestValue()} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
+                                <TextField data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue()} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
                             </TableCell>
                             <TableCell align='center'>
                                 {index === value.length - 1 ? <AddIcon onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}

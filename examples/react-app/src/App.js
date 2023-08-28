@@ -12,6 +12,26 @@ function App() {
     if (fullScreenView) {
       window.RestImport({
         dom_id: "#full-screen",
+        language: 'en',
+        config: {
+          proxy_conf: {
+            base_path: "http://localhost:5000",
+            proxy_path: "/restimport",
+            list_provider: "/get-default-provider",
+            getprovider: "/getprovider",
+            addprovider: "/addprovider",
+            authorizationUrl: "/authorizationUrl",
+          },
+          default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
+          oAuthConfig: {
+            base_path: "https://www.wavemakeronline.com/studio/services",
+            project_id: "",
+            list_provider: "/oauth2/providers/default",
+            getprovider: "", // /projects/{projectID}/oauth2/providers
+            addprovider: "", // /projects/{projectID}/oauth2/providers
+            authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+          }
+        },
       });
     }
   }, [fullScreenView]);
