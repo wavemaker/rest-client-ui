@@ -412,7 +412,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                             <TableCell align='center'>
                                 <FormControl size='small' sx={{ minWidth: 200 }}>
                                     <InputLabel>{translate('SELECT') + " " + translate('TYPE')}</InputLabel>
-                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')}>
+                                    <Select sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }} onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')}>
                                         <MenuItem value={'file'}>{translate("FILE")}</MenuItem>
                                         <MenuItem value={'text'}>{translate("TEXT")}</MenuItem>
                                         <MenuItem value={'plaintext'}>{translate("Text(Text/Plain)")}</MenuItem>

@@ -478,7 +478,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         <>
             <Stack className='rest-import-ui'>
                 {loading && <FallbackSpinner />}
-                {typeof window !== 'undefined' && typeof window.matchMedia === 'function' && <Toaster position='top-right' />}
+                <Toaster position='top-right' />
                 <Grid gap={5} p={2} className='cmnflx' container>
                     <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
                         <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
@@ -651,8 +651,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                                 </Tooltip>
                                             </Stack> :
                                                 <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
-                                                    <IconButton>
-                                                        <AddIcon onClick={() => setaddCustomType(true)} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                    <IconButton onClick={() => setaddCustomType(true)}>
+                                                        <AddIcon sx={{ cursor: 'pointer', color: 'black' }} />
                                                     </IconButton>
                                                 </Tooltip>}
                                         </Stack>
