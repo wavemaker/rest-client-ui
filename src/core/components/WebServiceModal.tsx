@@ -53,7 +53,8 @@ export interface restImportConfigI {
     oAuthConfig: APII,
     error: {
         errorMethod: "default" | "toast" | "customFunction",
-        errorFunction: (msg: string) => void
+        errorFunction: (msg: string) => void,
+        errorMessageTimeout: number
     }
 }
 
@@ -157,7 +158,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             setAlertMsg(message)
             return setTimeout(() => {
                 setAlertMsg(false)
-            }, 5000);
+            }, restImportConfig.error.errorMessageTimeout);
         }
         if (restImportConfig.error.errorMethod === 'toast')
             return toast.error(message)
