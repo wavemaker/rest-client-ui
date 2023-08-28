@@ -1,4 +1,4 @@
-import { getByRole, render, screen, within, fireEvent, findByRole, getRoles } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import user from '@testing-library/user-event'
 import WebServiceModal from '../core/components/WebServiceModal'
 import '@testing-library/jest-dom';
@@ -178,7 +178,7 @@ describe("Web Service Modal", () => {
         console.log("Query Name length -> " + queryNames.length)
         const queryValueContainer = screen.getAllByTestId("param-value")
         console.log("Container length -> " + queryValueContainer.length)
-        queryValueContainer.forEach((container) => {
+        queryValueContainer.forEach((container: any) => {
             queryValueTextField.push(within(container).getByRole("textbox"))
         })
         console.log("Query Value field length -> " + queryValueTextField.length)

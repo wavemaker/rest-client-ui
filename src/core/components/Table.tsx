@@ -12,7 +12,7 @@ import { ChangeEvent } from 'react';
 import { findDuplicateObjects, findDuplicatesAcrossArrays, getCurrentDateTime } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
-import { PathParamsI, handleToastError } from './WebServiceModal';
+import { PathParamsI } from './WebServiceModal';
 import { useTranslation } from 'react-i18next';
 
 export interface HeaderAndQueryI {
@@ -37,8 +37,12 @@ export const TableRowStyled = styled(TableRow)`
   } 
 `;
 
-export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams }:
-    { value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string, apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[], pathParams: PathParamsI[] }) {
+export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams, handleToastError }:
+    {
+        value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string,
+        apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
+        pathParams: PathParamsI[], handleToastError: (msg: string) => void
+    }) {
     const { t: translate } = useTranslation();
 
     const selectTypes =
