@@ -52,7 +52,7 @@
     "start": "react-scripts start",
     "dev": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack serve --config webpack/dev.babel.js",
     "build": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/stylesheets.babel.js && webpack --color --config webpack/bundle.babel.js && webpack --color --config webpack/bundle.config.babel.js && bash move-dist-to-examples.sh",
-    "build-windows": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/stylesheets.babel.js && webpack --color --config webpack/bundle.babel.js && webpack --color --config webpack/bundle.config.babel.js && @powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./copy-dist-to-examples.ps1"
+    "build-windows": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/stylesheets.babel.js && webpack --color --config webpack/bundle.babel.js && webpack --color --config webpack/bundle.config.babel.js && @powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./copy-dist-to-examples.ps1",
     "test": "jest src/test"
   },
   "eslintConfig": {
