@@ -27,7 +27,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [scopes, setscopes] = useState<ScopeI[]>([])
     const [scopeKey, setscopeKey] = useState('')
     const [scopeValue, setscopeValue] = useState('')
-    const [codeMethod, setCodeMethod] = useState('s256')
+    const [codeMethod, setCodeMethod] = useState('S256')
     const [tooltipTitle, setTooltipTitle] = useState(translate("CLIPBOARD_TEXT"));
     const [showErrorAlert, setShowErrorAlert] = useState(false);
     const [providerId, setProviderID] = useState('')
@@ -39,6 +39,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [provider_auth_url, setProviderAuthURL] = useState('')
     const [loading, setloading] = useState(false)
     const [basePath, setBasePath] = useState('')
+    const [callback_url, setCallbackUrl] = useState('')
+
 
     const customProviderList = useSelector((store: any) => store.slice.providerList)
     useEffect(() => {
@@ -56,7 +58,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         setAuthorizationUrl(providerConf?.authorizationUrl as string)
         setAccessTokenUrl(providerConf?.accessTokenUrl as string)
         setPKCE(providerConf?.oAuth2Pkce?.enabled || false);
-        setCodeMethod(providerConf?.oAuth2Pkce?.challengeMethod || "s256")
+        setCodeMethod(providerConf?.oAuth2Pkce?.challengeMethod || "S256")
         setClientId(providerConf?.clientId || "")
         setClientSecret(providerConf?.clientSecret || "")
     }, [providerConf])
@@ -248,6 +250,18 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         }
     }
 
+    useEffect(() =>{
+        let callbackurl =  providerConf
+        ? basePath + `/oauth2/${providerConf.providerId}/callback`
+        : providerId
+            ? basePath + `/oauth2/${providerId}/callback`
+            : basePath + `/oauth2/{providerId}/callback`
+        if(PKCE) {
+            callbackurl = basePath + '/oAuthCallback.html'
+        }
+        setCallbackUrl(callbackurl)
+    },[providerConf,providerId,PKCE])
+
     return (
         <>
             <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose} >
@@ -290,13 +304,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             <Stack direction={'row'} alignItems={"flex-start"}>
                                 <TextField size='small'
                                     sx={{ width: '30em' }}
-                                    value={
-                                        providerConf
-                                            ? basePath + `/oauth2/${providerConf.providerId}/callback`
-                                            : providerId
-                                                ? basePath + `/oauth2/${providerId}/callback`
-                                                : basePath + `/oauth2/{providerId}/callback`
-                                    }
+                                    value={callback_url}
                                     InputProps={{
                                         readOnly: !!providerConf,
                                     }}
@@ -305,11 +313,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     label={translate('CALLBACK') + ' ' + translate('URL')}
                                     placeholder={translate('CALLBACK') + ' ' + translate('URL')}
                                 />
-                                <Tooltip onMouseLeave={handleTooltipMouseLeave} onClick={() => handleCopyClick(providerConf
-                                    ? basePath + `/oauth2/${providerConf.providerId}/callback`
-                                    : providerId
-                                        ? basePath + `/oauth2/${providerId}/callback`
-                                        : basePath + `/oauth2/{providerId}/callback`)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
+                                <Tooltip onMouseLeave={handleTooltipMouseLeave} onClick={() => handleCopyClick(callback_url)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
                                     <IconButton>
                                         <ContentCopyIcon />
                                     </IconButton>
@@ -358,8 +362,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                             value={codeMethod}
                                             onChange={handleChangecodeMethod}
                                         >
-                                            <MenuItem value={'s256'}>s256</MenuItem>
-                                            <MenuItem value={'Basic'}>Basic</MenuItem>
+                                            <MenuItem value={'S256'}>S256</MenuItem>
+                                            <MenuItem value={'plain'}>Basic</MenuItem>
                                         </Select>
                                     </FormControl>
                                 </Grid>

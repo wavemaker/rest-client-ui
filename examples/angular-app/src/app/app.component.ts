@@ -66,6 +66,9 @@ export class AppComponent {
           authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
         },
       },
+      error : {
+        handleAlert : alert()
+      }
     });
   }
 }
