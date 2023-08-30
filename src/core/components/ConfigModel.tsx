@@ -50,6 +50,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     useEffect(() => {
         dispatch(setProviderAuthorizationUrl(provider_auth_url))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [provider_auth_url])
 
     useEffect(() => {
@@ -76,6 +77,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             });
         })
         setscopes(scope_value)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleOpen])
 
     const handleChangePKCE = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -285,7 +287,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         <Alert sx={{ py: 0 }} severity="error">{alertMsg} </Alert>
                     )}
                     <Grid spacing={2} mt={0.3} className='cmnflx' sx={{ width: '100%' }} container>
-
                         <Grid item md={3}>
                             <Typography>{translate('PROVIDER') + " " + translate('ID')} <span className='text-danger'>*</span>
                             </Typography>

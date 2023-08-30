@@ -12,6 +12,7 @@ function App() {
     if (fullScreenView) {
       window.RestImport({
         dom_id: "#full-screen",
+        language: 'en',
         config: {
           proxy_conf: {
             base_path: "http://localhost:5000",
@@ -19,6 +20,7 @@ function App() {
             list_provider: "/get-default-provider",
             getprovider: "/getprovider",
             addprovider: "/addprovider",
+            authorizationUrl: "/authorizationUrl",
           },
           default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
           oAuthConfig: {
@@ -28,7 +30,7 @@ function App() {
             getprovider: "", // /projects/{projectID}/oauth2/providers
             addprovider: "", // /projects/{projectID}/oauth2/providers
             authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
-          },
+          }
         },
       });
     }

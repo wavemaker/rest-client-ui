@@ -3,7 +3,8 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, Link, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table,
     TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button,
-    TextareaAutosize
+    TextareaAutosize,
+    Alert
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
@@ -27,7 +28,7 @@ import { useTranslation } from 'react-i18next';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ConfigModel from './ConfigModel'
 import { useSelector } from 'react-redux'
-
+import '../../i18n';
 interface TabPanelProps {
     children?: ReactNode
     index: number
@@ -50,7 +51,12 @@ export interface restImportConfigI {
     contentType?: string,
     proxy_conf: APII,
     default_proxy_state: string,
-    oAuthConfig: APII
+    oAuthConfig: APII,
+    error: {
+        errorMethod: "default" | "toast" | "customFunction",
+        errorFunction: (msg: string) => void,
+        errorMessageTimeout: number
+    }
 }
 
 interface APII {
@@ -61,7 +67,6 @@ interface APII {
     addprovider: string,
     authorizationUrl: string,
     project_id?: string,
-    restservices: string
 }
 function CustomTabPanel(props: TabPanelProps) {
     const { children, value, index, ...other } = props
@@ -107,10 +112,6 @@ const defaultContentTypes = [
     },
 ]
 
-export function handleToastError(message: string) {
-    toast.error(message)
-}
-
 export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const defaultValueforHandQParams = { name: '', value: '', type: '' }
     const { t: translate, i18n } = useTranslation();
@@ -139,6 +140,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const [configOpen, setConfigOpen] = useState(false)
     const [btnDisable, setBtnDisable] = useState(false)
 
+    const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
 
@@ -146,6 +148,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     useEffect(() => {
         setProviderId(selectedProvider.providerId)
         setBtnDisable(false)
+        
     }, [selectedProvider])
 
     useEffect(() => {
@@ -154,6 +157,18 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
 
+    function handleToastError(message: string) {
+        if (restImportConfig.error.errorMethod === 'default') {
+            setAlertMsg(message)
+            return setTimeout(() => {
+                setAlertMsg(false)
+            }, restImportConfig.error.errorMessageTimeout);
+        }
+        if (restImportConfig.error.errorMethod === 'toast')
+            return toast.error(message)
+        if (restImportConfig.error.errorMethod === 'customFunction')
+            return restImportConfig.error.errorFunction(message)
+    }
 
     const getPathParams = () => {
         let paths = getSubstring(apiURL.split("?")[0], "{", "}")
@@ -357,11 +372,11 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     if (userPassword.trim() === "")
                         return handleToastError("Please enter a password for basic authentication")
                 }
-
-                headerParams.forEach((data, index) => {
-                    if (httpAuth === "BASIC" && index === 0)
-                        header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
-                    if (headerParams.length - 1 !== index)
+                if (httpAuth === "BASIC") {
+                    header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
+                }
+                headerParams.forEach((data) => {
+                    if (data.name && data.value)
                         header[data.name] = data.value
                 })
                 if (contentType === 'multipart/form-data') {
@@ -575,10 +590,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
 
     return (
         <>
-
             <Stack className='rest-import-ui'>
                 {loading && <FallbackSpinner />}
-                <Toaster position='top-right' />
+                {typeof window !== 'undefined' && typeof window.matchMedia === 'function' && <Toaster position='top-right' />}
                 <Grid gap={5} p={2} className='cmnflx' container>
                     <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
                         <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
@@ -594,9 +608,15 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                         </Stack>
                     </Grid>
                     <Grid item md={12}>
+                        {alertMsg && (
+                            <Alert sx={{ py: 0 }} severity="error">{alertMsg} is required </Alert>
+                        )}
+                    </Grid>
+                    <Grid item md={12}>
                         <Stack spacing={5} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                             <FormControl sx={{ minWidth: 120 }} size='small'>
                                 <Select
+                                    data-testid="http-method"
                                     value={httpMethod}
                                     onChange={handleChangehttpMethod}
                                 >
@@ -655,6 +675,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                     <Grid item md={9}>
                                         <FormControl size='small' >
                                             <Select
+                                                data-testid="http-auth"
                                                 value={httpAuth}
                                                 onChange={handleChangehttpAuth}
                                             >
@@ -715,7 +736,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 </Grid>
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={1}>
-                                <HeaderAndQueryTable from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                <HeaderAndQueryTable handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={2}>
                                 <Stack spacing={1} mt={2} ml={1}>
@@ -756,7 +777,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 </Stack>
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={3}>
-                                <HeaderAndQueryTable from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                <HeaderAndQueryTable handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={4}>
                                 {pathParams.length > 0 ? <TableContainer component={Paper}>
@@ -772,13 +793,13 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                             {pathParams.map((data, index) =>
                                                 <TableRowStyled key={index}>
                                                     <TableCell align='center'>
-                                                        <FormLabel>{data.name}</FormLabel>
+                                                        <FormLabel data-testid="path-param-label">{data.name}</FormLabel>
                                                     </TableCell>
                                                     <TableCell align='center'>
                                                         <FormLabel>{translate("String")}</FormLabel>
                                                     </TableCell>
                                                     <TableCell align='center'>
-                                                        <TextField value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
+                                                        <TextField data-testid="path-param-value" value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
                                                     </TableCell>
                                                 </TableRowStyled>
                                             )}
@@ -832,6 +853,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     providerConf={selectedProvider}
                     proxyObj={restImportConfig}
                 />
+                <div style={{ position: 'relative', height: '0px' }}>
+                    <TextField data-testid="mock-response" value={responseEditorValue} disabled={true} sx={{ position: 'absolute', left: -10000, top: -10000 }}></TextField>
+                </div>
             </Stack>
         </>
     );
