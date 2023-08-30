@@ -156,17 +156,17 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
         setShowErrorAlert(true);
         if (!providerId) {
-            setAlertMsg('Provider Id is required')
+            setAlertMsg(translate("PROVIDERID_ALERT"))
         } else if (providerExists && !providerConf) {
-            setAlertMsg(`Provider ("${providerId}") already exists!`)
+            setAlertMsg( translate('PROVIDER')+ ` ("${providerId}") ` +translate('ALREADY_EXIST')+ `!`)
         }  else if (!authorizationUrl) {
-            setAlertMsg('Authorization URL is required')
+            setAlertMsg(translate('AUTHORIZATIONURL_ALERT'))
         } else if (!accessTokenUrl) {
-            setAlertMsg('Access Token URL is required')
+            setAlertMsg(translate('ACCESSTOKEN_ALERT'))
         } else if (!clientId) {
-            setAlertMsg('Client ID is required')
+            setAlertMsg(translate('CLIENTID_ALERT'))
         } else if (!clientSecret && !PKCE) {
-            setAlertMsg('Client Secret is required')
+            setAlertMsg(translate('CLIENTSECRET_ALERT'))
         } else {
             
             setloading(true)
@@ -207,7 +207,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             const response: any = await Apicall(configWProvider)
             if (response.status === 200) {
                 setloading(false)
-                toast.success(`Saved Successfully`, {
+                toast.success(translate('SUCCESS_MSG'), {
                     position: 'top-right',
                     duration: 5000
                 })

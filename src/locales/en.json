@@ -80,5 +80,13 @@
   "DELETE":"Delete",
   "MANDATORY_ALERT":"Please fill the mandatory fields",
   "CUSTOM":"Custom",
-  "PATHPARAMSALERT":"Please provide the path parameter value"
+  "PATHPARAMSALERT":"Please provide the path parameter value",
+  "PROVIDERID_ALERT": "Provider Id is required",
+  "AUTHORIZATIONURL_ALERT": "Authorization URL is required",
+  "ACCESSTOKEN_ALERT": "Access Token URL is required",
+  "CLIENTID_ALERT": "Client ID is required",
+  "CLIENTSECRET_ALERT": "Client Secret is required",
+  "ALREADY_EXIST":"already exists",
+  "SUCCESS_MSG":"Saved Successfully"
+
 }
