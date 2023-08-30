@@ -48,7 +48,7 @@ export const handlers = [
         )
     }),
 
-    rest.get(endPoints.getVerifyHeader, async (req, res, ctx) => {
+    rest.get(endPoints.getVerifyHeader, (req, res, ctx) => {
         const response: ResponseI = {
             requestHeaders: req.headers.all(),
             data: null,
@@ -63,7 +63,7 @@ export const handlers = [
         )
     }),
 
-    rest.put(`${endPoints.putResource}/:userId`, async (req, res, ctx) => {
+    rest.put(`${endPoints.putResource}/:userId`, (req, res, ctx) => {
         const response: ResponseI = {
             requestHeaders: {},
             data: null,
@@ -78,7 +78,7 @@ export const handlers = [
         )
     }),
 
-    rest.put(`${endPoints.putResource}/:userId/:event`, async (req, res, ctx) => {
+    rest.put(`${endPoints.putResource}/:userId/:event`, (req, res, ctx) => {
         const response: ResponseI = {
             requestHeaders: {},
             data: null,
@@ -103,7 +103,7 @@ export const handlers = [
             requestHeaders: {},
             data: null,
             queries,
-            pathParams: req.params,
+            pathParams: null,
             message: "Received the query parameters successfully"
         }
 
@@ -113,7 +113,7 @@ export const handlers = [
         )
     }),
 
-    rest.delete(`${endPoints.deleteResource}/:userId`, async (req, res, ctx) => {
+    rest.delete(`${endPoints.deleteResource}/:userId`, (req, res, ctx) => {
         const response: ResponseI = {
             requestHeaders: {},
             data: null,
@@ -126,6 +126,21 @@ export const handlers = [
             ctx.status(200),
             ctx.json(response)
         )
+    }),
+
+    rest.post(endPoints.proxyServer, async (req, res, ctx) => {
+        const requestObject = await req.json().then(data => data)
+        console.log(requestObject)
+        const proxyResponse: ProxyResponseI = {
+            headers: req.headers.all(),
+            responseBody: JSON.stringify(requestObject),
+            statusCode: "200"
+        }
+
+        return res(
+            ctx.status(200),
+            ctx.json(proxyResponse)
+        )
     })
 ]
 
@@ -136,4 +151,10 @@ export interface ResponseI {
     data: any,
     pathParams: any,
     queries: any,
+}
+
+export interface ProxyResponseI {
+    responseBody: any,
+    statusCode: any,
+    headers: any
 }

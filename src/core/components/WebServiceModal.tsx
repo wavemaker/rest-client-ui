@@ -61,12 +61,12 @@ export interface restImportConfigI {
 
 interface APII {
     base_path: string,
-    proxy_path?: string,
+    proxy_path: string,
     list_provider: string,
     getprovider: string,
     addprovider: string,
     authorizationUrl: string,
-    project_id?: string
+    project_id?: string,
 }
 function CustomTabPanel(props: TabPanelProps) {
     const { children, value, index, ...other } = props
@@ -138,14 +138,16 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const [loading, setloading] = useState(false)
     const [providerId, setProviderId] = useState('')
     const [configOpen, setConfigOpen] = useState(false)
+    const [btnDisable, setBtnDisable] = useState(false)
+
     const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
 
 
     useEffect(() => {
-        console.log(selectedProvider)
-        setProviderId(selectedProvider.providerId) 
+        setProviderId(selectedProvider.providerId)
+        setBtnDisable(false)
     }, [selectedProvider])
 
     useEffect(() => {
@@ -230,6 +232,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         setmultipartParams(data)
     }
     const handleChangehttpAuth = (event: SelectChangeEvent) => {
+        if (event.target.value === 'OAUTH2.0' && !selectedProvider.providerId) {
+            setBtnDisable(true)
+        }
         sethttpAuth(event.target.value as any)
     }
     const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => {
@@ -366,10 +371,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     if (userPassword.trim() === "")
                         return handleToastError("Please enter a password for basic authentication")
                 }
-                if (httpAuth === "OAUTH2.0") {
-                    window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600")
-                    setloading(true)
-                }
                 if (httpAuth === "BASIC") {
                     header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
                 }
@@ -384,6 +385,73 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             formData.append(data.name, data.value)
                     })
                     body = formData
+                }
+                if (httpAuth === "OAUTH2.0") {
+                    let codeVerifier: string;
+                    const clientId = selectedProvider.clientId;
+                    let redirectUri = restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
+                    const responseType = "code";
+                    const state = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==";
+                    const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
+                    let childWindow: any;
+                    let authUrl: string
+                    if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
+                        redirectUri = restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html'
+                        const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
+                        codeVerifier = generateRandomCodeVerifier();
+                        const encoder = new TextEncoder();
+                        const data = encoder.encode(codeVerifier);
+
+                        window.crypto.subtle.digest("SHA-256", data)
+                            .then(hashBuffer => {
+                                const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
+                                authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
+                                childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                            })
+                            .catch(error => {
+                                console.error("Error calculating code challenge:", error);
+                            });
+                    } else {
+                        authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
+                        childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+
+                    }
+                    // providerAuthURL
+                    setloading(true)
+
+                    const interval = setInterval(() => {
+                        if (childWindow.closed) {
+                            clearInterval(interval);
+                            header['Authorization'] = `Bearer ` + null
+                            handleRestAPI(header)
+                        }
+                    }, 1000);
+
+                    const messageHandler = async (event: { origin: string; data: { accessToken: any; code: string; error: any } }) => {
+                        const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
+                        if (event.origin === basePath && event.data.accessToken) {
+                            clearInterval(interval);
+                            const token = event.data.accessToken
+                            setTimeout(() => {
+                                header['Authorization'] = `Bearer ` + token
+                                handleRestAPI(header);
+                            }, 100);
+                            window.removeEventListener('message', messageHandler);
+
+                        } else if (event.origin === basePath && event.data.code) {
+                            clearInterval(interval);
+                            getAccessToken(event.data.code, codeVerifier)
+                            setloading(false)
+                            window.removeEventListener('message', messageHandler);
+
+                        } else {
+                            setloading(false)
+                        }
+                    }
+                    window.addEventListener('message', messageHandler);
+
+
+                    return
                 } else
                     body = bodyParams
                 const configWOProxy: AxiosRequestConfig = {
@@ -392,8 +460,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     method: httpMethod,
                     data: body
                 }
+                const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
                 const configWProxy: AxiosRequestConfig = {
-                    url: "http://localhost:5000/restimport",
+                    url: url,
                     data: {
                         "endpointAddress": requestAPI,
                         "method": httpMethod,
@@ -414,35 +483,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                 handleResponse(response)
                 setloading(false)
             } else
-                body = bodyParams
-            const configWOProxy: AxiosRequestConfig = {
-                url: requestAPI,
-                headers: header,
-                method: httpMethod,
-                data: body
-            }
-            const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : '';
-            const configWProxy: AxiosRequestConfig = {
-                url: url,
-                data: {
-                    "endpointAddress": requestAPI,
-                    "method": httpMethod,
-                    "contentType": contentType,
-                    "requestBody": body,
-                    "headers": header,
-                    "authDetails": null
-                },
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                withCredentials: true
-            }
-            setloading(true)
-            const config = useProxy ? configWProxy : configWOProxy
-            const response: any = await Apicall(config)
-            handleResponse(response)
-            setloading(false)
+                handleToastError(translate("VALID_URL_ALERT"))
         }
         else
             handleToastError(translate("VALID_URL_ALERT"))
@@ -474,6 +515,78 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         setConfigOpen(false)
     }
 
+    const handleRestAPI = async (header: object) => {
+        const configWOProxy: AxiosRequestConfig = {
+            url: apiURL,
+            headers: header,
+            method: httpMethod,
+            data: bodyParams
+        }
+        const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
+        const configWProxy: AxiosRequestConfig = {
+            url: url,
+            data: {
+                "endpointAddress": apiURL,
+                "method": httpMethod,
+                "contentType": contentType,
+                "requestBody": bodyParams,
+                "headers": header,
+                "authDetails": null
+            },
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            withCredentials: true
+        }
+        const config = useProxy ? configWProxy : configWOProxy
+        const response: any = await Apicall(config)
+        handleResponse(response)
+        setloading(false)
+    }
+
+    function generateRandomCodeVerifier() {
+        const array = new Uint32Array(56 / 2);
+        window.crypto.getRandomValues(array);
+        return Array.from(array, dec => ('0' + dec.toString(16)).substr(-2)).join('');
+    }
+    const base64URLEncode = (arrayBuffer: ArrayBuffer): string => {
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        return base64.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+    };
+    const getAccessToken = async (code: string, codeVerifier: any) => {
+        const reqParams = {
+            grant_type: 'authorization_code',
+            code: code,
+            client_id: selectedProvider.clientId,
+            // client_secret: selectedProvider.clientSecret,
+            code_verifier: codeVerifier,
+            redirect_uri: restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html',
+        }
+        const configToken: AxiosRequestConfig = {
+            url: selectedProvider.accessTokenUrl,
+            "headers": {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            method: "POST",
+            data: reqParams
+        }
+        const response: any = await Apicall(configToken)
+        if (response.status === 200) {
+            const header = {
+                "Authorization": `Bearer ` + response.data.access_token
+            }
+            handleRestAPI(header)
+        } else {
+            const header = {
+                "Authorization": `Bearer ` + null
+            }
+            handleRestAPI(header)
+        }
+
+    }
+
+
     return (
         <>
             <Stack className='rest-import-ui'>
@@ -495,7 +608,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     </Grid>
                     <Grid item md={12}>
                         {alertMsg && (
-                            <Alert sx={{ py: 0 }} severity="error">{alertMsg} is required </Alert>
+                            <Alert sx={{ py: 0 }} severity="error" data-testid="default-error">{alertMsg}</Alert>
                         )}
                     </Grid>
                     <Grid item md={12}>
@@ -518,7 +631,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 getPathParams()
                                 handleQueryChange()
                             }} autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
-                            <Button onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
+                            <Button onClick={handleTestClick} disabled={btnDisable} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
                     </Grid>
                     <Grid item md={12}>
@@ -532,7 +645,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             <Grid item md={6}>
                                 <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('USE_PROXY')}</Typography>
-                                    <Switch checked={useProxy} onChange={handleChangeProxy} />
+                                    <Switch data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
                                     <Tooltip title={translate("USE_PROXY")}>
                                         <IconButton>
                                             <HelpOutlineIcon />
@@ -542,7 +655,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             </Grid>
                         </Grid>
                     </Grid>
-                    <Grid item md={12}>
+                    <Grid item md={12} data-testid="request-config-block">
                         <Box sx={{ width: '100%' }}>
                             <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                 <Tabs value={requestTabValue} onChange={handleChangeHeaderTabs}>
@@ -633,6 +746,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                                 <Select
                                                     value={contentType}
                                                     onChange={handleChangecontentType}
+                                                    data-testid="select-content-type"
                                                 >
                                                     {contentTypes.map((data) => <MenuItem key={data.value} value={data.value}>{translate(data.label)}</MenuItem>)}
                                                 </Select>
@@ -643,10 +757,10 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                                 </IconButton>
                                             </Tooltip>
                                             {addCustomType ? <Stack direction={'row'}>
-                                                <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' />
+                                                <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
                                                 <Tooltip title={translate("ADD")}>
-                                                    <IconButton>
-                                                        <DoneIcon onClick={() => handleAddCustomContentType()} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                    <IconButton onClick={() => handleAddCustomContentType()}>
+                                                        <DoneIcon sx={{ cursor: 'pointer', color: 'black' }} />
                                                     </IconButton>
                                                 </Tooltip>
                                             </Stack> :
@@ -708,7 +822,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             </CustomTabPanel>
                         </Box>
                     </Grid>
-                    <Grid item md={12}>
+                    <Grid item md={12} data-testid="response-block">
                         <Box sx={{ width: '100%' }}>
                             <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                 <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>

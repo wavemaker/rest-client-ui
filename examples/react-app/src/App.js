@@ -25,11 +25,19 @@ function App() {
           default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
           oAuthConfig: {
             base_path: "https://www.wavemakeronline.com/studio/services",
+            proxy_path: "",
             project_id: "",
             list_provider: "/oauth2/providers/default",
             getprovider: "", // /projects/{projectID}/oauth2/providers
             addprovider: "", // /projects/{projectID}/oauth2/providers
             authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+          },
+          error: {
+            errorFunction: (msg) => {
+              alert(msg)
+            },
+            errorMethod: "default",
+            errorMessageTimeout: 5000
           }
         },
       });
@@ -53,7 +61,6 @@ function App() {
     window.configImport({
       dom_id: "#configModalUI",
       language: "en",
-
       config: {
         proxy_conf: {
           base_path: "http://localhost:5000",
@@ -80,9 +87,9 @@ function App() {
       <Stack
         direction={"row"}
         gap={10}
-        justifyContent={"center"}
+        justifyContent={"space-between"}
         alignItems={"center"}
-        sx={{ marginTop: 10 }}
+        sx={{ marginTop: 10, marginInline: 10 }}
       >
         <Button
           variant="contained"

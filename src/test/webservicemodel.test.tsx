@@ -3,18 +3,19 @@ import user from '@testing-library/user-event'
 import WebServiceModal from '../core/components/WebServiceModal'
 import '@testing-library/jest-dom';
 import { server } from './mocks/server'
-import testData, { mockEmptyProps, endPoints, HTTP_METHODS, TOAST_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI, Query } from './testdata'
+import testData, { mockEmptyProps, endPoints, HTTP_METHODS, REQUEST_TABS, RESPONSE_TABS, TOAST_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI, QueryI, AUTH_OPTIONS, HEADER_NAME_OPTIONS, HEADER_TYPE_OPTIONS, CONTENT_TYPE, SUBHEADER_UNDER_TABS, wavemakerMoreInfoLink } from './testdata'
 import { Provider } from 'react-redux'
 import appStore from '../core/components/appStore/Store';
 import { ResponseI } from './mocks/handlers';
+import { AxiosRequestConfig } from 'axios';
 
 interface ParamStructureInResponseI {
     [key: string]: any
 }
 
 type httpMethods = "GET" | "POST" | "PUT" | "HEAD" | "PATCH" | "DELETE"
-
-type authMethods = "Basic" | "OAuth 2.0"
+type authMethods = "None" | "Basic" | "OAuth 2.0"
+type tabs = "AUTHORIZATION" | "HEADER PARAMS" | "BODY PARAMS" | "QUERY PARAMS" | "PATH PARAMS"
 
 beforeAll(() => server.listen())
 
@@ -40,6 +41,22 @@ describe("Web Service Modal", () => {
         renderComponent()
         const modalTitle = screen.getByRole('heading', { name: /Web Service/i });
         expect(modalTitle).toBeInTheDocument();
+        const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
+        expect(httpMethodDropdown).toHaveTextContent('GET')
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        expect(urlTextField).toBeInTheDocument()
+        const testBtn = screen.getByRole('button', { name: /test/i })
+        expect(testBtn).toBeInTheDocument()
+        const requestTabs = within(screen.getByTestId('request-config-block')).getAllByRole('tab')
+        requestTabs.forEach((tab, index) => {
+            expect(tab).toHaveTextContent(new RegExp(REQUEST_TABS[index], 'i'))
+        })
+        const httpAuthenticationLabel = screen.getByText('HTTP Authentication')
+        expect(httpAuthenticationLabel).toBeInTheDocument()
+        const responseTabs = within(screen.getByTestId('response-block')).getAllByRole('tab')
+        responseTabs.forEach((tab, index) => {
+            expect(tab).toHaveTextContent(new RegExp(RESPONSE_TABS[index], 'i'))
+        })
     }, 80000);
 
     it("Able to type in URL field", async () => {
@@ -102,17 +119,12 @@ describe("Web Service Modal", () => {
         await selectHttpMethodFromDropdown('POST')
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.postCreateAccount)
-        const bodyParams = screen.getByRole('tab', { name: /body params/i })
-        expect(bodyParams).toBeEnabled()
-        await user.click(bodyParams)
+        await switchTab('BODY PARAMS')
         const tabpanel = await screen.findByRole('tabpanel');
         const bodyTextArea = within(tabpanel).getByRole('textbox');
         const jsonStr = JSON.stringify(testData.user)
         fireEvent.change(bodyTextArea, { target: { value: `${jsonStr}` } })
         await clickTestBtn()
-        const view = await screen.findByTestId('mock-response',);
-        const responseTextField = await within(view).findByRole('textbox', {}, { timeout: 5000 });
-        expect(JSON.parse(responseTextField.getAttribute('value')!).data).toEqual(testData.user)
         const response: ResponseI = await getResponse()
         expect(response.data).toEqual(testData.user)
 
@@ -126,8 +138,7 @@ describe("Web Service Modal", () => {
         expect(modalTitle).toBeInTheDocument();
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.getVerifyHeader)
-        const headerParams = screen.getByRole('tab', { name: /header params/i })
-        await user.click(headerParams)
+        await switchTab('HEADER PARAMS')
         for (let [index, header] of headersArray.entries()) {
             await addHeadersOrQueryParamsInTheFields(header, index)
         }
@@ -137,19 +148,16 @@ describe("Web Service Modal", () => {
         expect(response.requestHeaders).toEqual(matchResponse)
     }, 80000)
 
-    it("Sending Query Parameters in the Request", async () => {
+    it("Sending Query Parameters in the Request URL", async () => {
         const queryValueTextFields: HTMLElement[] = [];
         const queriesArray = testData.queries;
         user.setup()
         renderComponent()
-        const queryParams = screen.getByRole('tab', { name: /query params/i })
-        expect(queryParams).toBeInTheDocument()
-        await user.click(queryParams)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, constructUrlWithQueryParams(endPoints.getQueryParams, queriesArray))
         urlTextField.focus()
         urlTextField.blur()
-        await user.click(queryParams)
+        await switchTab('QUERY PARAMS')
         const queryNames = screen.getAllByRole('combobox');
         const queryValueContainer = screen.getAllByTestId("param-value")
         queryValueContainer.forEach((container) => {
@@ -170,19 +178,16 @@ describe("Web Service Modal", () => {
         const pathParam = "userId"
         renderComponent()
         await selectHttpMethodFromDropdown('PUT')
-        const pathParams = screen.getByRole('tab', { name: /path params/i })
-        await user.click(pathParams)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         fireEvent.change(urlTextField, { target: { value: `${endPoints.putResource}/{${pathParam}}` } })
         urlTextField.focus()
         urlTextField.blur()
+        await switchTab('PATH PARAMS')
         const pathParamLabelField = await screen.findByTestId('path-param-label')
         expect(pathParamLabelField).toHaveTextContent(pathParam)
         const pathParamValueField = await within(screen.getByTestId('path-param-value')).findByRole('textbox')
-        fireEvent.change(pathParamValueField, { target: { value: testData.user.id } })
-        const bodyParams = screen.getByRole('tab', { name: /body params/i })
-        expect(bodyParams).toBeEnabled()
-        await user.click(bodyParams)
+        await user.type(pathParamValueField, testData.user.id.toString())
+        await switchTab('BODY PARAMS')
         const tabpanel = await screen.findByRole('tabpanel');
         const bodyTextArea = within(tabpanel).getByRole('textbox');
         fireEvent.change(bodyTextArea, { target: { value: `${JSON.stringify(testData.user)}` } })
@@ -199,24 +204,34 @@ describe("Web Service Modal", () => {
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         fireEvent.change(urlTextField, { target: { value: `${endPoints.deleteResource}/{${pathParam}}` } })
         urlTextField.focus()
-        const pathParams = screen.getByRole('tab', { name: /path params/i })
-        await user.click(pathParams)
+        await switchTab('PATH PARAMS')
         const pathParamLabelField = await screen.findByTestId('path-param-label')
         expect(pathParamLabelField).toHaveTextContent(pathParam)
         const pathParamValueField = await within(screen.getByTestId('path-param-value')).findByRole('textbox')
-        fireEvent.change(pathParamValueField, { target: { value: testData.user.id } })
+        await user.type(pathParamValueField, testData.user.id.toString())
         await clickTestBtn()
         const response: ResponseI = await getResponse()
         expect(response.pathParams.userId).toMatch(testData.user.id.toString())
     }, 80000)
 
-    it("Check for Toast when clicking 'TEST' without a URL", async () => {
+    it("Check for Error Msg when clicking 'TEST' without entering URL", async () => {
         user.setup()
         renderComponent()
         await clickTestBtn()
-        const toastDisplayed = await isToastDisplayedWithMsg(TOAST_MESSAGES.EMPTY_URL)
-        expect(toastDisplayed).toBeTruthy()
+        const errorDisplayed = await isErrorMsgDisplayed(TOAST_MESSAGES.EMPTY_URL)
+        expect(errorDisplayed).toBeTruthy()
     }, 80000)
+
+    it("Check for Error Msg when click 'TEST' with an invalid URL", async () => {
+        user.setup()
+        renderComponent()
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        // fireEvent.change(urlTextField, { target: { value: `${endPoints.deleteResource}/{${pathParam}}` } })
+        await user.type(urlTextField, endPoints.invalidURL)
+        await clickTestBtn()
+        const errorDisplayed = await isErrorMsgDisplayed(TOAST_MESSAGES.EMPTY_URL)
+        expect(errorDisplayed).toBeTruthy()
+    })
 
     it("Check for all HTTP methods in the dropdown", async () => {
         user.setup()
@@ -224,6 +239,7 @@ describe("Web Service Modal", () => {
         const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
         await user.click(httpMethodDropdown);
         const dropdownOptions = await screen.findAllByRole('option')
+        expect(dropdownOptions.length).toBe(HTTP_METHODS.length)
         dropdownOptions.forEach((option, index) => {
             expect(option).toHaveTextContent(HTTP_METHODS[index])
         })
@@ -237,13 +253,13 @@ describe("Web Service Modal", () => {
         await user.type(urlTextField, endPoints.postLogin)
         await selectAuthenticationMethodFromDropdown('Basic')
         await clickTestBtn()
-        const userNameToastDisplayed = await isToastDisplayedWithMsg(TOAST_MESSAGES.EMPTY_BASIC_AUTH_USERNAME)
-        expect(userNameToastDisplayed).toBeTruthy()
+        const userNameErrorDisplayed = await isErrorMsgDisplayed(TOAST_MESSAGES.EMPTY_BASIC_AUTH_USERNAME)
+        expect(userNameErrorDisplayed).toBeTruthy()
         const userName = await screen.findByRole('textbox', { name: /user name/i })
         await user.type(userName, testData.user.userName)
         await clickTestBtn()
-        const passwordToastDisplayed = await isToastDisplayedWithMsg(TOAST_MESSAGES.EMPTY_BASIC_AUTH_PASSWORD)
-        expect(passwordToastDisplayed).toBeTruthy()
+        const passwordErrorDisplayed = await isErrorMsgDisplayed(TOAST_MESSAGES.EMPTY_BASIC_AUTH_PASSWORD)
+        expect(passwordErrorDisplayed).toBeTruthy()
     }, 80000)
 
     it("Check for delete headers", async () => {
@@ -253,8 +269,7 @@ describe("Web Service Modal", () => {
         renderComponent()
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.getVerifyHeader)
-        const headerParams = screen.getByRole('tab', { name: /header params/i })
-        await user.click(headerParams)
+        await switchTab('HEADER PARAMS')
         for (let [index, header] of headersArray.entries()) {
             await addHeadersOrQueryParamsInTheFields(header, index)
         }
@@ -278,9 +293,7 @@ describe("Web Service Modal", () => {
         renderComponent()
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.getQueryParams)
-        const queryParams = screen.getByRole('tab', { name: /query params/i })
-        expect(queryParams).toBeInTheDocument()
-        await user.click(queryParams)
+        await switchTab('QUERY PARAMS')
         for (let [index, query] of queriesArray.entries()) {
             await addHeadersOrQueryParamsInTheFields(query, index)
         }
@@ -306,35 +319,32 @@ describe("Web Service Modal", () => {
         user.setup()
         renderComponent()
         await selectHttpMethodFromDropdown('PUT')
-        const pathParams = screen.getByRole('tab', { name: /path params/i })
-        await user.click(pathParams)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         fireEvent.change(urlTextField, { target: { value: `${endPoints.putResource}` } })
         urlTextField.focus()
         urlTextField.blur()
+        await switchTab('PATH PARAMS')
         expect(screen.queryByTestId('path-param-label')).not.toBeInTheDocument()
         const infoMsg = screen.getByText(/No path param found/i)
         expect(infoMsg).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: 'More info' })).toHaveAttribute("href", wavemakerMoreInfoLink)
     }, 80000)
 
 
-    it("PUT with Path params", async () => {
+    it("Adding and deleting Path params in PUT request", async () => {
         user.setup()
         const pathParamsArray = testData.pathParams;
         const deletePathParamAtIndex = pathParamsArray.length - 1  //Removes a path from the last index by default
         renderComponent()
         await selectHttpMethodFromDropdown('PUT')
-        const pathParams = screen.getByRole('tab', { name: /path params/i })
-        await user.click(pathParams)
+        await switchTab('PATH PARAMS')
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         const constructedUrl = constructUrlWithPathParams(endPoints.putResource, pathParamsArray)
         fireEvent.change(urlTextField, { target: { value: constructedUrl } })
         urlTextField.focus()
         urlTextField.blur()
         await verifyPathLabelsAndEnterValues([...pathParamsArray])
-        const bodyParams = screen.getByRole('tab', { name: /body params/i })
-        expect(bodyParams).toBeEnabled()
-        await user.click(bodyParams)
+        await switchTab('BODY PARAMS')
         const tabpanel = await screen.findByRole('tabpanel');
         const bodyTextArea = within(tabpanel).getByRole('textbox');
         fireEvent.change(bodyTextArea, { target: { value: `${JSON.stringify(testData.user)}` } })
@@ -347,14 +357,106 @@ describe("Web Service Modal", () => {
         fireEvent.change(urlTextField, { target: { value: reconstructedUrl } })
         urlTextField.focus()
         urlTextField.blur()
-        await user.click(pathParams)
+        await switchTab('PATH PARAMS')
         await verifyPathLabelsAndEnterValues(pathParamsArray.filter((_, index) => index !== deletePathParamAtIndex))
         await clickTestBtn()
         const modifiedPathParamObj = constructObjToMatchWithResponseStructure(pathParamsArray, false, deletePathParamAtIndex)
         const updatedResponse: ResponseI = await getResponse()
         expect(updatedResponse.pathParams).toEqual(modifiedPathParamObj)
     }, 80000)
-});
+
+    it("Checking the proxy server", async () => {
+        user.setup()
+        renderComponent()
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.getUsers)
+        const useProxySwitch = screen.getByTestId('proxy-switch')
+        await user.click(within(useProxySwitch).getByRole('checkbox'))
+        expect(useProxySwitch).toHaveClass("Mui-checked")
+        await clickTestBtn()
+        const requestConfig = constructObjToMatchWithProxyConfig(endPoints.getUsers)
+        const configFromResponse: AxiosRequestConfig = await getResponse()
+        expect(configFromResponse).toEqual(requestConfig.data)
+    })
+
+
+    it("Check for all HTTP authentication dropdown options in the Authorization Tab", async () => {
+        user.setup()
+        renderComponent()
+        const httpAuthDropdown = within(screen.getByTestId("http-auth")).getByRole("button")
+        await user.click(httpAuthDropdown);
+        const dropdownOptions = await screen.findAllByRole('option')
+        expect(dropdownOptions.length).toBe(AUTH_OPTIONS.length)
+        dropdownOptions.forEach((option, index) => {
+            expect(option).toHaveTextContent(AUTH_OPTIONS[index])
+        })
+    }, 80000)
+
+    it("Check Header name and type dropdown options in Header Params Tab", async () => {
+        user.setup()
+        renderComponent()
+        await switchTab('HEADER PARAMS')
+        const combobox = await screen.findByRole('combobox')
+        await user.click(combobox)
+        await verifyDropdownOptionsArePresent(HEADER_NAME_OPTIONS)
+        const headerTypeField = within(screen.getByTestId('param-type')).getByRole('button')
+        await user.click(headerTypeField)
+        await verifyDropdownOptionsArePresent(HEADER_TYPE_OPTIONS)
+    }, 80000);
+
+    it("Check content type dropdown options in Body Params Tab", async () => {
+        user.setup()
+        renderComponent()
+        await selectHttpMethodFromDropdown('POST')
+        await switchTab('BODY PARAMS')
+        const contentTypeDropdown = within(await screen.findByTestId('select-content-type')).getByRole("button")
+        await user.click(contentTypeDropdown)
+        await verifyDropdownOptionsArePresent(CONTENT_TYPE)
+    }, 80000)
+
+    it("Check query type dropdown options in Query Params Tab", async () => {
+        user.setup()
+        renderComponent()
+        await switchTab('QUERY PARAMS')
+        const queryTypeField = within(screen.getByTestId('param-type')).getByRole('button')
+        await user.click(queryTypeField)
+        await verifyDropdownOptionsArePresent(HEADER_TYPE_OPTIONS)
+    })
+
+    it("Checking for required fields under Auth/Header/Body/Query/Path Tabs", async () => {
+        user.setup()
+        renderComponent()
+        await selectHttpMethodFromDropdown('POST')
+        const httpAuthenticationLabel = screen.getByText('HTTP Authentication')
+        expect(httpAuthenticationLabel).toBeInTheDocument()
+        const httpAuthDropdown = within(screen.getByTestId("http-auth")).getByRole("button")
+        expect(httpAuthDropdown).toHaveTextContent('None')
+        await switchTab('HEADER PARAMS')
+        await verifySubheadersAndTheirFields()
+        await switchTab('BODY PARAMS')
+        expect(await screen.findByText("Content Type")).toBeInTheDocument()
+        expect(within(screen.getByTestId('select-content-type')).getByRole('button')).toBeInTheDocument()
+        expect(within(screen.getByRole("tabpanel")).getByTestId('HelpOutlineIcon')).toBeInTheDocument()
+        expect(screen.getByTestId('AddIcon')).toBeInTheDocument()
+        expect(screen.getByPlaceholderText("Request Body:Provide sample POST data here that the service would consume")).toBeInTheDocument()
+        await switchTab('QUERY PARAMS')
+        await verifySubheadersAndTheirFields()
+    }, 80000)
+
+    it("Adding custom Content type", async () => {
+        const customValue = "audio/*,video/*,image/*"
+        user.setup()
+        renderComponent()
+        await selectHttpMethodFromDropdown('POST')
+        await switchTab('BODY PARAMS')
+        await user.click(await screen.findByTestId('AddIcon'))
+        const customTypeField = within(await screen.findByTestId('custom-type-field')).getByRole('textbox')
+        await user.type(customTypeField, customValue)
+        await user.click(screen.getByTestId('DoneIcon'))
+        expect(within(screen.getByTestId('select-content-type')).getByRole('button')).toHaveTextContent(customValue)
+    })
+})
+
 
 
 function renderComponent() {
@@ -381,13 +483,38 @@ async function selectAuthenticationMethodFromDropdown(authMethod: authMethods) {
     expect(httpAuthDropdown).toHaveTextContent(authMethod)
 }
 
+async function switchTab(tabName: tabs) {
+    const tab = screen.getByRole('tab', { name: new RegExp(tabName, 'i') })
+    expect(tab).toBeEnabled()
+    await user.click(tab)
+}
+
+async function verifySubheadersAndTheirFields() {
+    for (let label of SUBHEADER_UNDER_TABS) {
+        const subheader = within(await screen.findByTestId('subheaders')).getByText(new RegExp(label, 'i'))
+        expect(subheader).toBeInTheDocument()
+    }
+    expect(screen.getByRole('combobox')).toBeInTheDocument()
+    expect(within(screen.getByTestId('param-type')).getByRole('button')).toBeInTheDocument()
+    expect(within(screen.getByTestId('param-value')).getByRole('textbox')).toBeInTheDocument()
+    expect(screen.getByTestId("AddIcon")).toBeInTheDocument()
+}
+
+async function verifyDropdownOptionsArePresent(arrayToCheck: string[]) {
+    const optionElements = within(await screen.findByRole('presentation')).getAllByRole('option')
+    const textsFromDropdown = optionElements.map(optionElement => optionElement.textContent?.trim().toLowerCase())
+    arrayToCheck.forEach(option => {
+        expect(textsFromDropdown).toContainEqual(option.toLowerCase())
+    })
+}
+
 async function clickTestBtn() {
     const testBtn = screen.getByRole('button', { name: /test/i })
     expect(testBtn).toBeInTheDocument()
     await user.click(testBtn)
 }
 
-async function getResponse(): Promise<ResponseI> {
+async function getResponse() {
     const view = await screen.findByTestId('mock-response');
     const responseTextField = await within(view).findByRole('textbox', {}, { timeout: 5000 });
     return JSON.parse(responseTextField.getAttribute('value')!)
@@ -402,7 +529,7 @@ function constructObjToMatchWithResponseStructure(testArray: GENERAL_PARAM_STRUC
     return matchResponse
 }
 
-function constructUrlWithQueryParams(url: string, queryParams: Query[], removeIndex?: number) {
+function constructUrlWithQueryParams(url: string, queryParams: QueryI[], removeIndex?: number) {
     url += '?'
     queryParams.forEach((query, index) => {
         if (removeIndex !== index)
@@ -418,6 +545,26 @@ function constructUrlWithPathParams(url: string, pathParams: PathParamI[], remov
             url += `{${path.name}}${index !== pathParams.length - 1 && index + 1 !== removeIndex ? '/' : ''}`
     })
     return url
+}
+
+function constructObjToMatchWithProxyConfig(endpoint: string, httpMethod: httpMethods = "GET") {
+    const configWProxy: AxiosRequestConfig = {
+        url: "http://localhost:5000/restimport",
+        data: {
+            "endpointAddress": endpoint,
+            "method": httpMethod,
+            "contentType": "application/json",
+            "requestBody": "",
+            "headers": {},
+            "authDetails": null
+        },
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        withCredentials: true
+    }
+    return configWProxy
 }
 
 async function addHeadersOrQueryParamsInTheFields(data: GENERAL_PARAM_STRUCTURE, index: number) {
@@ -463,14 +610,29 @@ async function verifyPathLabelsAndEnterValues(pathParamsArray: PathParamI[]) {
     }
 }
 
-async function isToastDisplayedWithMsg(msgToCheck: string) {
-    let toastDisplayed = false
-    const toasts = await screen.findAllByRole('status')
-    toasts.forEach((toast) => {
-        if (toast.textContent === msgToCheck) {
-            toastDisplayed = true
-            return
+async function isErrorMsgDisplayed(msgToCheck: string) {
+    const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
+    let errorMsgDisplayed = false
+
+    switch (errorMethod) {
+        case "default": {
+            const errorField = await screen.findByTestId('default-error')
+            if (errorField.textContent === msgToCheck) {
+                errorMsgDisplayed = true
+            }
+            break;
         }
-    })
-    return toastDisplayed;
+        case "toast": {
+            const toasts = await screen.findAllByRole('status')
+            toasts.forEach((toast) => {
+                if (toast.textContent === msgToCheck) {
+                    errorMsgDisplayed = true
+                    return;
+                }
+            })
+            break;
+        }
+    }
+
+    return errorMsgDisplayed;
 }

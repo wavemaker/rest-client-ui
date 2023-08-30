@@ -9,7 +9,7 @@ interface CommonState {
     providerOpen: boolean
 }
 
-const commonSlice = createSlice({
+const providerState = createSlice({
     name: 'providerId',
     initialState: {
         selectedProvider: { providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] },
@@ -37,5 +37,6 @@ const commonSlice = createSlice({
     }
 });
 
-export const { setSelectedProvider, setProviderAuthorizationUrl, setproviderList, setConfigOpen, setProviderOpen } = commonSlice.actions;
-export default commonSlice.reducer;
+export const { setSelectedProvider, setProviderAuthorizationUrl, setproviderList, setConfigOpen, setProviderOpen } = providerState.actions;
+
+export default providerState.reducer;

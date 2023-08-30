@@ -98,12 +98,26 @@ const testData: TestData = {
 }
 
 export const HTTP_METHODS = ["GET", "POST", "PUT", "HEAD", "PATCH", "DELETE"]
-
+export const REQUEST_TABS = ["AUTHORIZATION", "HEADER PARAMS", "BODY PARAMS", "QUERY PARAMS", "PATH PARAMS"]
+export const RESPONSE_TABS = ["RESPONSE BODY", "RESPONSE HEADER", "RESPONSE STATUS"]
+export const AUTH_OPTIONS = ["None", "Basic", "OAuth 2.0"]
 export const TOAST_MESSAGES = {
     EMPTY_URL: "Please provide a valid URL",
     EMPTY_BASIC_AUTH_USERNAME: "Please enter a username for basic authentication",
     EMPTY_BASIC_AUTH_PASSWORD: "Please enter a password for basic authentication"
 }
+export const HEADER_NAME_OPTIONS = [
+    'Accept', 'Accept-Charset', 'Accept-Encoding', 'Accept-Language', 'Authorization', 'Content-Length', 'Content-Type', 'Cookie', 'Origin', 'Referer', 'User-Agent'
+]
+export const HEADER_TYPE_OPTIONS = [
+    'Boolean', 'Date', 'Date Time', 'Double', 'Float', 'Integer', 'Long', 'String', 'Current Date', 'Current Date Time', 'Current Time', 'Current Timestamp', 'LoggedIn UserId', 'LoggedIn Username', 'Option 1'
+]
+
+export const CONTENT_TYPE = [
+    "application/json", "application/octet-stream", "application/pdf", "application/x-www-form-urlencoded", "application/xml", "multipart/form-data", "text/html", "text/plain"
+]
+
+export const SUBHEADER_UNDER_TABS = ["Name", "Type", "Test Value", "Actions"]
 
 export const endPoints = {
     getUsers: "https://wavemaker.unittest.com/users",
@@ -112,8 +126,12 @@ export const endPoints = {
     getVerifyHeader: "https://wavemaker.com/header",
     putResource: "https://wavemaker.com/update",
     getQueryParams: "https://wavemaker.com/query",
-    deleteResource: "https://wavemaker.com/delete"
+    deleteResource: "https://wavemaker.com/delete",
+    proxyServer: "http://localhost:5000/restimport",
+    invalidURL: "http://invalid$url"
 }
+
+export const wavemakerMoreInfoLink = "https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/"
 
 export const restImportConfig: restImportConfigI = {
     proxy_conf: {
@@ -127,6 +145,7 @@ export const restImportConfig: restImportConfigI = {
     default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
     oAuthConfig: {
         base_path: "https://www.wavemakeronline.com/studio/services",
+        proxy_path: "",
         project_id: "",
         list_provider: "/oauth2/providers/default",
         getprovider: "", // /projects/{projectID}/oauth2/providers
@@ -138,7 +157,7 @@ export const restImportConfig: restImportConfigI = {
             alert(msg);
         },
         errorMessageTimeout: 5000,
-        errorMethod: "toast",
+        errorMethod: "default",
     },
 }
 export const mockEmptyProps: mockEmptyPropsI = {
@@ -153,7 +172,7 @@ export interface HeaderParamI {
     type: string,
     value: string
 }
-export interface Query {
+export interface QueryI {
     name: string,
     type: string,
     value: string,
@@ -182,10 +201,10 @@ interface TestData {
     user: User,
     userList: UserList,
     headerParams: HeaderParamI[],
-    queries: Query[],
+    queries: QueryI[],
     pathParams: PathParamI[]
 }
 
-export type GENERAL_PARAM_STRUCTURE = HeaderParamI | Query | PathParamI
+export type GENERAL_PARAM_STRUCTURE = HeaderParamI | QueryI | PathParamI
 
 export default testData;

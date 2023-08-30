@@ -43,6 +43,7 @@ export default class ConfigLayout extends React.Component {
                 Object.keys(providerConf).length === 0 ? null : providerConf
               }
               proxyObj={config}
+              configModel={true}
             />
           </div>
         </div>
