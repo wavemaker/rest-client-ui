@@ -61,6 +61,18 @@ function App() {
     window.configImport({
       dom_id: "#configModalUI",
       language: "en",
+      providerConf: {
+        accessTokenParamName: 'Bearer',
+        accessTokenUrl: 'https://www.googleapis.com/oauth2/v3/token',
+        authorizationUrl: 'https://accounts.google.com/o/oauth2/auth',
+        clientId:
+          '238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com  ',
+        clientSecret: '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',
+        oauth2Flow: 'AUTHORIZATION_CODE',
+        providerId: '',
+        scopes: [],
+        sendAccessTokenAs: 'HEADER',
+      },
       config: {
         proxy_conf: {
           base_path: "http://localhost:5000",
@@ -78,6 +90,13 @@ function App() {
           addprovider: "", // /projects/{projectID}/oauth2/providers
           authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
         },
+        error: {
+          errorFunction: (msg) => {
+            alert(msg)
+          },
+          errorMethod: "default",
+          errorMessageTimeout: 5000
+        }
       },
     });
   };

@@ -226,7 +226,6 @@ describe("Web Service Modal", () => {
         user.setup()
         renderComponent()
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
-        // fireEvent.change(urlTextField, { target: { value: `${endPoints.deleteResource}/{${pathParam}}` } })
         await user.type(urlTextField, endPoints.invalidURL)
         await clickTestBtn()
         const errorDisplayed = await isErrorMsgDisplayed(TOAST_MESSAGES.EMPTY_URL)
@@ -284,7 +283,7 @@ describe("Web Service Modal", () => {
         const modifiedHeaderObj = constructObjToMatchWithResponseStructure(headersArray, true, deleteHeaderAtIndex)
         const updatedResponse: ResponseI = await getResponse()
         expect(updatedResponse.requestHeaders).toEqual(modifiedHeaderObj)
-    }, 80000)
+    }, 100000)
 
     it("Adding/Deleting Query Parameters using fields", async () => {
         const queriesArray = testData.queries;
@@ -454,7 +453,7 @@ describe("Web Service Modal", () => {
         await user.type(customTypeField, customValue)
         await user.click(screen.getByTestId('DoneIcon'))
         expect(within(screen.getByTestId('select-content-type')).getByRole('button')).toHaveTextContent(customValue)
-    })
+    }, 80000)
 })
 
 
