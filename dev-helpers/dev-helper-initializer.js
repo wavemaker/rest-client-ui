@@ -72,10 +72,11 @@ window.onload = function () {
         addprovider: "", // /projects/{projectID}/oauth2/providers
         authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
       },
+     
     },
     presets: [RestImportBundle.presets.apis, RestImportStandalonePreset],
     plugins: [RestImportBundle.plugins.DownloadUrl],
-    layout: "ConfigLayout",
+    layout: "BaseLayout",
   });
 
   window.ui = ui;

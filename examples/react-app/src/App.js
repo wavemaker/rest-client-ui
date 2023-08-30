@@ -53,7 +53,6 @@ function App() {
     window.configImport({
       dom_id: "#configModalUI",
       language: "en",
-
       config: {
         proxy_conf: {
           base_path: "http://localhost:5000",

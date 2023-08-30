@@ -409,7 +409,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                             <TableCell align='center'>
                                 <TextField disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} />
                             </TableCell>
-                            <TableCell align='center'>
+                            <TableCell>
                                 <FormControl size='small' sx={{ minWidth: 200 }}>
                                     <InputLabel>{translate('SELECT') + " " + translate('TYPE')}</InputLabel>
                                     <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')}>
