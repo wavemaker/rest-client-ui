@@ -29,4 +29,8 @@ First the http method selection, it consists of six options they are GET, POST, 
 #### URL TextBox
 
 Here we can enter the URL of the API endpoint you want to access. Eg, "<https://jsonplaceholder.typicode.com/posts>".
-Also we can place dynamic paths in the URL string like "<https://jsonplaceholder.typicode.com/{path}>".
+Also we can place dynamic paths in the URL string like "<https://jsonplaceholder.typicode.com/{path}>". "{path}" can be replaced to the path of the API endpoint you want to access
+
+#### Test Button
+
+The test button can be used to test whether the API endpoint is available or not.
