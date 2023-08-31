@@ -30,7 +30,7 @@
             ],
             "scripts": [
               "src/assets/plugins/rest-import-bundle.js",
-              "src/assets/plugins/config-import.bundle.js"
+              "src/assets/plugins/config-import-bundle.js"
             ]
           },
           "configurations": {
@@ -96,7 +96,7 @@
             ],
             "scripts": [
               "src/assets/plugins/rest-import-bundle.js",
-              "src/assets/plugins/config-import.bundle.js"
+              "src/assets/plugins/config-import-bundle.js"
 
             ]
           }

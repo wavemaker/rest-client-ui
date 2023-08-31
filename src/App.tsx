@@ -7,7 +7,7 @@ import appStore from './core/components/appStore/Store';
 export default function App() {
   const config: restImportConfigI = {
     proxy_conf: {
-      base_path: "http://localhost:5000",
+      base_path: "http://localhost:4000",
       proxy_path: "/restimport",
       list_provider: "/get-default-provider",
       getprovider: "/getprovider",
@@ -18,6 +18,7 @@ export default function App() {
     oAuthConfig: {
       base_path: "https://www.wavemakeronline.com/studio/services",
       project_id: "",
+      proxy_path: '', // /projects/{projectID}/restservices/invoke?optimizeResponse=true
       list_provider: "/oauth2/providers/default",
       getprovider: "", // /projects/{projectID}/oauth2/providers
       addprovider: "", // /projects/{projectID}/oauth2/providers
@@ -28,7 +29,7 @@ export default function App() {
         alert(msg)
       },
       errorMethod: "default",
-      errorMessageTimeout: 5
+      errorMessageTimeout: 5000
     }
   }
 

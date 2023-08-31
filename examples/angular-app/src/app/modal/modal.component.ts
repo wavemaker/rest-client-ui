@@ -68,7 +68,7 @@ export class ModalComponent implements OnInit {
         language: 'en',
         config: {
           proxy_conf: {
-            base_path: 'http://localhost:5000',
+            base_path: 'http://localhost:4000',
             proxy_path: '/restimport',
             list_provider: '/get-default-provider',
             getprovider: '/getprovider',

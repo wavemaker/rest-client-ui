@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit'
-import commonSlice from './Slice'
+import providerState from './Slice'
 const appStore = configureStore({
     reducer: { 
-        slice : commonSlice
+        slice : providerState
      },
 })
-
+export type RootState = ReturnType<typeof appStore.getState>
 export default appStore
