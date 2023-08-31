@@ -25,7 +25,7 @@ export class AppComponent {
       size: 'xl',
       centered: true,
     });
-    if (type == 1) {
+    if (type === 1) {
       modalRef.componentInstance.configtype = false;
     } else {
       modalRef.componentInstance.configtype = true;

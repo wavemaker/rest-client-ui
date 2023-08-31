@@ -28,6 +28,13 @@ export class FullscreenComponent implements OnInit {
           addprovider: '', // /projects/{projectID}/oauth2/providers
           authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
         },
+        error: {
+          errorFunction: (msg: string) => {
+            alert(msg);
+          },
+          errorMethod: 'toast',
+          errorMessageTimeout: 5000,
+        },
       },
     });
   }

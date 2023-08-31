@@ -11,7 +11,7 @@ export class ModalComponent implements OnInit {
   constructor(public activeModal: NgbActiveModal) {}
   ngOnInit(): void {
     if (this.configtype) {
-      const reactUI = RestImport({
+      RestImport({
         dom_id: '#rest-import-ui-modal',
         language: 'en',
         config: {
@@ -53,10 +53,17 @@ export class ModalComponent implements OnInit {
             addprovider: '', // /projects/{projectID}/oauth2/providers
             authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
           },
+          error: {
+            errorFunction: (msg: string) => {
+              alert(msg);
+            },
+            errorMethod: 'toast',
+            errorMessageTimeout: 5000,
+          },
         },
       });
     } else {
-      const reactUI = RestImport({
+      RestImport({
         dom_id: '#rest-import-ui-modal',
         language: 'en',
         config: {
@@ -75,6 +82,13 @@ export class ModalComponent implements OnInit {
             getprovider: '', // /projects/{projectID}/oauth2/providers
             addprovider: '', // /projects/{projectID}/oauth2/providers
             authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+          },
+          error: {
+            errorFunction: (msg: string) => {
+              alert(msg);
+            },
+            errorMethod: 'toast',
+            errorMessageTimeout: 5000,
           },
         },
       });

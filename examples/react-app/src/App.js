@@ -30,6 +30,13 @@ function App() {
             getprovider: "", // /projects/{projectID}/oauth2/providers
             addprovider: "", // /projects/{projectID}/oauth2/providers
             authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+          },
+          error: {
+            errorFunction: (msg) => {
+              alert(msg)
+            },
+            errorMethod: "default",
+            errorMessageTimeout: 5000
           }
         },
       });
@@ -52,8 +59,7 @@ function App() {
   const handleConfigDialog = () => {
     window.configImport({
       dom_id: "#configModalUI",
-      language: "en",
-
+      language: "en", 
       config: {
         proxy_conf: {
           base_path: "http://localhost:5000",
@@ -70,7 +76,7 @@ function App() {
           getprovider: "", // /projects/{projectID}/oauth2/providers
           addprovider: "", // /projects/{projectID}/oauth2/providers
           authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
-        },
+        }, 
       },
     });
   };
