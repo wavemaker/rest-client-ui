@@ -8,7 +8,7 @@ declare const RestImport: any;
 })
 export class ModalComponent implements OnInit {
   @Input() configtype: boolean | undefined;
-  constructor(public activeModal: NgbActiveModal) {}
+  constructor(public activeModal: NgbActiveModal) { }
   ngOnInit(): void {
     if (this.configtype) {
       const reactUI = RestImport({
@@ -53,6 +53,13 @@ export class ModalComponent implements OnInit {
             addprovider: '', // /projects/{projectID}/oauth2/providers
             authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
           },
+          error: {
+            errorFunction: (msg: string) => {
+              alert(msg)
+            },
+            errorMethod: "default",
+            errorMessageTimeout: 5000
+          }
         },
       });
     } else {
@@ -76,6 +83,13 @@ export class ModalComponent implements OnInit {
             addprovider: '', // /projects/{projectID}/oauth2/providers
             authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
           },
+          error: {
+            errorFunction: (msg: string) => {
+              alert(msg)
+            },
+            errorMethod: "default",
+            errorMessageTimeout: 5000
+          }
         },
       });
     }

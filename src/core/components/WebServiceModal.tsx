@@ -148,7 +148,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     useEffect(() => {
         setProviderId(selectedProvider.providerId)
         setBtnDisable(false)
-        
     }, [selectedProvider])
 
     useEffect(() => {
@@ -592,7 +591,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         <>
             <Stack className='rest-import-ui'>
                 {loading && <FallbackSpinner />}
-                {typeof window !== 'undefined' && typeof window.matchMedia === 'function' && <Toaster position='top-right' />}
+                <Toaster position='top-right' />
                 <Grid gap={5} p={2} className='cmnflx' container>
                     <Grid sx={{ backgroundColor: 'lightgray' }} item md={12}>
                         <Stack p={2} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
@@ -609,7 +608,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     </Grid>
                     <Grid item md={12}>
                         {alertMsg && (
-                            <Alert sx={{ py: 0 }} severity="error">{alertMsg} is required </Alert>
+                            <Alert sx={{ py: 0 }} severity="error" data-testid="default-error">{alertMsg}</Alert>
                         )}
                     </Grid>
                     <Grid item md={12}>
@@ -646,7 +645,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             <Grid item md={6}>
                                 <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('USE_PROXY')}</Typography>
-                                    <Switch checked={useProxy} onChange={handleChangeProxy} />
+                                    <Switch data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
                                     <Tooltip title={translate("USE_PROXY")}>
                                         <IconButton>
                                             <HelpOutlineIcon />
@@ -656,7 +655,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             </Grid>
                         </Grid>
                     </Grid>
-                    <Grid item md={12}>
+                    <Grid item md={12} data-testid="request-config-block">
                         <Box sx={{ width: '100%' }}>
                             <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                 <Tabs value={requestTabValue} onChange={handleChangeHeaderTabs}>
@@ -747,6 +746,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                                 <Select
                                                     value={contentType}
                                                     onChange={handleChangecontentType}
+                                                    data-testid="select-content-type"
                                                 >
                                                     {contentTypes.map((data) => <MenuItem key={data.value} value={data.value}>{translate(data.label)}</MenuItem>)}
                                                 </Select>
@@ -757,16 +757,16 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                                 </IconButton>
                                             </Tooltip>
                                             {addCustomType ? <Stack direction={'row'}>
-                                                <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' />
+                                                <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
                                                 <Tooltip title={translate("ADD")}>
-                                                    <IconButton>
-                                                        <DoneIcon onClick={() => handleAddCustomContentType()} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                    <IconButton onClick={() => handleAddCustomContentType()}>
+                                                        <DoneIcon sx={{ cursor: 'pointer', color: 'black' }} />
                                                     </IconButton>
                                                 </Tooltip>
                                             </Stack> :
                                                 <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
-                                                    <IconButton>
-                                                        <AddIcon onClick={() => setaddCustomType(true)} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                    <IconButton onClick={() => setaddCustomType(true)}>
+                                                        <AddIcon sx={{ cursor: 'pointer', color: 'black' }} />
                                                     </IconButton>
                                                 </Tooltip>}
                                         </Stack>
@@ -822,7 +822,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             </CustomTabPanel>
                         </Box>
                     </Grid>
-                    <Grid item md={12}>
+                    <Grid item md={12} data-testid="response-block">
                         <Box sx={{ width: '100%' }}>
                             <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                 <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
