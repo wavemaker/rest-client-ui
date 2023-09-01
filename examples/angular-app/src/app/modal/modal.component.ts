@@ -8,7 +8,7 @@ declare const RestImport: any;
 })
 export class ModalComponent implements OnInit {
   @Input() configtype: boolean | undefined;
-  constructor(public activeModal: NgbActiveModal) {}
+  constructor(public activeModal: NgbActiveModal) { }
   ngOnInit(): void {
     if (this.configtype) {
       RestImport({
@@ -55,11 +55,19 @@ export class ModalComponent implements OnInit {
           },
           error: {
             errorFunction: (msg: string) => {
+<<<<<<< HEAD
               alert(msg);
             },
             errorMethod: 'toast',
             errorMessageTimeout: 5000,
           },
+=======
+              alert(msg)
+            },
+            errorMethod: "default",
+            errorMessageTimeout: 5000
+          }
+>>>>>>> ab65688857d258dafc36c7ded9eb66afefc850b1
         },
       });
     } else {
@@ -85,11 +93,19 @@ export class ModalComponent implements OnInit {
           },
           error: {
             errorFunction: (msg: string) => {
+<<<<<<< HEAD
               alert(msg);
             },
             errorMethod: 'toast',
             errorMessageTimeout: 5000,
           },
+=======
+              alert(msg)
+            },
+            errorMethod: "default",
+            errorMessageTimeout: 5000
+          }
+>>>>>>> ab65688857d258dafc36c7ded9eb66afefc850b1
         },
       });
     }
