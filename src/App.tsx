@@ -28,7 +28,7 @@ export default function App() {
         alert(msg)
       },
       errorMethod: "default",
-      errorMessageTimeout: 5
+      errorMessageTimeout: 5000
     }
   }
 

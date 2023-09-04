@@ -144,8 +144,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
 
 
     useEffect(() => {
-        console.log(selectedProvider)
-        setProviderId(selectedProvider.providerId) 
+        setProviderId(selectedProvider.providerId)
     }, [selectedProvider])
 
     useEffect(() => {
@@ -212,29 +211,18 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         })
         setpathParams(pathParamsClone)
     }
+    const handleCloseProvider = () => setproviderOpen(false)
+    const handleChangeapiURL = (value: string) => setapiURL(value)
+    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => setheaderParams(data)
+    const handleChangeQueryParams = (data: HeaderAndQueryI[]) => setqueryParams(data)
+    const handlemultipartParams = (data: BodyParamsI[]) => setmultipartParams(data)
+    const handleChangehttpAuth = (event: SelectChangeEvent) => sethttpAuth(event.target.value as any)
+    const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => setrequestTabValue(newValue)
+    const handleChangehttpMethod = (event: SelectChangeEvent) => sethttpMethod(event.target.value as any)
+    const handleChangecontentType = (event: SelectChangeEvent) => setcontentType(event.target.value as string)
+    const handleChangeProxy = (event: React.ChangeEvent<HTMLInputElement>) => setuseProxy(event.target.checked)
+    const handleResponseEditorChange = (newValue: string) => setresponseEditorValue(newValue)
 
-    const handleCloseProvider = () => {
-        setproviderOpen(false)
-    }
-
-    const handleChangeapiURL = (value: string) => {
-        setapiURL(value)
-    }
-    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => {
-        setheaderParams(data)
-    }
-    const handleChangeQueryParams = (data: HeaderAndQueryI[]) => {
-        setqueryParams(data)
-    }
-    const handlemultipartParams = (data: BodyParamsI[]) => {
-        setmultipartParams(data)
-    }
-    const handleChangehttpAuth = (event: SelectChangeEvent) => {
-        sethttpAuth(event.target.value as any)
-    }
-    const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => {
-        setrequestTabValue(newValue);
-    };
     const handleChangeResponseTabs = (event: any, newValue: number) => {
         switch (newValue) {
             case 0:
@@ -248,15 +236,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                 break
         }
         setresponseTabValue(newValue);
-    };
-    const handleChangehttpMethod = (event: SelectChangeEvent) => {
-        sethttpMethod(event.target.value as any)
-    }
-    const handleChangecontentType = (event: SelectChangeEvent) => {
-        setcontentType(event.target.value as string)
-    }
-    const handleChangeProxy = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setuseProxy(event.target.checked);
     }
     const handleQueryChange = () => {
         if (apiURL !== '') {
@@ -329,25 +308,27 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         }
     }
     const handleAddCustomContentType = () => {
-        if (!contentTypes.find(e => e.value === newContentType)) {
-            const contentTypesClone = [...contentTypes]
-            contentTypesClone.push({
-                label: newContentType,
-                value: newContentType
-            })
-            setcontentTypes(contentTypesClone)
-            setaddCustomType(false)
-            setcontentType(newContentType)
-            setnewContentType("")
+        if (newContentType.trim().length > 0) {
+            if (!contentTypes.find(e => e.value === newContentType)) {
+                const contentTypesClone = [...contentTypes]
+                contentTypesClone.push({
+                    label: newContentType,
+                    value: newContentType
+                })
+                setcontentTypes(contentTypesClone)
+                setaddCustomType(false)
+                setcontentType(newContentType)
+                setnewContentType("")
+            }
+            else {
+                setaddCustomType(false)
+                setcontentType(newContentType)
+                setnewContentType("")
+            }
         }
         else {
-            setaddCustomType(false)
-            setcontentType(newContentType)
-            setnewContentType("")
+            handleToastError("Valid content type")
         }
-    }
-    const handleResponseEditorChange = (newValue: string) => {
-        setresponseEditorValue(newValue)
     }
     const handleTestClick = async () => {
         if (apiURL.length > 0) {
@@ -360,21 +341,21 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     return handleToastError(translate("PATHPARAMSALERT"))
             })
             if (isValidUrl(requestAPI)) {
+                if (httpMethod !== "GET")
+                    header['Content-Type'] = contentType
                 if (httpAuth === "BASIC") {
                     if (userName.trim() === "")
                         return handleToastError("Please enter a username for basic authentication")
                     if (userPassword.trim() === "")
                         return handleToastError("Please enter a password for basic authentication")
+                    header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
                 }
                 if (httpAuth === "OAUTH2.0") {
                     window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600")
                     setloading(true)
                 }
-                if (httpAuth === "BASIC") {
-                    header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
-                }
-                headerParams.forEach((data) => {
-                    if (data.name && data.value)
+                headerParams.forEach((data, index) => {
+                    if (data.name && data.value && headerParams.length - 1 !== index)
                         header[data.name] = data.value
                 })
                 if (contentType === 'multipart/form-data') {

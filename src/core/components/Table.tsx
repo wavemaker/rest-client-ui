@@ -14,6 +14,7 @@ import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import { PathParamsI } from './WebServiceModal';
 import { useTranslation } from 'react-i18next';
+import React from 'react'
 
 export interface HeaderAndQueryI {
     name: string
@@ -95,22 +96,18 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
 
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
-        if (name !== null) {
+        if (name !== null)
             valueClone.map((data: HeaderAndQueryI, index) => {
-                if (index === currentIndex) {
+                if (index === currentIndex)
                     data.name = name
-                }
                 return data
             })
-        }
-        else {
+        else
             valueClone.map((data: HeaderAndQueryI, index) => {
-                if (index === currentIndex) {
+                if (index === currentIndex)
                     data.name = ''
-                }
                 return data
             })
-        }
         setValue(valueClone)
     }
 
@@ -137,9 +134,8 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         }
         else {
             valueClone.map((data, index) => {
-                if (index === currentIndex) {
+                if (index === currentIndex)
                     data.type = event.target.value
-                }
                 return data
             })
             setValue(valueClone)
@@ -149,9 +145,8 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
     const handleChangeTestValue = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, currentIndex: number) => {
         const valueClone = [...value]
         valueClone.map((data, index) => {
-            if (index === currentIndex) {
+            if (index === currentIndex)
                 data.value = event.target.value
-            }
             return data
         })
         setValue(valueClone)
@@ -167,12 +162,10 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         const pathParamsClone = [...pathParams]
         const allDuplicates = (): any[] => {
             let returnDuplicates: any[] = []
-            if (from === 'header') {
+            if (from === 'header')
                 returnDuplicates = findDuplicatesAcrossArrays([valueClone, queryParamsClone.slice(0, queryParamsClone.length - 1), pathParamsClone], "name")
-            }
-            else {
+            else
                 returnDuplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), valueClone, pathParamsClone], "name")
-            }
             return returnDuplicates
         }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
@@ -183,14 +176,12 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             if (from === 'query' && duplicates.length === 0 && allDuplicates().length === 0) {
                 valueClone.forEach((data, index) => {
                     let addData = data.name + "=" + data.value
-                    if (index === 0) {
+                    if (index === 0)
                         if (!orginalURL.includes("?" + addData) && !orginalURL.includes("&" + addData))
                             orginalURL += "?" + data.name + "=" + data.value
-                    }
-                    else {
-                        if (!orginalURL.includes(addData))
-                            orginalURL += "&" + data.name + "=" + data.value
-                    }
+                        else
+                            if (!orginalURL.includes(addData))
+                                orginalURL += "&" + data.name + "=" + data.value
                 })
                 changeapiURL(orginalURL)
             }
@@ -200,9 +191,8 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                 })
             setValue(valueClone)
         }
-        else {
+        else
             handleToastError(translate("MANDATORY_ALERT"))
-        }
     }
 
     function handleDeleteRow(currentIndex: number) {
@@ -225,23 +215,25 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         setValue(valueClone)
     }
 
-    const handleOnBlurTestValue = () => {
-        const headerParamsClone = [...headerParams]
-        const pathParamsClone = [...pathParams]
-        const valueClone = [...value]
-        const allDuplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), valueClone, pathParamsClone], "name")
-        if (allDuplicates.length === 0)
-            if (from === 'query') {
-                let createQueryString = ''
-                valueClone.forEach((data, index) => {
-                    if (index === 0)
-                        createQueryString = `?${data.name}=${data.value}`
-                    else if (index !== valueClone.length - 1)
-                        createQueryString += `&${data.name}=${data.value}`
-                })
-                const originalURL = apiURL.split('?')[0]
-                changeapiURL(originalURL + createQueryString)
-            }
+    const handleOnBlurTestValue = (index: number) => { 
+        if (value.length - 1 !== index) {
+            const headerParamsClone = [...headerParams]
+            const pathParamsClone = [...pathParams]
+            const valueClone = [...value]
+            const allDuplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), valueClone, pathParamsClone], "name")
+            if (allDuplicates.length === 0)
+                if (from === 'query') {
+                    let createQueryString = ''
+                    valueClone.forEach((data, index) => {
+                        if (index === 0)
+                            createQueryString = `?${data.name}=${data.value}`
+                        else if (index !== valueClone.length - 1)
+                            createQueryString += `&${data.name}=${data.value}`
+                    })
+                    const originalURL = apiURL.split('?')[0]
+                    changeapiURL(originalURL + createQueryString)
+                }
+        }
     }
 
     return (
@@ -303,7 +295,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                 </Stack>
                             </TableCell>
                             <TableCell align='center'>
-                                <TextField data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue()} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
+                                <TextField data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue(index)} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
                             </TableCell>
                             <TableCell align='center'>
                                 {index === value.length - 1 ? <AddIcon onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
