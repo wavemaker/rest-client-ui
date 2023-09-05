@@ -139,11 +139,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const [providerId, setProviderId] = useState('')
     const [configOpen, setConfigOpen] = useState(false)
     const [btnDisable, setBtnDisable] = useState(false)
-
     const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
-    const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
-
 
     useEffect(() => {
         setProviderId(selectedProvider.providerId)
@@ -168,7 +165,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         if (restImportConfig.error.errorMethod === 'customFunction')
             return restImportConfig.error.errorFunction(message)
     }
-
     const getPathParams = () => {
         let paths = getSubstring(apiURL.split("?")[0], "{", "}")
         if (paths.length > 0) {
@@ -214,32 +210,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         })
         setpathParams(pathParamsClone)
     }
-
-    const handleCloseProvider = () => {
-        setproviderOpen(false)
-    }
-
-    const handleChangeapiURL = (value: string) => {
-        setapiURL(value)
-    }
-    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => {
-        setheaderParams(data)
-    }
-    const handleChangeQueryParams = (data: HeaderAndQueryI[]) => {
-        setqueryParams(data)
-    }
-    const handlemultipartParams = (data: BodyParamsI[]) => {
-        setmultipartParams(data)
-    }
-    const handleChangehttpAuth = (event: SelectChangeEvent) => {
-        if (event.target.value === 'OAUTH2.0' && !selectedProvider.providerId) {
-            setBtnDisable(true)
-        }
-        sethttpAuth(event.target.value as any)
-    }
-    const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => {
-        setrequestTabValue(newValue);
-    };
     const handleChangeResponseTabs = (event: any, newValue: number) => {
         switch (newValue) {
             case 0:
@@ -253,15 +223,23 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                 break
         }
         setresponseTabValue(newValue);
-    };
-    const handleChangehttpMethod = (event: SelectChangeEvent) => {
-        sethttpMethod(event.target.value as any)
     }
-    const handleChangecontentType = (event: SelectChangeEvent) => {
-        setcontentType(event.target.value as string)
-    }
-    const handleChangeProxy = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setuseProxy(event.target.checked);
+    const handleCloseProvider = () => setproviderOpen(false)
+    const handleChangeapiURL = (value: string) => setapiURL(value)
+    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => setheaderParams(data)
+    const handleChangeQueryParams = (data: HeaderAndQueryI[]) => setqueryParams(data)
+    const handlemultipartParams = (data: BodyParamsI[]) => setmultipartParams(data)
+    const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => setrequestTabValue(newValue);
+    const handleChangehttpMethod = (event: SelectChangeEvent) => sethttpMethod(event.target.value as any)
+    const handleChangecontentType = (event: SelectChangeEvent) => setcontentType(event.target.value as string)
+    const handleChangeProxy = (event: React.ChangeEvent<HTMLInputElement>) => setuseProxy(event.target.checked)
+    const handleResponseEditorChange = (newValue: string) => setresponseEditorValue(newValue)
+    const handleCloseConfig = () => setConfigOpen(false)
+    const handleChangehttpAuth = (event: SelectChangeEvent) => {
+        if (event.target.value === 'OAUTH2.0' && !selectedProvider.providerId) {
+            setBtnDisable(true)
+        }
+        sethttpAuth(event.target.value as any)
     }
     const handleQueryChange = () => {
         if (apiURL !== '') {
@@ -351,9 +329,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             setnewContentType("")
         }
     }
-    const handleResponseEditorChange = (newValue: string) => {
-        setresponseEditorValue(newValue)
-    }
+
     const handleTestClick = async () => {
         if (apiURL.length > 0) {
             let header: any = {}, body;
@@ -365,15 +341,16 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     return handleToastError(translate("PATHPARAMSALERT"))
             })
             if (isValidUrl(requestAPI)) {
+                if (httpMethod !== "GET")
+                    header['Content-Type'] = contentType
                 if (httpAuth === "BASIC") {
                     if (userName.trim() === "")
                         return handleToastError("Please enter a username for basic authentication")
                     if (userPassword.trim() === "")
                         return handleToastError("Please enter a password for basic authentication")
                 }
-                if (httpAuth === "BASIC") {
+                if (httpAuth === "BASIC")
                     header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
-                }
                 headerParams.forEach((data) => {
                     if (data.name && data.value)
                         header[data.name] = data.value
@@ -386,6 +363,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     })
                     body = formData
                 }
+                else
+                    body = bodyParams
                 if (httpAuth === "OAUTH2.0") {
                     let codeVerifier: string;
                     const clientId = selectedProvider.clientId;
@@ -401,7 +380,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                         codeVerifier = generateRandomCodeVerifier();
                         const encoder = new TextEncoder();
                         const data = encoder.encode(codeVerifier);
-
                         window.crypto.subtle.digest("SHA-256", data)
                             .then(hashBuffer => {
                                 const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
@@ -414,19 +392,16 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     } else {
                         authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
                         childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
-
                     }
                     // providerAuthURL
                     setloading(true)
-
                     const interval = setInterval(() => {
                         if (childWindow.closed) {
                             clearInterval(interval);
                             header['Authorization'] = `Bearer ` + null
                             handleRestAPI(header)
                         }
-                    }, 1000);
-
+                    }, 1000)
                     const messageHandler = async (event: { origin: string; data: { accessToken: any; code: string; error: any } }) => {
                         const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
                         if (event.origin === basePath && event.data.accessToken) {
@@ -436,24 +411,19 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 header['Authorization'] = `Bearer ` + token
                                 handleRestAPI(header);
                             }, 100);
-                            window.removeEventListener('message', messageHandler);
-
+                            window.removeEventListener('message', messageHandler)
                         } else if (event.origin === basePath && event.data.code) {
                             clearInterval(interval);
                             getAccessToken(event.data.code, codeVerifier)
                             setloading(false)
                             window.removeEventListener('message', messageHandler);
-
                         } else {
                             setloading(false)
                         }
                     }
-                    window.addEventListener('message', messageHandler);
-
-
+                    window.addEventListener('message', messageHandler)
                     return
-                } else
-                    body = bodyParams
+                }
                 const configWOProxy: AxiosRequestConfig = {
                     url: requestAPI,
                     headers: header,
@@ -511,10 +481,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         }
         setresponse(responseValue as any)
     }
-    const handleCloseConfig = () => {
-        setConfigOpen(false)
-    }
-
     const handleRestAPI = async (header: object) => {
         const configWOProxy: AxiosRequestConfig = {
             url: apiURL,
@@ -544,7 +510,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         handleResponse(response)
         setloading(false)
     }
-
     function generateRandomCodeVerifier() {
         const array = new Uint32Array(56 / 2);
         window.crypto.getRandomValues(array);
@@ -553,7 +518,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const base64URLEncode = (arrayBuffer: ArrayBuffer): string => {
         const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
         return base64.replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-    };
+    }
     const getAccessToken = async (code: string, codeVerifier: any) => {
         const reqParams = {
             grant_type: 'authorization_code',
@@ -585,7 +550,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         }
 
     }
-
 
     return (
         <>
