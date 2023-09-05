@@ -632,8 +632,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                                 </Tooltip>
                                             </Stack> :
                                                 <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
-                                                    <IconButton>
-                                                        <AddIcon onClick={() => setaddCustomType(true)} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                    <IconButton onClick={() => setaddCustomType(true)}>
+                                                        <AddIcon sx={{ cursor: 'pointer', color: 'black' }} />
                                                     </IconButton>
                                                 </Tooltip>}
                                         </Stack>
