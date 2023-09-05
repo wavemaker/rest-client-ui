@@ -8,10 +8,10 @@ declare const RestImport: any;
 })
 export class ModalComponent implements OnInit {
   @Input() configtype: boolean | undefined;
-  constructor(public activeModal: NgbActiveModal) {}
+  constructor(public activeModal: NgbActiveModal) { }
   ngOnInit(): void {
     if (this.configtype) {
-      const reactUI = RestImport({
+      RestImport({
         dom_id: '#rest-import-ui-modal',
         language: 'en',
         config: {
@@ -53,15 +53,30 @@ export class ModalComponent implements OnInit {
             addprovider: '', // /projects/{projectID}/oauth2/providers
             authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
           },
+          error: {
+            errorFunction: (msg: string) => {
+<<<<<<< HEAD
+              alert(msg);
+            },
+            errorMethod: 'toast',
+            errorMessageTimeout: 5000,
+          },
+=======
+              alert(msg)
+            },
+            errorMethod: "default",
+            errorMessageTimeout: 5000
+          }
+>>>>>>> ab65688857d258dafc36c7ded9eb66afefc850b1
         },
       });
     } else {
-      const reactUI = RestImport({
+      RestImport({
         dom_id: '#rest-import-ui-modal',
         language: 'en',
         config: {
           proxy_conf: {
-            base_path: 'http://localhost:5000',
+            base_path: 'http://localhost:4000',
             proxy_path: '/restimport',
             list_provider: '/get-default-provider',
             getprovider: '/getprovider',
@@ -76,6 +91,21 @@ export class ModalComponent implements OnInit {
             addprovider: '', // /projects/{projectID}/oauth2/providers
             authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
           },
+          error: {
+            errorFunction: (msg: string) => {
+<<<<<<< HEAD
+              alert(msg);
+            },
+            errorMethod: 'toast',
+            errorMessageTimeout: 5000,
+          },
+=======
+              alert(msg)
+            },
+            errorMethod: "default",
+            errorMessageTimeout: 5000
+          }
+>>>>>>> ab65688857d258dafc36c7ded9eb66afefc850b1
         },
       });
     }
