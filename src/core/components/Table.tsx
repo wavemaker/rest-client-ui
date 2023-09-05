@@ -14,7 +14,7 @@ import { findDuplicateObjects, findDuplicatesAcrossArrays, getCurrentDateTime } 
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import { PathParamsI } from './WebServiceModal';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'; 
 
 export interface HeaderAndQueryI {
     name: string
