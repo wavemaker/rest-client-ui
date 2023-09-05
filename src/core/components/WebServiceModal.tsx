@@ -626,8 +626,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                             {addCustomType ? <Stack direction={'row'}>
                                                 <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' />
                                                 <Tooltip title={translate("ADD")}>
-                                                    <IconButton>
-                                                        <DoneIcon onClick={() => handleAddCustomContentType()} sx={{ cursor: 'pointer', color: 'black' }} />
+                                                    <IconButton onClick={() => handleAddCustomContentType()}>
+                                                        <DoneIcon sx={{ cursor: 'pointer', color: 'black' }} />
                                                     </IconButton>
                                                 </Tooltip>
                                             </Stack> :
