@@ -599,6 +599,11 @@ describe("Web Service Modal", () => {
         const fileNameContainer = await screen.findByTestId('test-value')
         const fileNameField = within(fileNameContainer).getAllByRole('textbox')[0]
         expect(fileNameField).toHaveValue(filename)
+        await user.click(within(screen.getByTestId('multipart-table')).getByTestId('AddIcon'))
+        await clickTestBtn()
+        await switchTab('RESPONSE STATUS')
+        const response = await getResponse()
+        expect(response.statusCode).toEqual("200 " + httpStatusCodes.get(200))
     }, 80000)
 
     it("Adding already available content type as custom content type doesn't create duplicate entry in the dropdown", async () => {
@@ -627,6 +632,27 @@ describe("Web Service Modal", () => {
         })
         expect(hasDuplicates).toBeFalsy()
     })
+
+    it("Error Msg displayed when adding duplicate(already present in other parameters) path params on blur of the URL field", async () => {
+        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
+        const url = endPoints.getQueryParams
+        const query: QueryI = { name: "id", type: "String", value: "25" }
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, url)
+        await switchTab('QUERY PARAMS')
+        await addHeadersOrQueryParamsInTheFields(query, 0)
+        const urlWithQuery = urlTextField.getAttribute('value')!
+        const urlOnly = urlWithQuery.slice(0, urlWithQuery.indexOf('?'))
+        const queriesOnly = urlWithQuery.slice(urlWithQuery.indexOf('?'))
+        const urlWithPathParam = `${urlOnly}/{${query.name}}${queriesOnly}`
+        fireEvent.change(urlTextField, { target: { value: urlWithPathParam } })
+        urlTextField.focus()
+        urlTextField.blur()
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, `parameter "${query.name}" already exists`)
+        expect(errorDisplayed).toBeTruthy()
+    }, 80000)
 })
 
 function renderComponent(mockProps: mockPropsI) {

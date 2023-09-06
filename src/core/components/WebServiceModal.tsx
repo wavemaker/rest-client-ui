@@ -113,7 +113,7 @@ const defaultContentTypes = [
 ]
 
 export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
-    const defaultValueforHandQParams = { name: '', value: '', type: '' }
+    const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
     const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState<string>(restImportConfig?.url || '')
     const [httpMethod, sethttpMethod] = useState<"GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT">(restImportConfig?.httpMethod || 'GET')
@@ -234,7 +234,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const handleChangehttpAuth = (event: SelectChangeEvent) => {
         if (event.target.value === 'OAUTH2.0' && !selectedProvider.providerId) {
             setBtnDisable(true)
-        }
+        } else
+            setBtnDisable(false)
         sethttpAuth(event.target.value as any)
     }
     const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => {
@@ -358,145 +359,148 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         setresponseEditorValue(newValue)
     }
     const handleTestClick = async () => {
-        if (apiURL.length > 0) {
-            let header: any = {}, body;
-            let requestAPI = apiURL
-            let isValidPathValue = true;
-            pathParams.forEach((params) => {
-                if (params.value.trim() !== "")
-                    requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
-                else {
-                    isValidPathValue = false;
-                    return handleToastError(translate("PATHPARAMSALERT"))
-                }
-            })
-            if (!isValidPathValue) return
-            if (isValidUrl(requestAPI)) {
-                if (httpAuth === "BASIC") {
-                    if (userName.trim() === "")
-                        return handleToastError("Please enter a username for basic authentication")
-                    if (userPassword.trim() === "")
-                        return handleToastError("Please enter a password for basic authentication")
-                }
-                if (httpAuth === "BASIC") {
-                    header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
-                }
-                headerParams.forEach((data) => {
-                    if (data.name && data.value)
-                        header[data.name] = data.value
+        try {
+            if (apiURL.length > 0) {
+                let header: any = {}, body;
+                let requestAPI = apiURL
+                pathParams.forEach((params) => {
+                    if (params.value.trim() !== "")
+                        requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
+                    else
+                        throw new Error(translate("PATHPARAMSALERT"))
                 })
 
-                // header['content-type'] = contentType
-                if (contentType === 'multipart/form-data') {
-                    const formData = new FormData()
-                    multipartParams.forEach((data, index) => {
-                        if (multipartParams.length - 1 !== index)
-                            formData.append(data.name, data.value)
+                if (isValidUrl(requestAPI)) {
+                    if (httpAuth === "BASIC") {
+                        if (userName.trim() === "")
+                            throw new Error("Please enter a username for basic authentication")
+                        if (userPassword.trim() === "")
+                            throw new Error("Please enter a password for basic authentication")
+                        header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
+                    }
+
+                    headerParams.forEach((data) => {
+                        if (data.name && data.value) {
+                            if (data.name === 'Authorization' && header['Authorization'])
+                                throw new Error(`Parameter "Authorization" already exists`)
+                            header[data.name] = data.value
+                        }
                     })
-                    body = formData
-                } else
-                    body = bodyParams
 
-                if (httpAuth === "OAUTH2.0") {
-                    let codeVerifier: string;
-                    const clientId = selectedProvider.clientId;
-                    let redirectUri = restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
-                    const responseType = "code";
-                    const state = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==";
-                    const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
-                    let childWindow: any;
-                    let authUrl: string
-                    if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
-                        redirectUri = restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html'
-                        const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
-                        codeVerifier = generateRandomCodeVerifier();
-                        const encoder = new TextEncoder();
-                        const data = encoder.encode(codeVerifier);
+                    header['content-type'] = contentType
+                    if (contentType === 'multipart/form-data') {
+                        const formData = new FormData()
+                        multipartParams.forEach(data => {
+                            if (data.name && data.value)
+                                formData.append(data.name, data.value)
+                        })
+                        body = formData
+                    } else
+                        body = bodyParams
 
-                        window.crypto.subtle.digest("SHA-256", data)
-                            .then(hashBuffer => {
-                                const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
-                                childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
-                            })
-                            .catch(error => {
-                                console.error("Error calculating code challenge:", error);
-                            });
-                    } else {
-                        authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
-                        childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                    if (httpAuth === "OAUTH2.0") {
+                        let codeVerifier: string;
+                        const clientId = selectedProvider.clientId;
+                        let redirectUri = restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
+                        const responseType = "code";
+                        const state = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==";
+                        const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
+                        let childWindow: any;
+                        let authUrl: string
+                        if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
+                            redirectUri = restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html'
+                            const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
+                            codeVerifier = generateRandomCodeVerifier();
+                            const encoder = new TextEncoder();
+                            const data = encoder.encode(codeVerifier);
 
-                    }
-                    // providerAuthURL
-                    setloading(true)
-
-                    const interval = setInterval(() => {
-                        if (childWindow.closed) {
-                            clearInterval(interval);
-                            header['Authorization'] = `Bearer ` + null
-                            handleRestAPI(header)
-                        }
-                    }, 1000);
-
-                    const messageHandler = async (event: { origin: string; data: { accessToken: any; code: string; error: any } }) => {
-                        const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
-                        if (event.origin === basePath && event.data.accessToken) {
-                            clearInterval(interval);
-                            const token = event.data.accessToken
-                            setTimeout(() => {
-                                header['Authorization'] = `Bearer ` + token
-                                handleRestAPI(header);
-                            }, 100);
-                            window.removeEventListener('message', messageHandler);
-
-                        } else if (event.origin === basePath && event.data.code) {
-                            clearInterval(interval);
-                            getAccessToken(event.data.code, codeVerifier)
-                            setloading(false)
-                            window.removeEventListener('message', messageHandler);
-
+                            window.crypto.subtle.digest("SHA-256", data)
+                                .then(hashBuffer => {
+                                    const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
+                                    authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
+                                    childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                })
+                                .catch(error => {
+                                    console.error("Error calculating code challenge:", error);
+                                });
                         } else {
-                            setloading(false)
+                            authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
+                            childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+
                         }
+                        // providerAuthURL
+                        setloading(true)
+
+                        const interval = setInterval(() => {
+                            if (childWindow.closed) {
+                                clearInterval(interval);
+                                header['Authorization'] = `Bearer ` + null
+                                handleRestAPI(header)
+                            }
+                        }, 1000);
+
+                        const messageHandler = async (event: { origin: string; data: { accessToken: any; code: string; error: any } }) => {
+                            const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
+                            if (event.origin === basePath && event.data.accessToken) {
+                                clearInterval(interval);
+                                const token = event.data.accessToken
+                                setTimeout(() => {
+                                    header['Authorization'] = `Bearer ` + token
+                                    handleRestAPI(header);
+                                }, 100);
+                                window.removeEventListener('message', messageHandler);
+
+                            } else if (event.origin === basePath && event.data.code) {
+                                clearInterval(interval);
+                                getAccessToken(event.data.code, codeVerifier)
+                                setloading(false)
+                                window.removeEventListener('message', messageHandler);
+
+                            } else {
+                                setloading(false)
+                            }
+                        }
+                        window.addEventListener('message', messageHandler);
+
+
+                        return
                     }
-                    window.addEventListener('message', messageHandler);
-
-
-                    return
-                }
-                const configWOProxy: AxiosRequestConfig = {
-                    url: requestAPI,
-                    headers: header,
-                    method: httpMethod,
-                    data: body
-                }
-                const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
-                const configWProxy: AxiosRequestConfig = {
-                    url: url,
-                    data: {
-                        "endpointAddress": requestAPI,
-                        "method": httpMethod,
-                        "contentType": contentType,
-                        "requestBody": body,
-                        "headers": header,
-                        "authDetails": null
-                    },
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    withCredentials: true
-                }
-                setloading(true)
-                const config = useProxy ? configWProxy : configWOProxy
-                const response: any = await Apicall(config)
-                handleResponse(response)
-                setloading(false)
-            } else
-                handleToastError(translate("VALID_URL_ALERT"))
+                    const configWOProxy: AxiosRequestConfig = {
+                        url: requestAPI,
+                        headers: header,
+                        method: httpMethod,
+                        data: body
+                    }
+                    const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
+                    const configWProxy: AxiosRequestConfig = {
+                        url: url,
+                        data: {
+                            "endpointAddress": requestAPI,
+                            "method": httpMethod,
+                            "contentType": contentType,
+                            "requestBody": body,
+                            "headers": header,
+                            "authDetails": null
+                        },
+                        method: "POST",
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        withCredentials: true
+                    }
+                    setloading(true)
+                    const config = useProxy ? configWProxy : configWOProxy
+                    const response: any = await Apicall(config)
+                    handleResponse(response)
+                    setloading(false)
+                } else
+                    throw new Error(translate("VALID_URL_ALERT"))
+            }
+            else
+                throw new Error(translate("VALID_URL_ALERT"))
+        } catch (error: any) {
+            handleToastError(error.message)
         }
-        else
-            handleToastError(translate("VALID_URL_ALERT"))
     }
     function handleResponse(response: any): void {
         let responseValue;
@@ -640,7 +644,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             <TextField onBlur={() => {
                                 getPathParams()
                                 handleQueryChange()
-                            }} autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
+                            }} autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
                             <Button onClick={handleTestClick} disabled={btnDisable} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
                     </Grid>
@@ -713,7 +717,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                         </Grid>
                                         <Grid item md={9}>
                                             <Stack direction={'row'}>
-                                                <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
+                                                <TextField type='password' value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
                                                 <Tooltip title={translate("PASSWORD")}>
                                                     <IconButton>
                                                         <HelpOutlineIcon />
