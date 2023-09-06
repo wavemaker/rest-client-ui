@@ -1,6 +1,7 @@
-# Indtroduction
+# Introduction
 
-This Application represents an API platform for building and using APIs.
+Looking to enhance your application's capabilities with robust API testing and request functionality? Our API Testing and Request Library is the ideal solution. Seamlessly integrate this powerful library into your application to simplify API interactions, streamline testing, and ensure the reliability of your API-dependent features.
+This library can be easily be integrated into both React and Angular applications.
 
 ## User Interface
 
