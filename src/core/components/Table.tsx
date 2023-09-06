@@ -6,7 +6,9 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, Stack, TextField } from '@mui/material';
+import {
+    Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, Stack, TextField
+} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { ChangeEvent } from 'react';
@@ -14,21 +16,18 @@ import { findDuplicateObjects, findDuplicatesAcrossArrays, getCurrentDateTime } 
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import { PathParamsI } from './WebServiceModal';
-import { useTranslation } from 'react-i18next'; 
-
+import { useTranslation } from 'react-i18next';
 export interface HeaderAndQueryI {
     name: string
     type: string
     value: string
 }
-
 export interface BodyParamsI {
     name: string
     type: string
     value: string | File
     filename?: string
 }
-
 export const TableRowStyled = styled(TableRow)`
   &:nth-of-type(odd) {
     background-color: #fff;
@@ -44,8 +43,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
         pathParams: PathParamsI[], handleToastError: (msg: string) => void
     }) {
-    const { t: translate } = useTranslation();
-
+    const { t: translate } = useTranslation()
     const selectTypes =
     {
         UITypes: [
@@ -96,22 +94,18 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
 
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
-        if (name !== null) {
+        if (name !== null)
             valueClone.map((data: HeaderAndQueryI, index) => {
-                if (index === currentIndex) {
+                if (index === currentIndex)
                     data.name = name
-                }
                 return data
             })
-        }
-        else {
+        else
             valueClone.map((data: HeaderAndQueryI, index) => {
-                if (index === currentIndex) {
+                if (index === currentIndex)
                     data.name = ''
-                }
                 return data
             })
-        }
         setValue(valueClone)
     }
 
@@ -138,9 +132,8 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         }
         else {
             valueClone.map((data, index) => {
-                if (index === currentIndex) {
+                if (index === currentIndex)
                     data.type = event.target.value
-                }
                 return data
             })
             setValue(valueClone)
@@ -150,9 +143,8 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
     const handleChangeTestValue = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, currentIndex: number) => {
         const valueClone = [...value]
         valueClone.map((data, index) => {
-            if (index === currentIndex) {
+            if (index === currentIndex)
                 data.value = event.target.value
-            }
             return data
         })
         setValue(valueClone)
@@ -168,12 +160,10 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         const pathParamsClone = [...pathParams]
         const allDuplicates = (): any[] => {
             let returnDuplicates: any[] = []
-            if (from === 'header') {
+            if (from === 'header')
                 returnDuplicates = findDuplicatesAcrossArrays([valueClone, queryParamsClone.slice(0, queryParamsClone.length - 1), pathParamsClone], "name")
-            }
-            else {
+            else
                 returnDuplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), valueClone, pathParamsClone], "name")
-            }
             return returnDuplicates
         }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
@@ -188,10 +178,9 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                         if (!orginalURL.includes("?" + addData) && !orginalURL.includes("&" + addData))
                             orginalURL += "?" + data.name + "=" + data.value
                     }
-                    else {
+                    else
                         if (!orginalURL.includes(addData))
                             orginalURL += "&" + data.name + "=" + data.value
-                    }
                 })
                 changeapiURL(orginalURL)
             }
@@ -201,9 +190,8 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                 })
             setValue(valueClone)
         }
-        else {
+        else
             handleToastError(translate("MANDATORY_ALERT"))
-        }
     }
 
     function handleDeleteRow(currentIndex: number) {
