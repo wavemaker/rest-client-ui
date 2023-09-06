@@ -334,7 +334,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         }
     }
     const handleAddCustomContentType = () => {
-        if (!contentTypes.find(e => e.value === newContentType)) {
+        if (newContentType && !contentTypes.find(e => e.value === newContentType)) {
             const contentTypesClone = [...contentTypes]
             contentTypesClone.push({
                 label: newContentType,
@@ -344,10 +344,13 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             setaddCustomType(false)
             setcontentType(newContentType)
             setnewContentType("")
+        } else if (newContentType && contentTypes.find(e => e.value === newContentType)) {
+            setaddCustomType(false)
+            setcontentType(newContentType)
+            setnewContentType("")
         }
         else {
             setaddCustomType(false)
-            setcontentType(newContentType)
             setnewContentType("")
         }
     }
@@ -358,12 +361,16 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         if (apiURL.length > 0) {
             let header: any = {}, body;
             let requestAPI = apiURL
+            let isValidPathValue = true;
             pathParams.forEach((params) => {
                 if (params.value.trim() !== "")
                     requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
-                else
+                else {
+                    isValidPathValue = false;
                     return handleToastError(translate("PATHPARAMSALERT"))
+                }
             })
+            if (!isValidPathValue) return
             if (isValidUrl(requestAPI)) {
                 if (httpAuth === "BASIC") {
                     if (userName.trim() === "")
@@ -378,6 +385,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     if (data.name && data.value)
                         header[data.name] = data.value
                 })
+
+                // header['content-type'] = contentType
                 if (contentType === 'multipart/form-data') {
                     const formData = new FormData()
                     multipartParams.forEach((data, index) => {
@@ -385,7 +394,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             formData.append(data.name, data.value)
                     })
                     body = formData
-                }
+                } else
+                    body = bodyParams
+
                 if (httpAuth === "OAUTH2.0") {
                     let codeVerifier: string;
                     const clientId = selectedProvider.clientId;
@@ -452,8 +463,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
 
 
                     return
-                } else
-                    body = bodyParams
+                }
                 const configWOProxy: AxiosRequestConfig = {
                     url: requestAPI,
                     headers: header,

@@ -1,21 +1,23 @@
+/* eslint-disable jest/no-conditional-expect */
 import { render, screen, within, fireEvent } from '@testing-library/react';
 import user from '@testing-library/user-event'
 import WebServiceModal from '../core/components/WebServiceModal'
 import '@testing-library/jest-dom';
 import { server } from './mocks/server'
-import testData, { mockEmptyProps, endPoints, HTTP_METHODS, REQUEST_TABS, RESPONSE_TABS, TOAST_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI, QueryI, AUTH_OPTIONS, HEADER_NAME_OPTIONS, HEADER_TYPE_OPTIONS, CONTENT_TYPE, SUBHEADER_UNDER_TABS, wavemakerMoreInfoLink } from './testdata'
+import testData, { mockEmptyProps, endPoints, HTTP_METHODS, REQUEST_TABS, RESPONSE_TABS, ERROR_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI, QueryI, AUTH_OPTIONS, HEADER_NAME_OPTIONS, HEADER_TYPE_OPTIONS, CONTENT_TYPE, SUBHEADER_UNDER_TABS, wavemakerMoreInfoLink, mockPropsI, preLoadedProps, getCustomizedError, responseHeaders } from './testdata'
 import { Provider } from 'react-redux'
 import appStore from '../core/components/appStore/Store';
 import { ResponseI } from './mocks/handlers';
 import { AxiosRequestConfig } from 'axios';
-
-interface ParamStructureInResponseI {
-    [key: string]: any
-}
+import { httpStatusCodes } from '../core/components/common/common';
 
 type httpMethods = "GET" | "POST" | "PUT" | "HEAD" | "PATCH" | "DELETE"
 type authMethods = "None" | "Basic" | "OAuth 2.0"
-type tabs = "AUTHORIZATION" | "HEADER PARAMS" | "BODY PARAMS" | "QUERY PARAMS" | "PATH PARAMS"
+type contentTypes = "multipart/form-data"
+type multipartFileTypes = "File" | "Text" | "Text(Text/Plain)" | "application/json"
+type options = httpMethods | authMethods | contentTypes | multipartFileTypes
+type dropdownIDs = "http-auth" | "http-method" | "select-content-type" | "multipart-type" | "param-type"
+type tabs = "AUTHORIZATION" | "HEADER PARAMS" | "BODY PARAMS" | "QUERY PARAMS" | "PATH PARAMS" | "RESPONSE BODY" | "RESPONSE HEADER" | "RESPONSE STATUS"
 
 beforeAll(() => server.listen())
 
@@ -38,7 +40,7 @@ Object.defineProperty(window, 'matchMedia', {
 
 describe("Web Service Modal", () => {
     it("Renders correctly", () => {
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const modalTitle = screen.getByRole('heading', { name: /Web Service/i });
         expect(modalTitle).toBeInTheDocument();
         const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
@@ -59,37 +61,37 @@ describe("Web Service Modal", () => {
         })
     }, 80000);
 
-    it("Able to type in URL field", async () => {
+    it("Able to type in the URL field", async () => {
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.getUsers)
         expect(urlTextField).toHaveValue(endPoints.getUsers)
     }, 80000)
 
     it("Authorization tab selected by default", () => {
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const authTab = screen.getByRole('tab', { name: /authorization/i })
         expect(authTab).toHaveClass("Mui-selected")
     }, 80000)
 
-    it("Body Params disabled for GET method by default", () => {
-        renderComponent()
+    it("Body Params tab disabled for GET method by default", () => {
+        renderComponent(mockEmptyProps)
         const bodyParams = screen.getByRole('tab', { name: /body params/i })
         expect(bodyParams).toBeDisabled()
     }, 80000)
 
-    it("Body Params enabled for POST method", async () => {
+    it("Body Params tab enabled for POST method", async () => {
         user.setup()
-        renderComponent()
-        await selectHttpMethodFromDropdown('POST')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'POST')
         const bodyParams = screen.getByRole('tab', { name: /body params/i })
         expect(bodyParams).toBeEnabled()
     }, 80000)
 
-    it("GET request returns the list of users", async () => {
+    it("Returns a successful response [GET]", async () => {
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.getUsers)
         await clickTestBtn()
@@ -97,13 +99,13 @@ describe("Web Service Modal", () => {
         expect(response.data).toEqual(testData.userList)
     }, 80000)
 
-    it("POST request with basic authentication", async () => {
+    it("Basic authentication works properly [POST]", async () => {
         user.setup()
-        renderComponent()
-        await selectHttpMethodFromDropdown('POST')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'POST')
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.postLogin)
-        await selectAuthenticationMethodFromDropdown('Basic')
+        await selectOptionFromDropdown('http-auth', 'Basic')
         const userName = await screen.findByRole('textbox', { name: /user name/i })
         await user.type(userName, testData.user.userName)
         const password = await screen.findByRole('textbox', { name: /password/i })
@@ -113,10 +115,10 @@ describe("Web Service Modal", () => {
         expect(response?.requestHeaders?.authorization).toMatch(/basic/i)
     }, 80000)
 
-    it("POST request with Body params", async () => {
+    it("Sends data to the server successfully [POST]", async () => {
         user.setup()
-        renderComponent()
-        await selectHttpMethodFromDropdown('POST')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'POST')
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.postCreateAccount)
         await switchTab('BODY PARAMS')
@@ -130,10 +132,10 @@ describe("Web Service Modal", () => {
 
     }, 80000)
 
-    it("Sending Header Parameters in the Request", async () => {
+    it("Sends Header Parameters to the server successfully [GET]", async () => {
         const headersArray = testData.headerParams;
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const modalTitle = screen.getByRole('heading', { name: /Web Service/i });
         expect(modalTitle).toBeInTheDocument();
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
@@ -143,41 +145,30 @@ describe("Web Service Modal", () => {
             await addHeadersOrQueryParamsInTheFields(header, index)
         }
         await clickTestBtn()
-        const matchResponse = constructObjToMatchWithResponseStructure(headersArray, true)
         const response: ResponseI = await getResponse()
-        expect(response.requestHeaders).toEqual(matchResponse)
+        validateResponseWithTestData(response.requestHeaders, headersArray, true)
     }, 80000)
 
-    it("Sending Query Parameters in the Request URL", async () => {
-        const queryValueTextFields: HTMLElement[] = [];
+    it("Sends Query Parameters in the Request URL [GET]", async () => {
         const queriesArray = testData.queries;
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, constructUrlWithQueryParams(endPoints.getQueryParams, queriesArray))
         urlTextField.focus()
         urlTextField.blur()
         await switchTab('QUERY PARAMS')
-        const queryNames = screen.getAllByRole('combobox');
-        const queryValueContainer = screen.getAllByTestId("param-value")
-        queryValueContainer.forEach((container) => {
-            queryValueTextFields.push(within(container).getByRole("textbox"))
-        })
-        queriesArray.forEach((query, index) => {
-            expect(queryNames[index]).toHaveDisplayValue(query.name)
-            expect(queryValueTextFields[index]).toHaveDisplayValue(query.value)
-        })
+        await checkIfQueryParamsAreReflectedInFieldsFromURL(queriesArray)
         await clickTestBtn()
-        const matchResponse = constructObjToMatchWithResponseStructure(queriesArray, false)
         const response: ResponseI = await getResponse()
-        expect(response.queries).toEqual(matchResponse)
+        validateResponseWithTestData(response.queries, queriesArray)
     }, 80000)
 
-    it("PUT request with Path params", async () => {
+    it("Sends Path Parameters in the Request URL [PUT]", async () => {
         user.setup()
         const pathParam = "userId"
-        renderComponent()
-        await selectHttpMethodFromDropdown('PUT')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'PUT')
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         fireEvent.change(urlTextField, { target: { value: `${endPoints.putResource}/{${pathParam}}` } })
         urlTextField.focus()
@@ -196,11 +187,11 @@ describe("Web Service Modal", () => {
         expect(response.pathParams.userId).toMatch(testData.user.id.toString())
     }, 80000)
 
-    it("Deleting a resource with Path params", async () => {
+    it("Deletes a resource with a Path param [DELETE]", async () => {
         user.setup()
         const pathParam = "userId"
-        renderComponent()
-        await selectHttpMethodFromDropdown('DELETE')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'DELETE')
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         fireEvent.change(urlTextField, { target: { value: `${endPoints.deleteResource}/{${pathParam}}` } })
         urlTextField.focus()
@@ -214,27 +205,29 @@ describe("Web Service Modal", () => {
         expect(response.pathParams.userId).toMatch(testData.user.id.toString())
     }, 80000)
 
-    it("Check for Error Msg when clicking 'TEST' without entering URL", async () => {
+    it("Error Msg displayed when clicking 'TEST' btn without entering URL [Default Error]", async () => {
+        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         await clickTestBtn()
-        const errorDisplayed = await isErrorMsgDisplayed(TOAST_MESSAGES.EMPTY_URL)
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, ERROR_MESSAGES.EMPTY_URL)
         expect(errorDisplayed).toBeTruthy()
     }, 80000)
 
-    it("Check for Error Msg when click 'TEST' with an invalid URL", async () => {
+    it("Error Msg displayed when clicking 'TEST' btn with an invalid URL", async () => {
+        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.invalidURL)
         await clickTestBtn()
-        const errorDisplayed = await isErrorMsgDisplayed(TOAST_MESSAGES.EMPTY_URL)
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, ERROR_MESSAGES.EMPTY_URL)
         expect(errorDisplayed).toBeTruthy()
     })
 
-    it("Check for all HTTP methods in the dropdown", async () => {
+    it("Check if all HTTP methods present in the dropdown", async () => {
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
         await user.click(httpMethodDropdown);
         const dropdownOptions = await screen.findAllByRole('option')
@@ -244,20 +237,21 @@ describe("Web Service Modal", () => {
         })
     }, 80000)
 
-    it("Check for Basic Auth Username/Password", async () => {
+    it("Check validation for Basic Auth Username/Password", async () => {
+        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
         user.setup()
-        renderComponent()
-        await selectHttpMethodFromDropdown('POST')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'POST')
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.postLogin)
-        await selectAuthenticationMethodFromDropdown('Basic')
+        await selectOptionFromDropdown('http-auth', 'Basic')
         await clickTestBtn()
-        const userNameErrorDisplayed = await isErrorMsgDisplayed(TOAST_MESSAGES.EMPTY_BASIC_AUTH_USERNAME)
+        const userNameErrorDisplayed = await isErrorMsgDisplayed(errorMethod, ERROR_MESSAGES.EMPTY_BASIC_AUTH_USERNAME)
         expect(userNameErrorDisplayed).toBeTruthy()
         const userName = await screen.findByRole('textbox', { name: /user name/i })
         await user.type(userName, testData.user.userName)
         await clickTestBtn()
-        const passwordErrorDisplayed = await isErrorMsgDisplayed(TOAST_MESSAGES.EMPTY_BASIC_AUTH_PASSWORD)
+        const passwordErrorDisplayed = await isErrorMsgDisplayed(errorMethod, ERROR_MESSAGES.EMPTY_BASIC_AUTH_PASSWORD)
         expect(passwordErrorDisplayed).toBeTruthy()
     }, 80000)
 
@@ -265,7 +259,7 @@ describe("Web Service Modal", () => {
         const headersArray = testData.headerParams;
         const deleteHeaderAtIndex = headersArray.length - 1  //Removes a header from the last index by default
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.getVerifyHeader)
         await switchTab('HEADER PARAMS')
@@ -273,23 +267,20 @@ describe("Web Service Modal", () => {
             await addHeadersOrQueryParamsInTheFields(header, index)
         }
         await clickTestBtn()
-        const headerObj = constructObjToMatchWithResponseStructure(headersArray, true)
         const response: ResponseI = await getResponse()
-        expect(response.requestHeaders).toEqual(headerObj)
-
+        validateResponseWithTestData(response.requestHeaders, headersArray, true)
         const deleteIcons = screen.getAllByTestId('DeleteIcon')
         await user.click(deleteIcons[deleteHeaderAtIndex])
         await clickTestBtn()
-        const modifiedHeaderObj = constructObjToMatchWithResponseStructure(headersArray, true, deleteHeaderAtIndex)
         const updatedResponse: ResponseI = await getResponse()
-        expect(updatedResponse.requestHeaders).toEqual(modifiedHeaderObj)
+        validateResponseWithTestData(updatedResponse.requestHeaders, headersArray, true, deleteHeaderAtIndex)
     }, 100000)
 
     it("Adding/Deleting Query Parameters using fields", async () => {
         const queriesArray = testData.queries;
         const deleteQueryAtIndex = queriesArray.length - 1  //Removes a query from the last index by default
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.getQueryParams)
         await switchTab('QUERY PARAMS')
@@ -299,25 +290,22 @@ describe("Web Service Modal", () => {
         const constructedUrl = constructUrlWithQueryParams(endPoints.getQueryParams, queriesArray)
         expect(urlTextField.getAttribute('value')).toEqual(constructedUrl)
         await clickTestBtn()
-        const queriesObj = constructObjToMatchWithResponseStructure(queriesArray, false)
         const response: ResponseI = await getResponse()
-        expect(response.queries).toEqual(queriesObj)
-
+        validateResponseWithTestData(response.queries, queriesArray)
         const deleteIcons = screen.getAllByTestId('DeleteIcon')
         await user.click(deleteIcons[deleteQueryAtIndex])
         const reconstructedUrl = constructUrlWithQueryParams(endPoints.getQueryParams, queriesArray, deleteQueryAtIndex)
         const urlFieldAfterQueryDeletion = screen.getByRole('textbox', { name: /url/i })
         expect(urlFieldAfterQueryDeletion.getAttribute('value')).toEqual(reconstructedUrl)
         await clickTestBtn()
-        const modifiedQueryObj = constructObjToMatchWithResponseStructure(queriesArray, false, deleteQueryAtIndex)
         const updatedResponse: ResponseI = await getResponse()
-        expect(updatedResponse.queries).toEqual(modifiedQueryObj)
+        validateResponseWithTestData(updatedResponse.queries, queriesArray, false, deleteQueryAtIndex)
     }, 80000)
 
-    it("Check for info message if there aren't any path params", async () => {
+    it("Info message displayed if there aren't any path params", async () => {
         user.setup()
-        renderComponent()
-        await selectHttpMethodFromDropdown('PUT')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'PUT')
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         fireEvent.change(urlTextField, { target: { value: `${endPoints.putResource}` } })
         urlTextField.focus()
@@ -330,12 +318,12 @@ describe("Web Service Modal", () => {
     }, 80000)
 
 
-    it("Adding and deleting Path params in PUT request", async () => {
+    it("Adding and deleting Path params in the URL [PUT]", async () => {
         user.setup()
         const pathParamsArray = testData.pathParams;
         const deletePathParamAtIndex = pathParamsArray.length - 1  //Removes a path from the last index by default
-        renderComponent()
-        await selectHttpMethodFromDropdown('PUT')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'PUT')
         await switchTab('PATH PARAMS')
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         const constructedUrl = constructUrlWithPathParams(endPoints.putResource, pathParamsArray)
@@ -348,10 +336,8 @@ describe("Web Service Modal", () => {
         const bodyTextArea = within(tabpanel).getByRole('textbox');
         fireEvent.change(bodyTextArea, { target: { value: `${JSON.stringify(testData.user)}` } })
         await clickTestBtn()
-        const pathParamsObj = constructObjToMatchWithResponseStructure(pathParamsArray, false)
         const response: ResponseI = await getResponse()
-        expect(response.pathParams).toEqual(pathParamsObj)
-
+        validateResponseWithTestData(response.pathParams, pathParamsArray)
         const reconstructedUrl = constructUrlWithPathParams(endPoints.putResource, pathParamsArray, deletePathParamAtIndex)
         fireEvent.change(urlTextField, { target: { value: reconstructedUrl } })
         urlTextField.focus()
@@ -359,14 +345,13 @@ describe("Web Service Modal", () => {
         await switchTab('PATH PARAMS')
         await verifyPathLabelsAndEnterValues(pathParamsArray.filter((_, index) => index !== deletePathParamAtIndex))
         await clickTestBtn()
-        const modifiedPathParamObj = constructObjToMatchWithResponseStructure(pathParamsArray, false, deletePathParamAtIndex)
         const updatedResponse: ResponseI = await getResponse()
-        expect(updatedResponse.pathParams).toEqual(modifiedPathParamObj)
+        validateResponseWithTestData(updatedResponse.pathParams, pathParamsArray, false, deletePathParamAtIndex)
     }, 80000)
 
-    it("Checking the proxy server", async () => {
+    it("Request reaches the proxy server and displays the result", async () => {
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.getUsers)
         const useProxySwitch = screen.getByTestId('proxy-switch')
@@ -374,14 +359,27 @@ describe("Web Service Modal", () => {
         expect(useProxySwitch).toHaveClass("Mui-checked")
         await clickTestBtn()
         const requestConfig = constructObjToMatchWithProxyConfig(endPoints.getUsers)
-        const configFromResponse: AxiosRequestConfig = await getResponse()
+        const configFromResponse = await getResponse()
         expect(configFromResponse).toEqual(requestConfig.data)
-    })
+    }, 80000)
 
-
-    it("Check for all HTTP authentication dropdown options in the Authorization Tab", async () => {
+    it("Checking error response from the proxy server", async () => {
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, "http://wavemaker.com/proxyerror")
+        const useProxySwitch = screen.getByTestId('proxy-switch')
+        await user.click(within(useProxySwitch).getByRole('checkbox'))
+        expect(useProxySwitch).toHaveClass("Mui-checked")
+        await clickTestBtn()
+        const configFromResponse = await getResponse()
+        expect(configFromResponse).toEqual(httpStatusCodes.get(400))
+    }, 80000)
+
+
+    it("All HTTP authentication dropdown options are present in the Authorization Tab", async () => {
+        user.setup()
+        renderComponent(mockEmptyProps)
         const httpAuthDropdown = within(screen.getByTestId("http-auth")).getByRole("button")
         await user.click(httpAuthDropdown);
         const dropdownOptions = await screen.findAllByRole('option')
@@ -393,7 +391,7 @@ describe("Web Service Modal", () => {
 
     it("Check Header name and type dropdown options in Header Params Tab", async () => {
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         await switchTab('HEADER PARAMS')
         const combobox = await screen.findByRole('combobox')
         await user.click(combobox)
@@ -405,8 +403,8 @@ describe("Web Service Modal", () => {
 
     it("Check content type dropdown options in Body Params Tab", async () => {
         user.setup()
-        renderComponent()
-        await selectHttpMethodFromDropdown('POST')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'POST')
         await switchTab('BODY PARAMS')
         const contentTypeDropdown = within(await screen.findByTestId('select-content-type')).getByRole("button")
         await user.click(contentTypeDropdown)
@@ -415,7 +413,7 @@ describe("Web Service Modal", () => {
 
     it("Check query type dropdown options in Query Params Tab", async () => {
         user.setup()
-        renderComponent()
+        renderComponent(mockEmptyProps)
         await switchTab('QUERY PARAMS')
         const queryTypeField = within(screen.getByTestId('param-type')).getByRole('button')
         await user.click(queryTypeField)
@@ -424,14 +422,14 @@ describe("Web Service Modal", () => {
 
     it("Checking for required fields under Auth/Header/Body/Query/Path Tabs", async () => {
         user.setup()
-        renderComponent()
-        await selectHttpMethodFromDropdown('POST')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'POST')
         const httpAuthenticationLabel = screen.getByText('HTTP Authentication')
         expect(httpAuthenticationLabel).toBeInTheDocument()
         const httpAuthDropdown = within(screen.getByTestId("http-auth")).getByRole("button")
         expect(httpAuthDropdown).toHaveTextContent('None')
         await switchTab('HEADER PARAMS')
-        await verifySubheadersAndTheirFields()
+        await verifySubheadersAndTheirFieldsUnderHeaderandQueryTabs()
         await switchTab('BODY PARAMS')
         expect(await screen.findByText("Content Type")).toBeInTheDocument()
         expect(within(screen.getByTestId('select-content-type')).getByRole('button')).toBeInTheDocument()
@@ -439,47 +437,210 @@ describe("Web Service Modal", () => {
         expect(screen.getByTestId('AddIcon')).toBeInTheDocument()
         expect(screen.getByPlaceholderText("Request Body:Provide sample POST data here that the service would consume")).toBeInTheDocument()
         await switchTab('QUERY PARAMS')
-        await verifySubheadersAndTheirFields()
+        await verifySubheadersAndTheirFieldsUnderHeaderandQueryTabs()
     }, 80000)
 
-    it("Adding custom Content type", async () => {
+    it("Adding custom Content type in Body params tab", async () => {
         const customValue = "audio/*,video/*,image/*"
         user.setup()
-        renderComponent()
-        await selectHttpMethodFromDropdown('POST')
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'POST')
         await switchTab('BODY PARAMS')
         await user.click(await screen.findByTestId('AddIcon'))
         const customTypeField = within(await screen.findByTestId('custom-type-field')).getByRole('textbox')
         await user.type(customTypeField, customValue)
         await user.click(screen.getByTestId('DoneIcon'))
+        expect(customTypeField).not.toBeInTheDocument()
         expect(within(screen.getByTestId('select-content-type')).getByRole('button')).toHaveTextContent(customValue)
     }, 80000)
+
+    it("Component is rendering with the given data", async () => {
+        const config = preLoadedProps.restImportConfig
+        const headerParams = config?.headerParams
+        const queryParams = retrieveQueryParamsFromURL(config.url!)
+        const pathParams = retrievePathParamsFromURL(config.url!, '{', '}')
+        user.setup()
+        renderComponent(preLoadedProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        expect(urlTextField.getAttribute('value')).toBe(config.url)
+        const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
+        expect(httpMethodDropdown).toHaveTextContent(new RegExp(config.httpMethod!, 'i'))
+        const httpAuthDropdown = within(screen.getByTestId("http-auth")).getByRole("button")
+        expect(httpAuthDropdown).toHaveTextContent(new RegExp(config.httpAuth!, 'i'))
+        await switchTab('HEADER PARAMS')
+        const headerNameFields = await screen.findAllByRole('combobox')
+        const paramTypeDropdowns = await screen.findAllByTestId('param-type')
+        const paramValueFields = await screen.findAllByTestId('param-value')
+        headerParams?.forEach((header, index) => {
+            expect(headerNameFields[index]).toHaveDisplayValue(header.name)
+            expect(within(paramTypeDropdowns[index]).getByRole('button')).toHaveTextContent(new RegExp(header.type, 'i'))
+            expect(within(paramValueFields[index]).getByRole('textbox')).toHaveDisplayValue(header.value)
+        })
+        await switchTab('BODY PARAMS')
+        expect(within(screen.getByTestId('select-content-type')).getByRole('button')).toHaveTextContent(config.contentType!)
+        // Add code to test multipart data
+        await switchTab('QUERY PARAMS')
+        await checkIfQueryParamsAreReflectedInFieldsFromURL(queryParams)
+        await switchTab('PATH PARAMS')
+        const pathLabels = await screen.findAllByTestId('path-param-label')
+        expect(pathLabels.length).toBe(pathParams.length)
+        pathLabels.forEach((label, index) => {
+            expect(label).toHaveTextContent(pathParams[index])
+        })
+    }, 80000)
+
+    it("Error Msg displayed when clicking 'TEST' without entering URL[Toast Error]", async () => {
+        const props = getCustomizedError('toast')
+        const errorMethod = props.restImportConfig.error.errorMethod
+        user.setup()
+        renderComponent(props)
+        await clickTestBtn()
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, ERROR_MESSAGES.EMPTY_URL)
+        expect(errorDisplayed).toBeTruthy()
+    }, 80000)
+
+    it("Error Msg displayed when clicking 'TEST' without entering URL [Custom Function Error]", async () => {
+        const customFunction = jest.fn((msg) => console.log(msg))
+        const props = getCustomizedError('customFunction', customFunction)
+        user.setup()
+        renderComponent(props)
+        await clickTestBtn()
+        expect(customFunction).toHaveBeenCalledWith(ERROR_MESSAGES.EMPTY_URL)
+    }, 80000)
+
+    it("TEST button disabled right after selecting OAuth 2.0 authentication method", async () => {
+        user.setup()
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-auth', 'OAuth 2.0')
+        const testBtn = screen.getByRole('button', { name: /test/i })
+        expect(testBtn).toHaveClass('Mui-disabled')
+    }, 80000)
+
+    it("Error displayed on clicking TEST button without entering path param value", async () => {
+        const errorMethod = preLoadedProps.restImportConfig.error.errorMethod
+        user.setup()
+        renderComponent(preLoadedProps)
+        await clickTestBtn()
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, ERROR_MESSAGES.EMPTY_PATH_PARAM_VALUE)
+        expect(errorDisplayed).toBeTruthy()
+    }, 80000)
+
+    it("Error displayed on clicking TEST button with duplicate query params in the URL", async () => {
+        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
+        const duplicateQueryStr = "?id=2&id=5"
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.getQueryParams + duplicateQueryStr)
+        await clickTestBtn()
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, ERROR_MESSAGES.DUPLICATE_QUERY_PARAM)
+        expect(errorDisplayed).toBeTruthy()
+    }, 80000)
+
+    it("Adding empty custom content type under Body Params Tab hides the field and doesn't affect the defaults", async () => {
+        user.setup()
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'POST')
+        await switchTab('BODY PARAMS')
+        const contentTypesDropdown = within(screen.getByTestId('select-content-type')).getByRole('button')
+        const defaultValue = contentTypesDropdown.textContent
+        await user.click(await screen.findByTestId('AddIcon'))
+        await user.click(screen.getByTestId('DoneIcon'))
+        expect(contentTypesDropdown).toHaveTextContent(defaultValue!)
+
+    }, 80000)
+
+    it("Switched between response tabs and verified their content", async () => {
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.getUsers)
+        await clickTestBtn()
+        const response: ResponseI = await getResponse()
+        expect(response.data).toEqual(testData.userList)
+        await switchTab('RESPONSE HEADER')
+        const header = await getResponse()
+        for (let [key, value] of Object.entries(responseHeaders)) {
+            expect(header).toHaveProperty(key, value)
+        }
+        await switchTab('RESPONSE STATUS')
+        const status = await getResponse()
+        expect(status.statusCode).toEqual("200 " + httpStatusCodes.get(200))
+    }, 80000)
+
+    it("Handling the error response from the server", async () => {
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.badRequest)
+        await clickTestBtn()
+        await switchTab('RESPONSE STATUS')
+        const response = await getResponse()
+        expect(response.statusCode).toEqual("400 " + httpStatusCodes.get(400))
+    }, 80000)
+
+    it("Adding multipart data(file upload)", async () => {
+        const filename = 'multipart.txt'
+        const text = 'This is a multipart file content'
+        const blobData = new Blob([text], { type: 'text/plain' });
+        const file = new File([blobData], filename, { type: 'text/plain' });
+        user.setup()
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'POST')
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.postMultipartData)
+        await switchTab('BODY PARAMS')
+        await selectOptionFromDropdown('select-content-type', 'multipart/form-data')
+        const multipartName = within(screen.getByTestId('multipart-name')).getByRole('textbox')
+        await user.type(multipartName, "Test-file")
+        await selectOptionFromDropdown('multipart-type', 'File')
+        const fileInput = screen.getByTestId('file-upload')
+        await user.upload(fileInput, file)
+        const fileNameContainer = await screen.findByTestId('test-value')
+        const fileNameField = within(fileNameContainer).getAllByRole('textbox')[0]
+        expect(fileNameField).toHaveValue(filename)
+    }, 80000)
+
+    it("Adding already available content type as custom content type doesn't create duplicate entry in the dropdown", async () => {
+        const contentTypeSet = new Set()
+        const alreadyAvailableContentType = "text/plain"
+        let hasDuplicates = false
+        user.setup()
+        renderComponent(mockEmptyProps)
+        await selectOptionFromDropdown('http-method', 'POST')
+        await switchTab('BODY PARAMS')
+        await user.click(await screen.findByTestId('AddIcon'))
+        const customTypeField = within(await screen.findByTestId('custom-type-field')).getByRole('textbox')
+        await user.type(customTypeField, alreadyAvailableContentType)
+        await user.click(screen.getByTestId('DoneIcon'))
+        const contentTypeDropdown = within(screen.getByTestId('select-content-type')).getByRole('button')
+        expect(contentTypeDropdown).toHaveTextContent(alreadyAvailableContentType)
+        await user.click(contentTypeDropdown)
+        const options = await screen.findAllByRole('option')
+        options.forEach((option) => {
+            const contentType = option.textContent;
+            if (contentTypeSet.has(contentType)) {
+                hasDuplicates = true
+                return
+            }
+            contentTypeSet.add(contentType)
+        })
+        expect(hasDuplicates).toBeFalsy()
+    })
 })
 
-
-
-function renderComponent() {
-    render(<Provider store={appStore}><WebServiceModal {...mockEmptyProps} /></Provider >);
+function renderComponent(mockProps: mockPropsI) {
+    render(<Provider store={appStore}><WebServiceModal {...mockProps} /></Provider >);
 }
 
-async function selectHttpMethodFromDropdown(httpMethod: httpMethods) {
-    const regexPattern = new RegExp(httpMethod, 'i')
-    const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
-    await user.click(httpMethodDropdown);
+async function selectOptionFromDropdown(dropdownElementId: dropdownIDs, selectOption: options) {
+    const regexPattern = new RegExp(selectOption, 'i')
+    const dropdown = within(screen.getByTestId(dropdownElementId)).getByRole("button")
+    await user.click(dropdown);
     const option = await screen.findByRole('option', { name: regexPattern })
     expect(option).toBeInTheDocument()
     await user.click(option)
-    expect(httpMethodDropdown).toHaveTextContent(httpMethod)
-}
-
-async function selectAuthenticationMethodFromDropdown(authMethod: authMethods) {
-    const regexPattern = new RegExp(authMethod, 'i')
-    const httpAuthDropdown = within(screen.getByTestId("http-auth")).getByRole("button")
-    await user.click(httpAuthDropdown);
-    const option = await screen.findByRole('option', { name: regexPattern })
-    expect(option).toBeInTheDocument()
-    await user.click(option)
-    expect(httpAuthDropdown).toHaveTextContent(authMethod)
+    expect(dropdown).toHaveTextContent(selectOption)
 }
 
 async function switchTab(tabName: tabs) {
@@ -488,7 +649,7 @@ async function switchTab(tabName: tabs) {
     await user.click(tab)
 }
 
-async function verifySubheadersAndTheirFields() {
+async function verifySubheadersAndTheirFieldsUnderHeaderandQueryTabs() {
     for (let label of SUBHEADER_UNDER_TABS) {
         const subheader = within(await screen.findByTestId('subheaders')).getByText(new RegExp(label, 'i'))
         expect(subheader).toBeInTheDocument()
@@ -497,6 +658,19 @@ async function verifySubheadersAndTheirFields() {
     expect(within(screen.getByTestId('param-type')).getByRole('button')).toBeInTheDocument()
     expect(within(screen.getByTestId('param-value')).getByRole('textbox')).toBeInTheDocument()
     expect(screen.getByTestId("AddIcon")).toBeInTheDocument()
+}
+
+async function checkIfQueryParamsAreReflectedInFieldsFromURL(queriesArray: QueryI[]) {
+    const queryValueTextFields: HTMLElement[] = []
+    const queryNames = await screen.findAllByRole('combobox');
+    const queryValueContainer = await screen.findAllByTestId("param-value")
+    queryValueContainer.forEach((container) => {
+        queryValueTextFields.push(within(container).getByRole("textbox"))
+    })
+    queriesArray.forEach((query, index) => {
+        expect(queryNames[index]).toHaveDisplayValue(query.name)
+        expect(queryValueTextFields[index]).toHaveDisplayValue(query.value)
+    })
 }
 
 async function verifyDropdownOptionsArePresent(arrayToCheck: string[]) {
@@ -519,13 +693,40 @@ async function getResponse() {
     return JSON.parse(responseTextField.getAttribute('value')!)
 }
 
-function constructObjToMatchWithResponseStructure(testArray: GENERAL_PARAM_STRUCTURE[], toLowerCase: boolean, removeIndex?: number) {
-    const matchResponse: ParamStructureInResponseI = {}
+function retrieveQueryParamsFromURL(url: string) {
+    const queryPart = url.split('?')[1]
+    const queryList = queryPart.split('&')
+    const queriesArray: QueryI[] = []
+    queryList.forEach((item) => {
+        const query: any = {}
+        const index = item.indexOf('=')
+        query.name = item.slice(0, index)
+        query.value = item.slice(index + 1)
+        query.type = "string"
+        queriesArray.push(query)
+    })
+    return queriesArray
+}
+
+function retrievePathParamsFromURL(url: string, start: string, end: string) {
+    const paths = []
+    for (let i = 0; i < url.length; i++) {
+        if (url.charAt(i) === start) {
+            const endIndex = url.indexOf(end, i)
+            paths.push(url.slice(i + 1, endIndex))
+            i = endIndex
+        }
+    }
+    return paths
+}
+
+function validateResponseWithTestData(response: any, testArray: GENERAL_PARAM_STRUCTURE[], toLowerCase: boolean = false, removeIndex?: number) {
     testArray.forEach((param, index) => {
         if (removeIndex !== index)
-            toLowerCase ? matchResponse[param.name.toLowerCase()] = param.value : matchResponse[param.name] = param.value
+            toLowerCase ? expect(response).toHaveProperty(param.name.toLowerCase(), param.value) : expect(response).toHaveProperty(param.name, param.value)
+        else
+            toLowerCase ? expect(response).not.toHaveProperty(param.name.toLowerCase()) : expect(response).not.toHaveProperty(param.name)
     })
-    return matchResponse
 }
 
 function constructUrlWithQueryParams(url: string, queryParams: QueryI[], removeIndex?: number) {
@@ -554,7 +755,7 @@ function constructObjToMatchWithProxyConfig(endpoint: string, httpMethod: httpMe
             "method": httpMethod,
             "contentType": "application/json",
             "requestBody": "",
-            "headers": {},
+            "headers": {}, // put "content-type": "application/json" inside the Obj when default content type is set in body params tab 
             "authDetails": null
         },
         method: "POST",
@@ -569,7 +770,7 @@ function constructObjToMatchWithProxyConfig(endpoint: string, httpMethod: httpMe
 async function addHeadersOrQueryParamsInTheFields(data: GENERAL_PARAM_STRUCTURE, index: number) {
     const paramTypeFields: HTMLElement[] = []
     const paramValueFields: HTMLElement[] = []
-    const combobox = await screen.findAllByRole('combobox')
+    const combobox = await screen.findAllByRole('combobox', {}, { timeout: 5000 })
     expect(combobox.length).toBe(index + 1)
     await user.type(combobox[index], data.name)
 
@@ -609,8 +810,7 @@ async function verifyPathLabelsAndEnterValues(pathParamsArray: PathParamI[]) {
     }
 }
 
-async function isErrorMsgDisplayed(msgToCheck: string) {
-    const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
+async function isErrorMsgDisplayed(errorMethod: string, msgToCheck: string) {
     let errorMsgDisplayed = false
 
     switch (errorMethod) {

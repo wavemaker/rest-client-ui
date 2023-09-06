@@ -395,7 +395,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
 
     return (
         <TableContainer component={Paper}>
-            <Table>
+            <Table data-testid="multipart-table">
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
                         <TableCell align='center'>{translate('NAME')}</TableCell>
@@ -408,12 +408,12 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
                             <TableCell align='center'>
-                                <TextField disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} />
+                                <TextField disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} data-testid="multipart-name" />
                             </TableCell>
                             <TableCell>
                                 <FormControl size='small' sx={{ minWidth: 200 }}>
                                     <InputLabel>{translate('SELECT') + " " + translate('TYPE')}</InputLabel>
-                                    <Select sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }} onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')}>
+                                    <Select sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }} onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')} data-testid="multipart-type">
                                         <MenuItem value={'file'}>{translate("FILE")}</MenuItem>
                                         <MenuItem value={'text'}>{translate("TEXT")}</MenuItem>
                                         <MenuItem value={'plaintext'}>{translate("Text(Text/Plain)")}</MenuItem>
@@ -427,6 +427,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                                     type="text"
                                     disabled
                                     value={data.filename}
+                                    data-testid="test-value"
                                     InputProps={{
                                         endAdornment: (
                                             <IconButton component="label">
@@ -439,6 +440,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                                                         //@ts-ignore
                                                         handleChangeFile(e.target.files[0], index)
                                                     }}
+                                                    data-testid="file-upload"
                                                 />
                                             </IconButton>
                                         ),

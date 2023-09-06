@@ -1,6 +1,6 @@
 import { restImportConfigI } from "../core/components/WebServiceModal";
 
-interface mockEmptyPropsI {
+export interface mockPropsI {
     language: string;
     restImportConfig: restImportConfigI;
 }
@@ -94,17 +94,25 @@ const testData: TestData = {
             type: "String",
             value: "34"
         }
-    ]
+    ],
+}
+
+export const responseHeaders = {
+    'accept-language': 'en-US',
+    'content-encoding': 'gzip',
+    'content-length': '40032',
 }
 
 export const HTTP_METHODS = ["GET", "POST", "PUT", "HEAD", "PATCH", "DELETE"]
 export const REQUEST_TABS = ["AUTHORIZATION", "HEADER PARAMS", "BODY PARAMS", "QUERY PARAMS", "PATH PARAMS"]
 export const RESPONSE_TABS = ["RESPONSE BODY", "RESPONSE HEADER", "RESPONSE STATUS"]
 export const AUTH_OPTIONS = ["None", "Basic", "OAuth 2.0"]
-export const TOAST_MESSAGES = {
+export const ERROR_MESSAGES = {
     EMPTY_URL: "Please provide a valid URL",
     EMPTY_BASIC_AUTH_USERNAME: "Please enter a username for basic authentication",
-    EMPTY_BASIC_AUTH_PASSWORD: "Please enter a password for basic authentication"
+    EMPTY_BASIC_AUTH_PASSWORD: "Please enter a password for basic authentication",
+    EMPTY_PATH_PARAM_VALUE: "Please provide the path parameter value",
+    DUPLICATE_QUERY_PARAM: "Queries cannot have duplicates, removed the dupicates"
 }
 export const HEADER_NAME_OPTIONS = [
     'Accept', 'Accept-Charset', 'Accept-Encoding', 'Accept-Language', 'Authorization', 'Content-Length', 'Content-Type', 'Cookie', 'Origin', 'Referer', 'User-Agent'
@@ -128,12 +136,14 @@ export const endPoints = {
     getQueryParams: "https://wavemaker.com/query",
     deleteResource: "https://wavemaker.com/delete",
     proxyServer: "http://localhost:5000/restimport",
-    invalidURL: "http://invalid$url"
+    invalidURL: "http://invalid$url",
+    badRequest: "http://wavemaker.com/badrequest",
+    postMultipartData:"http://wavemaker.com/multipart"
 }
 
 export const wavemakerMoreInfoLink = "https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/"
 
-export const restImportConfig: restImportConfigI = {
+export const emptyConfig: restImportConfigI = {
     proxy_conf: {
         base_path: "http://localhost:5000",
         proxy_path: "/restimport",
@@ -160,11 +170,65 @@ export const restImportConfig: restImportConfigI = {
         errorMethod: "default",
     },
 }
-export const mockEmptyProps: mockEmptyPropsI = {
+export const mockEmptyProps: mockPropsI = {
     language: 'en',
-    restImportConfig
+    restImportConfig: emptyConfig
 };
 
+const configWithData: restImportConfigI = {
+    url: "https://wavemaker.com/users/{location}?sort=alpha",
+    httpMethod: "POST",
+    useProxy: true,
+    httpAuth: "BASIC",
+    bodyParams: "{name:Ardella}",
+    userName: "Ardella",
+    userPassword: "HBubkbai89",
+    headerParams: [
+        {
+            name: "Authorization",
+            type: "string",
+            value: "Bearer ibYkjnuIBNkbhk782b",
+        },
+    ],
+    multipartParams: [
+        {
+            name: "post",
+            type: "file",
+            value: "fe",
+        },
+    ],
+    contentType: "multipart/form-data",
+    proxy_conf: {
+        base_path: "http://localhost:5000",
+        proxy_path: "/restimport",
+        list_provider: "/get-default-provider",
+        getprovider: "/getprovider",
+        addprovider: "/addprovider",
+        authorizationUrl: "/authorizationUrl",
+    },
+    default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
+    oAuthConfig: {
+        base_path: "https://www.wavemakeronline.com/studio/services",
+        proxy_path: "",
+        project_id: "",
+        list_provider: "/oauth2/providers/default",
+        getprovider: "", // /projects/{projectID}/oauth2/providers
+        addprovider: "", // /projects/{projectID}/oauth2/providers
+        authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+    },
+    error: {
+        errorFunction: (msg) => {
+            alert(msg)
+        },
+        errorMethod: "toast",
+        errorMessageTimeout: 5000
+    }
+}
+
+export const preLoadedProps: mockPropsI = {
+    language: 'en',
+    restImportConfig: configWithData
+}
 
 // Interfaces
 export interface HeaderParamI {
@@ -208,3 +272,12 @@ interface TestData {
 export type GENERAL_PARAM_STRUCTURE = HeaderParamI | QueryI | PathParamI
 
 export default testData;
+
+
+export function getCustomizedError(errMethod: typeof emptyConfig.error.errorMethod, errFunction?: typeof emptyConfig.error.errorFunction) {
+    const data: mockPropsI = {
+        language: 'en',
+        restImportConfig: { ...emptyConfig, error: { ...emptyConfig.error, errorMethod: errMethod, errorFunction: errMethod === 'customFunction' ? errFunction! : (msg) => console.log("custom function") } }
+    }
+    return data
+}
