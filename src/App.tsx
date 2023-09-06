@@ -3,6 +3,7 @@ import WebServiceModal from './core/components/WebServiceModal'
 import { restImportConfigI } from './core/components/WebServiceModal'
 import { Provider } from 'react-redux'
 import appStore from './core/components/appStore/Store';
+import { AxiosResponse } from 'axios';
 
 export default function App() {
   const config: restImportConfigI = {
@@ -25,10 +26,11 @@ export default function App() {
       authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
     },
     error: {
-      errorFunction: (msg: string) => {
-        alert(msg)
+      errorFunction: (msg: string, response?: AxiosResponse) => {
+        alert(msg);
+        console.log(response)
       },
-      errorMethod: "default",
+      errorMethod: "customFunction",
       errorMessageTimeout: 5000
     }
   }
