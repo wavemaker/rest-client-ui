@@ -58,7 +58,6 @@ export interface restImportConfigI {
         errorMessageTimeout: number
     }
 }
-
 interface APII {
     base_path: string,
     proxy_path: string,
@@ -112,6 +111,13 @@ const defaultContentTypes = [
     },
 ]
 
+declare global {
+    interface Window {
+        google: any;
+    }
+}
+
+
 export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const defaultValueforHandQParams = { name: '', value: '', type: '' }
     const { t: translate, i18n } = useTranslation();
@@ -144,11 +150,19 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
 
+    useEffect(() => {
+        if (!window.google) {
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            document.head.appendChild(script);
+        }
+    }, [])
 
     useEffect(() => {
         setProviderId(selectedProvider.providerId)
         setBtnDisable(false)
-        
+
     }, [selectedProvider])
 
     useEffect(() => {
@@ -235,6 +249,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const handleChangehttpAuth = (event: SelectChangeEvent) => {
         if (event.target.value === 'OAUTH2.0' && !selectedProvider.providerId) {
             setBtnDisable(true)
+        } else {
+            setBtnDisable(false)
         }
         sethttpAuth(event.target.value as any)
     }
@@ -391,68 +407,105 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     let codeVerifier: string;
                     const clientId = selectedProvider.clientId;
                     let redirectUri = restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
+                    // let redirectUri = `https://4319-117-200-155-252.ngrok-free.app/oauth2/${selectedProvider.providerId}/callback`;
                     const responseType = "code";
                     const state = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==";
                     const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
                     let childWindow: any;
                     let authUrl: string
-                    if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
-                        redirectUri = restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html'
-                        const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
-                        codeVerifier = generateRandomCodeVerifier();
-                        const encoder = new TextEncoder();
-                        const data = encoder.encode(codeVerifier);
-
-                        window.crypto.subtle.digest("SHA-256", data)
-                            .then(hashBuffer => {
-                                const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
-                                childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
-                            })
-                            .catch(error => {
-                                console.error("Error calculating code challenge:", error);
-                            });
+                    // const isToken = window.sessionStorage.getItem(selectedProvider.providerId + "access_token");
+                    const isToken = null
+                    if (isToken) {
+                        header['Authorization'] = `Bearer ` + isToken
+                        handleRestAPI(header);
                     } else {
-                        authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
-                        childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                        if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
+                            if (selectedProvider.providerId === "google") {
+                                if (window && window?.google) {
+                                    const client = window?.google?.accounts.oauth2.initTokenClient({
+                                        client_id: clientId,
+                                        scope: scope,
+                                        callback: (tokenResponse: any) => {
+                                            if (tokenResponse && tokenResponse.access_token) {
+                                                header['Authorization'] = `Bearer ` + tokenResponse.access_token
+                                                handleRestAPI(header);
+                                                setloading(false)
+                                            }
+                                        },
+                                        error_callback: (error: any) => {
+                                            if (error.type === "popup_closed") {
+                                                header['Authorization'] = `Bearer ` + null
+                                                handleRestAPI(header)
+                                                setloading(false)
 
-                    }
-                    // providerAuthURL
-                    setloading(true)
+                                            }
+                                        },
+                                    }) as any;
+                                    client.requestAccessToken();
+                                }
 
-                    const interval = setInterval(() => {
-                        if (childWindow.closed) {
-                            clearInterval(interval);
-                            header['Authorization'] = `Bearer ` + null
-                            handleRestAPI(header)
-                        }
-                    }, 1000);
+                            } else {
+                                redirectUri = restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html'
+                                // redirectUri = 'https://4319-117-200-155-252.ngrok-free.app/oAuthCallback.html'
 
-                    const messageHandler = async (event: { origin: string; data: { accessToken: any; code: string; error: any } }) => {
-                        const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
-                        if (event.origin === basePath && event.data.accessToken) {
-                            clearInterval(interval);
-                            const token = event.data.accessToken
-                            setTimeout(() => {
-                                header['Authorization'] = `Bearer ` + token
-                                handleRestAPI(header);
-                            }, 100);
-                            window.removeEventListener('message', messageHandler);
-
-                        } else if (event.origin === basePath && event.data.code) {
-                            clearInterval(interval);
-                            getAccessToken(event.data.code, codeVerifier)
-                            setloading(false)
-                            window.removeEventListener('message', messageHandler);
+                                const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
+                                codeVerifier = generateRandomCodeVerifier();
+                                const encoder = new TextEncoder();
+                                const data = encoder.encode(codeVerifier);
+                                window.crypto.subtle.digest("SHA-256", data)
+                                    .then(hashBuffer => {
+                                        const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
+                                        console.log(codeChallenge, "codeChallenge")
+                                        authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
+                                        childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                    })
+                                    .catch(error => {
+                                        console.error("Error calculating code challenge:", error);
+                                    });
+                            }
 
                         } else {
-                            setloading(false)
+                            authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
+                            childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                         }
+                        // providerAuthURL
+                        setloading(true)
+                        if ((selectedProvider.providerId === 'google' && !selectedProvider.oAuth2Pkce) || selectedProvider.providerId !== 'google') {
+                            const interval = setInterval(() => {
+                                if (childWindow.closed) {
+                                    clearInterval(interval);
+                                    header['Authorization'] = `Bearer ` + null
+                                    handleRestAPI(header)
+                                }
+                            }, 1000);
+
+                            const messageHandler = async (event: { origin: string; data: { accessToken: any; code: string; error: any } }) => {
+                                console.log(event.data)
+                                const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
+                                if (event.origin === basePath && event.data.accessToken) {
+                                    clearInterval(interval);
+                                    const token = event.data.accessToken
+                                    // window.sessionStorage.setItem(selectedProvider.providerId + "access_token", token);
+                                    setTimeout(() => {
+                                        header['Authorization'] = `Bearer ` + token
+                                        handleRestAPI(header);
+                                    }, 100);
+                                    window.removeEventListener('message', messageHandler);
+
+                                } else if (event.origin === basePath && event.data.code) {
+                                    clearInterval(interval);
+                                    getAccessToken(event.data.code, codeVerifier)
+                                    setloading(false)
+                                    window.removeEventListener('message', messageHandler);
+
+                                } else {
+                                    setloading(false)
+                                }
+                            }
+                            window.addEventListener('message', messageHandler);
+                        }
+                        return
                     }
-                    window.addEventListener('message', messageHandler);
-
-
-                    return
                 } else
                     body = bodyParams
                 const configWOProxy: AxiosRequestConfig = {
@@ -563,7 +616,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             // client_secret: selectedProvider.clientSecret,
             code_verifier: codeVerifier,
             redirect_uri: restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html',
+            // redirect_uri: 'https://4319-117-200-155-252.ngrok-free.app/oAuthCallback.html',
         }
+
         const configToken: AxiosRequestConfig = {
             url: selectedProvider.accessTokenUrl,
             "headers": {
@@ -572,11 +627,20 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             method: "POST",
             data: reqParams
         }
+
+        console.log(reqParams)
         const response: any = await Apicall(configToken)
         if (response.status === 200) {
-            const header = {
-                "Authorization": `Bearer ` + response.data.access_token
-            }
+            let header: any = {};
+            headerParams.forEach((data) => {
+                if (data.name && data.value)
+                    header[data.name] = data.value
+            })
+            header['Authorization'] = `Bearer ` + response.data.access_token
+            // const header = {
+            //     "Authorization": `Bearer ` + response.data.access_token
+            // }
+            // window.sessionStorage.setItem(selectedProvider.providerId + "access_token", response.data.access_token);
             handleRestAPI(header)
         } else {
             const header = {

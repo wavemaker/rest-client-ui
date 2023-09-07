@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "release": {
-    "branches": ["main", "next"]
+    "branches": [
+      "main",
+      "next"
+    ]
   },
   "dependencies": {
     "@babel/runtime-corejs3": "^7.22.6",
