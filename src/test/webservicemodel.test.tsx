@@ -4,7 +4,7 @@ import user from '@testing-library/user-event'
 import WebServiceModal from '../core/components/WebServiceModal'
 import '@testing-library/jest-dom';
 import { server } from './mocks/server'
-import testData, { mockEmptyProps, endPoints, HTTP_METHODS, REQUEST_TABS, RESPONSE_TABS, ERROR_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI, QueryI, AUTH_OPTIONS, HEADER_NAME_OPTIONS, HEADER_TYPE_OPTIONS, CONTENT_TYPE, SUBHEADER_UNDER_TABS, wavemakerMoreInfoLink, mockPropsI, preLoadedProps, getCustomizedError, responseHeaders } from './testdata'
+import testData, { mockEmptyProps, endPoints, HTTP_METHODS, REQUEST_TABS, RESPONSE_TABS, ERROR_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI, QueryI, AUTH_OPTIONS, HEADER_NAME_OPTIONS, HEADER_TYPE_OPTIONS, CONTENT_TYPE, SUBHEADER_UNDER_TABS, wavemakerMoreInfoLink, mockPropsI, preLoadedProps, getCustomizedError, responseHeaders, HeaderParamI } from './testdata'
 import { Provider } from 'react-redux'
 import appStore from '../core/components/appStore/Store';
 import { ResponseI } from './mocks/handlers';
@@ -525,16 +525,16 @@ describe("Web Service Modal", () => {
         expect(errorDisplayed).toBeTruthy()
     }, 80000)
 
-    it("Error displayed on clicking TEST button with duplicate query params in the URL", async () => {
-        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
+    it("URL field accepts duplicate query params without any error", async () => {
         const duplicateQueryStr = "?id=2&id=5"
         user.setup()
         renderComponent(mockEmptyProps)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.getQueryParams + duplicateQueryStr)
         await clickTestBtn()
-        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, ERROR_MESSAGES.DUPLICATE_QUERY_PARAM)
-        expect(errorDisplayed).toBeTruthy()
+        expect(urlTextField).toHaveValue(endPoints.getQueryParams + duplicateQueryStr)
+        const errorField = screen.queryByTestId('default-error')
+        expect(errorField).toBeFalsy()
     }, 80000)
 
     it("Adding empty custom content type under Body Params Tab hides the field and doesn't affect the defaults", async () => {
@@ -635,22 +635,20 @@ describe("Web Service Modal", () => {
 
     it("Error Msg displayed when adding duplicate(already present in other parameters) path params on blur of the URL field", async () => {
         const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
-        const url = endPoints.getQueryParams
-        const query: QueryI = { name: "id", type: "String", value: "25" }
+        const url = endPoints.getUsers
+        const header: HeaderParamI = {
+            name: "Accept", type: "String", value: "application/json;q=0.8"
+        }
         user.setup()
         renderComponent(mockEmptyProps)
+        await switchTab('HEADER PARAMS')
+        await addHeadersOrQueryParamsInTheFields(header, 0)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
-        await user.type(urlTextField, url)
-        await switchTab('QUERY PARAMS')
-        await addHeadersOrQueryParamsInTheFields(query, 0)
-        const urlWithQuery = urlTextField.getAttribute('value')!
-        const urlOnly = urlWithQuery.slice(0, urlWithQuery.indexOf('?'))
-        const queriesOnly = urlWithQuery.slice(urlWithQuery.indexOf('?'))
-        const urlWithPathParam = `${urlOnly}/{${query.name}}${queriesOnly}`
+        const urlWithPathParam = `${url}/{${header.name}}`
         fireEvent.change(urlTextField, { target: { value: urlWithPathParam } })
         urlTextField.focus()
         urlTextField.blur()
-        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, `parameter "${query.name}" already exists`)
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, `Parameters cannot have duplicates, removed the duplicates[${header.name}]`)
         expect(errorDisplayed).toBeTruthy()
     }, 80000)
 })
@@ -734,13 +732,12 @@ function retrieveQueryParamsFromURL(url: string) {
     return queriesArray
 }
 
-function retrievePathParamsFromURL(url: string, start: string, end: string) {
+function retrievePathParamsFromURL(url: string, start: string, end: string): string[] {
     const paths = []
     for (let i = 0; i < url.length; i++) {
         if (url.charAt(i) === start) {
             const endIndex = url.indexOf(end, i)
-            paths.push(url.slice(i + 1, endIndex))
-            i = endIndex
+            endIndex !== -1 && paths.push(url.slice(i + 1, i = endIndex))
         }
     }
     return paths
@@ -781,7 +778,9 @@ function constructObjToMatchWithProxyConfig(endpoint: string, httpMethod: httpMe
             "method": httpMethod,
             "contentType": "application/json",
             "requestBody": "",
-            "headers": {}, // put "content-type": "application/json" inside the Obj when default content type is set in body params tab 
+            "headers": {
+                "content-type": "application/json"
+            }, // put "content-type": "application/json" inside the Obj when default content type is set in body params tab 
             "authDetails": null
         },
         method: "POST",

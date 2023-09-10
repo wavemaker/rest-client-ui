@@ -10,7 +10,7 @@ import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuI
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { ChangeEvent } from 'react';
-import { findDuplicateObjects, findDuplicatesAcrossArrays, getCurrentDateTime } from './common/common';
+import { constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison, getCurrentDateTime, retrieveQueryDetailsFromURL } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import { PathParamsI } from './WebServiceModal';
@@ -117,35 +117,33 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
 
     const handleChangeType = (event: SelectChangeEvent, currentIndex: number) => {
         const valueClone = [...value]
-        const query = apiURL?.split('?')[1]
-        const queries = query?.split('&')
-        let originalURL = apiURL
-        if (selectTypes.ServerSideProperties.find(e => e.value === event.target.value)) {
-            valueClone.map((data, index) => {
-                if (index === currentIndex) {
-                    if (queries !== undefined) {
-                        const value = queries[index]?.split('=')[1]
-                        if (data.value === value)
-                            originalURL = originalURL.replace("=" + data.value, "=" + ServerSidePropertiesMap.get(event.target.value) as string)
+        let newQueryString = ''
+        valueClone.map((data, index) => {
+            if (index === currentIndex) {
+                if (selectTypes.ServerSideProperties.find(e => e.value === event.target.value)) {
+                    if (from === 'query') {
+                        const queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
+                        const result = queryObjFromUrl && queryObjFromUrl[index]?.name === data.name && queryObjFromUrl[index]?.value === data.value
+                        if (result) {  // Creating a URL with modified query parameter 
+                            queryObjFromUrl[index].value = ServerSidePropertiesMap.get(event.target.value) as string
+                            newQueryString = constructUpdatedQueryString(queryObjFromUrl)
+                        } else {  // Reconstructing the old URL
+                            newQueryString = constructUpdatedQueryString(queryObjFromUrl)
+                        }
                     }
                     data.type = event.target.value
                     data.value = ServerSidePropertiesMap.get(event.target.value) as string
-                }
-                return data
-            })
-            setValue(valueClone)
-            changeapiURL(originalURL)
-        }
-        else {
-            valueClone.map((data, index) => {
-                if (index === currentIndex) {
+                } else {
                     data.type = event.target.value
                 }
-                return data
-            })
-            setValue(valueClone)
-        }
+            }
+            return data
+        })
+        const originalURL = apiURL.split('?')[0]
+        setValue(valueClone)
+        changeapiURL(originalURL + newQueryString)
     }
+
 
     const handleChangeTestValue = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, currentIndex: number) => {
         const valueClone = [...value]
@@ -159,92 +157,128 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
     }
 
     function handleAddRow() {
-        let orginalURL = apiURL
         const lastRow = value[value.length - 1]
         const valueClone = [...value]
-        const duplicates = findDuplicateObjects(valueClone, "name")
-        const headerParamsClone = [...headerParams]
-        const queryParamsClone = [...queryParams]
-        const pathParamsClone = [...pathParams]
+        const duplicates = findDuplicateObjectsWithinArray(valueClone, "name")
+
         const allDuplicates = (): any[] => {
             let returnDuplicates: any[] = []
             if (from === 'header') {
-                returnDuplicates = findDuplicatesAcrossArrays([valueClone, queryParamsClone.slice(0, queryParamsClone.length - 1), pathParamsClone], "name")
+                returnDuplicates = findDuplicatesByComparison(valueClone, [...queryParams, ...pathParams], "name")
             }
             else {
-                returnDuplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), valueClone, pathParamsClone], "name")
+                returnDuplicates = findDuplicatesByComparison(valueClone, [...headerParams, ...pathParams], "name")
             }
             return returnDuplicates
         }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
-            if (duplicates.length > 0)
+            if (from === 'header' && duplicates.length > 0)
                 return handleToastError(`parameter "${duplicates[0].name}" already exists`)
             if (allDuplicates().length > 0)
                 return handleToastError(`parameter "${allDuplicates()[0].name}" already exists`)
-            if (from === 'query' && duplicates.length === 0 && allDuplicates().length === 0) {
-                valueClone.forEach((data, index) => {
-                    let addData = data.name + "=" + data.value
-                    if (index === 0) {
-                        if (!orginalURL.includes("?" + addData) && !orginalURL.includes("&" + addData))
-                            orginalURL += "?" + data.name + "=" + data.value
-                    }
-                    else {
-                        if (!orginalURL.includes(addData))
-                            orginalURL += "&" + data.name + "=" + data.value
+            if (from === 'query' && allDuplicates().length === 0) {
+                const lastRowValuesArray = lastRow.value.split(',')
+                const lastRowValues = lastRowValuesArray.filter((value, index) => lastRowValuesArray.indexOf(value) === index)
+                const uniqueValues: HeaderAndQueryI[] = []
+                lastRowValues.forEach(value => {
+                    const query = `${lastRow.name}=${value}`
+                    if (!apiURL.includes(query)) {
+                        uniqueValues.push({ name: lastRow.name, value: value, type: 'string' })
                     }
                 })
-                changeapiURL(orginalURL)
+                let valuesToBeAdded = ''
+                uniqueValues.forEach((query, index) => {
+                    valuesToBeAdded += index !== 0 ? `,${query.value}` : query.value
+                })
+                console.log(valuesToBeAdded)
+                if (uniqueValues.length) {
+                    if (apiURL) {
+                        let newQueryString = ''
+                        const queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
+                        let updatedObj: HeaderAndQueryI[] = [...queryObjFromUrl]
+                        if (queryObjFromUrl.some(query => query.name === lastRow.name)) {
+                            updatedObj = queryObjFromUrl.map((queryFromUrl, index) => {
+                                if (queryFromUrl.name === lastRow.name) {
+                                    valueClone[index].value += `,${valuesToBeAdded}`
+                                    valueClone.length = valueClone.length - 1
+                                    return { name: lastRow.name, value: `${queryFromUrl.value},${valuesToBeAdded}`, type: lastRow.type }
+                                }
+                                return queryFromUrl
+                            })
+                        } else {
+                            updatedObj.push({ name: lastRow.name, value: valuesToBeAdded, type: lastRow.type })
+                        }
+                        newQueryString = constructUpdatedQueryString(updatedObj)
+                        const originalURL = apiURL.split('?')[0]
+                        changeapiURL(originalURL + newQueryString)
+                    } else {
+                        let duplicateQuery = false
+                        valueClone.map((element, index) => {
+                            const firstIndex = valueClone.findIndex(item => item.name === element.name)
+                            if (index !== firstIndex) {
+                                const combinedValues = [...valueClone[firstIndex].value.split(','), ...valuesToBeAdded.split(',')]
+                                const valuesWithoutDuplicates = combinedValues.filter((value, index) => combinedValues.indexOf(value) === index)
+                                valueClone[firstIndex].value = valuesWithoutDuplicates.join()
+                                duplicateQuery = true
+                            }
+                            return element
+                        })
+
+                        valueClone.length = duplicateQuery ? valueClone.length - 1 : valueClone.length
+                    }
+                } else {
+                    valueClone.length = valueClone.length === 1 ? valueClone.length : valueClone.length - 1
+                }
             }
-            if (duplicates.length === 0 && allDuplicates().length === 0)
+            if (allDuplicates().length === 0)
                 valueClone.push({
-                    name: '', value: "", type: ''
+                    name: '', value: "", type: 'string'
                 })
             setValue(valueClone)
         }
         else {
             handleToastError(translate("MANDATORY_ALERT"))
         }
+
     }
 
     function handleDeleteRow(currentIndex: number) {
         const valueClone = [...value]
         if (from === 'query') {
-            const originalURL = apiURL
-            let changedURL = ''
-            const removedValue = valueClone[currentIndex]
-            if (currentIndex === 0) {
-                if (valueClone.length - 1 > 1)
-                    changedURL = originalURL.replace(`${removedValue.name}=${removedValue.value}&`, '')
-                else
-                    changedURL = originalURL.replace(`?${removedValue.name}=${removedValue.value}`, '')
+            if (apiURL) {
+                let newQueryString = ''
+                const queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
+                const result = queryObjFromUrl && queryObjFromUrl[currentIndex]?.name === valueClone[currentIndex].name
+                if (result) {
+                    queryObjFromUrl.splice(currentIndex, 1)
+                    newQueryString = constructUpdatedQueryString(queryObjFromUrl)
+                    const originalURL = apiURL.split('?')[0]
+                    changeapiURL(originalURL + newQueryString)
+                }
             }
-            else
-                changedURL = originalURL.replace(`&${removedValue.name}=${removedValue.value}`, '')
-            changeapiURL(changedURL)
         }
         valueClone.splice(currentIndex, 1)
         setValue(valueClone)
     }
 
-    const handleOnBlurTestValue = () => {
-        const headerParamsClone = [...headerParams]
-        const pathParamsClone = [...pathParams]
+    const handleOnBlurTestValue = (currentIndex: number) => {
         const valueClone = [...value]
-        const allDuplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), valueClone, pathParamsClone], "name")
-        if (allDuplicates.length === 0)
-            if (from === 'query') {
-                let createQueryString = ''
-                valueClone.forEach((data, index) => {
-                    if (index === 0)
-                        createQueryString = `?${data.name}=${data.value}`
-                    else if (index !== valueClone.length - 1)
-                        createQueryString += `&${data.name}=${data.value}`
-                })
-                const originalURL = apiURL.split('?')[0]
-                changeapiURL(originalURL + createQueryString)
+        if (from === 'query') {
+            let newQueryString = ''
+            if (apiURL) {
+                const queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
+                const result = queryObjFromUrl && queryObjFromUrl[currentIndex]?.name === valueClone[currentIndex].name
+                if (result) {  // Creating a URL with modified query parameter 
+                    queryObjFromUrl[currentIndex].value = valueClone[currentIndex].value
+                    newQueryString = constructUpdatedQueryString(queryObjFromUrl)
+                } else {
+                    newQueryString = constructUpdatedQueryString(queryObjFromUrl)
+                }
             }
+            const originalURL = apiURL.split('?')[0]
+            changeapiURL(originalURL + newQueryString)
+        }
     }
-
     return (
         <TableContainer component={Paper}>
             <Table>
@@ -304,7 +338,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                 </Stack>
                             </TableCell>
                             <TableCell align='center'>
-                                <TextField data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue()} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
+                                <TextField data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue(index)} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
                             </TableCell>
                             <TableCell align='center'>
                                 {index === value.length - 1 ? <AddIcon onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
