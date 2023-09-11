@@ -4,8 +4,16 @@ import { restImportConfigI } from './core/components/WebServiceModal'
 import { Provider } from 'react-redux'
 import appStore from './core/components/appStore/Store';
 import { AxiosResponse } from 'axios';
+import { Editor } from '@monaco-editor/react';
+import { useState } from 'react';
 
 export default function App() {
+  const data = {
+    test: true,
+    newSda: "rwef "
+  }
+  const [monacoEditorValue, setmonacoEditorValue] = useState(JSON.stringify(data, null, 2))
+  const [hideMonacoEditor, sethideMonacoEditor] = useState(false)
   const config: restImportConfigI = {
     proxy_conf: {
       base_path: "http://localhost:5000",
@@ -27,11 +35,16 @@ export default function App() {
     },
     error: {
       errorFunction: (msg: string, response?: AxiosResponse) => {
-        alert(msg);
-        console.log(response)
+        alert(msg)
       },
       errorMethod: "customFunction",
       errorMessageTimeout: 5000
+    },
+    handleResponse: (response?: AxiosResponse) => { 
+      setmonacoEditorValue(JSON.stringify(response?.data, null, 2))
+    },
+    hideMonacoEditor: (value: boolean) => {
+      sethideMonacoEditor(value)
     }
   }
 
@@ -39,6 +52,19 @@ export default function App() {
     <Provider store={appStore}>
       <Stack className='rest-import-ui'>
         <WebServiceModal restImportConfig={config} language='en' />
+        {!hideMonacoEditor && <Editor
+          height="200px"
+          width={'100%'}
+          language="json"
+          path={'file.json'}
+          theme="vs-dark"
+          value={monacoEditorValue}
+          options={{
+            readOnly: true,
+            minimap: {
+              enabled: false,
+            }
+          }} />}
       </Stack>
     </Provider>
   )

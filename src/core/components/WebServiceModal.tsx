@@ -3,8 +3,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, Link, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table,
     TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button,
-    TextareaAutosize,
-    Alert
+    TextareaAutosize, Alert
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
@@ -15,10 +14,10 @@ import {
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
 import DoneIcon from '@mui/icons-material/Done'
-import AceEditor from "react-ace"
-import "ace-builds/src-noconflict/mode-json"
-import "ace-builds/src-noconflict/theme-dracula"
-import "ace-builds/src-noconflict/ext-language_tools"
+// // import AceEditor from "react-ace"
+// import "ace-builds/src-noconflict/mode-json"
+// import "ace-builds/src-noconflict/theme-dracula"
+// import "ace-builds/src-noconflict/ext-language_tools"
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import Apicall from './common/apicall'
 import { encode } from 'js-base64';
@@ -56,7 +55,9 @@ export interface restImportConfigI {
         errorMethod: "default" | "toast" | "customFunction",
         errorFunction: (msg: string, response?: AxiosResponse) => void,
         errorMessageTimeout: number
-    }
+    },
+    handleResponse: (response?: AxiosResponse) => void,
+    hideMonacoEditor: (value: boolean) => void
 }
 
 interface APII {
@@ -245,7 +246,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                 setresponseEditorValue(JSON.stringify(response?.headers, undefined, 2))
                 break
         }
-        setresponseTabValue(newValue);
+        newValue === 0 ? restImportConfig.hideMonacoEditor(false) : restImportConfig.hideMonacoEditor(true)
+        setresponseTabValue(newValue)
+        restImportConfig.handleResponse(response)
     };
     const handleChangehttpMethod = (event: SelectChangeEvent) => {
         sethttpMethod(event.target.value as any)
@@ -829,15 +832,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                     </TableBody>
                                 </Table>
                             </TableContainer>}
-                        </Stack> : <AceEditor
-                            setOptions={{ useWorker: false, printMargin: false, wrap: true }}
-                            mode="json"
-                            theme="dracula"
-                            editorProps={{ $blockScrolling: true }}
-                            style={{ height: "20em", width: "100%" }}
-                            value={responseEditorValue}
-                            onChange={handleResponseEditorChange}
-                        />}
+                        </Stack> : ''}
                     </Grid>
                 </Grid>
                 <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} proxyObj={restImportConfig} />
