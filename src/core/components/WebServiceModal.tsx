@@ -3,8 +3,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, Link, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table,
     TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button,
-    TextareaAutosize,
-    Alert
+    TextareaAutosize, Alert
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
@@ -15,10 +14,10 @@ import {
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
 import DoneIcon from '@mui/icons-material/Done'
-import AceEditor from "react-ace"
-import "ace-builds/src-noconflict/mode-json"
-import "ace-builds/src-noconflict/theme-dracula"
-import "ace-builds/src-noconflict/ext-language_tools"
+// // import AceEditor from "react-ace"
+// import "ace-builds/src-noconflict/mode-json"
+// import "ace-builds/src-noconflict/theme-dracula"
+// import "ace-builds/src-noconflict/ext-language_tools"
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import Apicall from './common/apicall'
 import { encode } from 'js-base64';
@@ -54,9 +53,11 @@ export interface restImportConfigI {
     oAuthConfig: APII,
     error: {
         errorMethod: "default" | "toast" | "customFunction",
-        errorFunction: (msg: string) => void,
+        errorFunction: (msg: string, response?: AxiosResponse) => void,
         errorMessageTimeout: number
-    }
+    },
+    handleResponse: (response?: AxiosResponse) => void,
+    hideMonacoEditor: (value: boolean) => void
 }
 
 interface APII {
@@ -139,12 +140,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const [providerId, setProviderId] = useState('')
     const [configOpen, setConfigOpen] = useState(false)
     const [btnDisable, setBtnDisable] = useState(false)
-
     const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
-    const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
-
-
     useEffect(() => {
         setProviderId(selectedProvider.providerId)
         setBtnDisable(false)
@@ -156,7 +153,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
 
-    function handleToastError(message: string) {
+    function handleToastError(message: string, response?: AxiosResponse) {
         if (restImportConfig.error.errorMethod === 'default') {
             setAlertMsg(message)
             return setTimeout(() => {
@@ -166,7 +163,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         if (restImportConfig.error.errorMethod === 'toast')
             return toast.error(message)
         if (restImportConfig.error.errorMethod === 'customFunction')
-            return restImportConfig.error.errorFunction(message)
+            return restImportConfig.error.errorFunction(message, response)
     }
 
     const getPathParams = () => {
@@ -248,11 +245,10 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             case 1:
                 setresponseEditorValue(JSON.stringify(response?.headers, undefined, 2))
                 break
-            case 2:
-                setresponseEditorValue(JSON.stringify({ statusCode: response?.status }, undefined, 2))
-                break
         }
-        setresponseTabValue(newValue);
+        newValue === 0 ? restImportConfig.hideMonacoEditor(false) : restImportConfig.hideMonacoEditor(true)
+        setresponseTabValue(newValue)
+        restImportConfig.handleResponse(response)
     };
     const handleChangehttpMethod = (event: SelectChangeEvent) => {
         sethttpMethod(event.target.value as any)
@@ -401,7 +397,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                         codeVerifier = generateRandomCodeVerifier();
                         const encoder = new TextEncoder();
                         const data = encoder.encode(codeVerifier);
-
                         window.crypto.subtle.digest("SHA-256", data)
                             .then(hashBuffer => {
                                 const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
@@ -414,11 +409,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     } else {
                         authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
                         childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
-
                     }
-                    // providerAuthURL
                     setloading(true)
-
                     const interval = setInterval(() => {
                         if (childWindow.closed) {
                             clearInterval(interval);
@@ -426,7 +418,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             handleRestAPI(header)
                         }
                     }, 1000);
-
                     const messageHandler = async (event: { origin: string; data: { accessToken: any; code: string; error: any } }) => {
                         const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
                         if (event.origin === basePath && event.data.accessToken) {
@@ -437,20 +428,16 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 handleRestAPI(header);
                             }, 100);
                             window.removeEventListener('message', messageHandler);
-
                         } else if (event.origin === basePath && event.data.code) {
                             clearInterval(interval);
                             getAccessToken(event.data.code, codeVerifier)
                             setloading(false)
                             window.removeEventListener('message', messageHandler);
-
                         } else {
                             setloading(false)
                         }
                     }
                     window.addEventListener('message', messageHandler);
-
-
                     return
                 } else
                     body = bodyParams
@@ -495,21 +482,21 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
                     responseValue = { data: response.data.responseBody !== "" ? JSON.parse(response.data.responseBody) : response.data.responseBody, status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
                 else
-                    responseValue = { data: response?.data.responseBody, status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
+                    responseValue = { data: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
             else
-                responseValue = { data: httpStatusCodes.get(response?.response?.status), status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
+                responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
         } else {
             if (response.status >= 200 && response.status < 300)
                 responseValue = { data: response?.data, status: response?.status + " " + httpStatusCodes.get(response?.status), headers: response?.headers }
             else if (response.response !== undefined)
-                responseValue = { data: response.response?.data, status: response?.response.status + " " + httpStatusCodes.get(response.response?.status), headers: response.response?.headers }
+                responseValue = { data: response?.response.status + " " + httpStatusCodes.get(response.response?.status), status: response?.response.status + " " + httpStatusCodes.get(response.response?.status), headers: response.response?.headers }
             else
-                responseValue = { data: response.message, status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
+                responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
         }
         if (responseValue.data === undefined || responseValue.headers === undefined) {
             responseValue = { data: response.message, status: response.code, headers: {} }
         }
-        setresponse(responseValue as any)
+        setresponse(responseValue as AxiosResponse)
     }
     const handleCloseConfig = () => {
         setConfigOpen(false)
@@ -583,9 +570,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             }
             handleRestAPI(header)
         }
-
     }
-
 
     return (
         <>
@@ -828,24 +813,29 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
                                     <Tab label={translate("RESPONSE") + " " + translate("BODY")} />
                                     <Tab label={translate("RESPONSE") + " " + translate("HEADER")} />
-                                    <Tab label={translate("RESPONSE") + " " + translate("STATUS")} />
                                 </Tabs>
                             </Box>
                         </Box>
-                        <AceEditor
-                            setOptions={{ useWorker: false, printMargin: false, wrap: true }}
-                            mode="json"
-                            theme="dracula"
-                            editorProps={{ $blockScrolling: true }}
-                            style={{ height: "20em", width: "100%" }}
-                            value={responseEditorValue}
-                            onChange={handleResponseEditorChange}
-                        />
+                        {responseTabValue === 1 ? <Stack overflow={'hidden'} sx={{ wordBreak: 'break-word', backgroundColor: "rgb(40, 42, 54)", color: 'white' }} whiteSpace={'normal'} p={2} width={'100%'} direction={'row'}>
+                            {response === undefined ? "" : <TableContainer>
+                                <Table>
+                                    <TableBody>
+                                        {Object.keys(response?.headers as any).map(key => {
+                                            return <TableRow
+                                                key={key}
+                                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                            >
+                                                <TableCell align='left' sx={{ color: 'white' }}>{key} :</TableCell>
+                                                <TableCell align='left' sx={{ color: 'white' }}>{(response?.headers as any)[key]}</TableCell>
+                                            </TableRow>
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>}
+                        </Stack> : ''}
                     </Grid>
                 </Grid>
-
                 <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} proxyObj={restImportConfig} />
-
                 <ConfigModel
                     handleOpen={configOpen}
                     handleClose={handleCloseConfig}
