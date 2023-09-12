@@ -2,11 +2,18 @@ import React, { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import RestModel from "./components/RestModelDialog";
+import { Editor } from '@monaco-editor/react';
 
 function App() {
   const [open, setOpen] = useState(false);
   const [fullScreenView, setFullScreenView] = useState(false);
   const [defaultData, setDefaultData] = useState(true);
+  const data = {
+    test: true,
+    newSda: "rwef "
+  }
+  const [monacoEditorValue, setmonacoEditorValue] = useState(JSON.stringify(data, null, 2))
+  const [hideMonacoEditor, sethideMonacoEditor] = useState(true)
 
   useEffect(() => {
     if (fullScreenView) {
@@ -38,7 +45,14 @@ function App() {
             },
             errorMethod: "default",
             errorMessageTimeout: 5000
-          }
+          },
+          handleResponse: (response) => {
+            console.log(response?.data);
+            setmonacoEditorValue(JSON.stringify(response?.data, null, 2));
+          },
+          hideMonacoEditor: (value) => {
+            sethideMonacoEditor(value);
+          },
         },
       });
     }
@@ -96,6 +110,13 @@ function App() {
           },
           errorMethod: "default",
           errorMessageTimeout: 5000
+        },
+        handleResponse: (response) => {
+          console.log(response?.data)
+          setmonacoEditorValue(JSON.stringify(response?.data, null, 2))
+        },
+        hideMonacoEditor: (value) => {
+          sethideMonacoEditor(value)
         }
       },
     });
@@ -114,6 +135,7 @@ function App() {
           variant="contained"
           onClick={() => {
             setFullScreenView(!fullScreenView);
+            sethideMonacoEditor(false)
           }}
         >
           Full Screen
@@ -132,9 +154,25 @@ function App() {
         handleOpen={open}
         handleClose={handleClose}
         defaultData={defaultData}
+        sethideMonacoEditor={sethideMonacoEditor}
+        setmonacoEditorValue={setmonacoEditorValue}
       />
       <div id="configModalUI"></div>
-      {fullScreenView && <div id="full-screen"></div>}
+      {fullScreenView && <div id="full-screen"></div>}'
+      {!hideMonacoEditor && <Editor
+        height="200px"
+        width={'100%'}
+        language="json"
+        path={'file.json'}
+        theme="vs-dark"
+        value={monacoEditorValue}
+        options={{
+          domReadOnly: true,
+          readOnly: true,
+          minimap: {
+            enabled: false,
+          },
+        }} />}
     </>
   );
 }
