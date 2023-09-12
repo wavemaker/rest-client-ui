@@ -145,6 +145,7 @@ export const endPoints = {
   duplicateQueryParams: "http://wavemaker.com/query?id=2&id=5",
   oneQueryParam: "http://wavemaker.com/query?id=2",
   invalidQueryParam: "http://wavemaker.com/query?id="
+  
 }
 
 export const wavemakerMoreInfoLink = "https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/"

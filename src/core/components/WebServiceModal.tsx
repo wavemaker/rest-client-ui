@@ -465,11 +465,12 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                         header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
                     }
 
-                    headerParams.forEach((data) => {
+                    headerParams.forEach((data, index) => {
                         if (data.name && data.value) {
                             if (data.name === 'Authorization' && header['Authorization'])
                                 throw new Error(`Parameter "Authorization" already exists`)
                             header[data.name] = data.value
+                            index === headerParams.length - 1 && setheaderParams([...headerParams, { name: '', value: '', type: 'string' }])
                         }
                     })
 

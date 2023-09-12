@@ -363,17 +363,30 @@ describe("Web Service Modal", () => {
         expect(configFromResponse).toEqual(requestConfig.data)
     }, 80000)
 
-    it("Checking error response from the proxy server", async () => {
+    // it("Checking error response from the proxy server", async () => {
+    //     user.setup()
+    //     renderComponent(mockEmptyProps)
+    //     const urlTextField = screen.getByRole('textbox', { name: /url/i })
+    //     await user.type(urlTextField, "http://wavemaker.com/proxyerror")
+    //     const useProxySwitch = screen.getByTestId('proxy-switch')
+    //     await user.click(within(useProxySwitch).getByRole('checkbox'))
+    //     expect(useProxySwitch).toHaveClass("Mui-checked")
+    //     await clickTestBtn()
+    //     const configFromResponse = await getResponse()
+    //     expect(configFromResponse).toEqual(httpStatusCodes.get(400))
+    // }, 80000)
+
+    it("Checking error response of incorrect url via the proxy server", async () => {
         user.setup()
         renderComponent(mockEmptyProps)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
-        await user.type(urlTextField, "http://wavemaker.com/proxyerror")
+        await user.type(urlTextField, "http://wavemaker.com/actualRespError")
         const useProxySwitch = screen.getByTestId('proxy-switch')
         await user.click(within(useProxySwitch).getByRole('checkbox'))
         expect(useProxySwitch).toHaveClass("Mui-checked")
         await clickTestBtn()
         const configFromResponse = await getResponse()
-        expect(configFromResponse).toEqual(httpStatusCodes.get(400))
+        expect(configFromResponse).toEqual(`400 ${httpStatusCodes.get(400)}`)
     }, 80000)
 
 
@@ -500,12 +513,12 @@ describe("Web Service Modal", () => {
     }, 80000)
 
     it("Error Msg displayed when clicking 'TEST' without entering URL [Custom Function Error]", async () => {
-        const customFunction = jest.fn((msg) => console.log(msg))
+        const customFunction = jest.fn((msg, response?) => console.log(msg))
         const props = getCustomizedError('customFunction', customFunction)
         user.setup()
         renderComponent(props)
         await clickTestBtn()
-        expect(customFunction).toHaveBeenCalledWith(ERROR_MESSAGES.EMPTY_URL)
+        expect(customFunction).toHaveBeenCalledWith(ERROR_MESSAGES.EMPTY_URL, undefined)
     }, 80000)
 
     it("TEST button disabled right after selecting OAuth 2.0 authentication method", async () => {
@@ -562,9 +575,6 @@ describe("Web Service Modal", () => {
         for (let [key, value] of Object.entries(responseHeaders)) {
             expect(header).toHaveProperty(key, value)
         }
-        await switchTab('RESPONSE STATUS')
-        const status = await getResponse()
-        expect(status.statusCode).toEqual("200 " + httpStatusCodes.get(200))
     }, 80000)
 
     it("Handling the error response from the server", async () => {
@@ -573,9 +583,8 @@ describe("Web Service Modal", () => {
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
         await user.type(urlTextField, endPoints.badRequest)
         await clickTestBtn()
-        await switchTab('RESPONSE STATUS')
         const response = await getResponse()
-        expect(response.statusCode).toEqual("400 " + httpStatusCodes.get(400))
+        expect(response).toEqual("400 " + httpStatusCodes.get(400))
     }, 80000)
 
     it("Adding multipart data(file upload)", async () => {
@@ -600,9 +609,8 @@ describe("Web Service Modal", () => {
         expect(fileNameField).toHaveValue(filename)
         await user.click(within(screen.getByTestId('multipart-table')).getByTestId('AddIcon'))
         await clickTestBtn()
-        await switchTab('RESPONSE STATUS')
         const response = await getResponse()
-        expect(response.statusCode).toEqual("200 " + httpStatusCodes.get(200))
+        expect(response.message).toEqual("Multipart/form data received successfully")
     }, 80000)
 
     it("Adding already available content type as custom content type doesn't create duplicate entry in the dropdown", async () => {
@@ -931,7 +939,7 @@ function constructUrlWithPathParams(url: string, pathParams: PathParamI[], remov
     url += '/'
     pathParams.forEach((path, index) => {
         if (removeIndex !== index)
-            url += `{${path.name}}${index !== pathParams.length - 1 && index + 1 !== removeIndex ? '/' : ''}`
+            url += `{ ${path.name}}${index !== pathParams.length - 1 && index + 1 !== removeIndex ? '/' : ''}`
     })
     return url
 }

@@ -136,12 +136,19 @@ export const handlers = [
         const proxyResponse: ProxyResponseI = {
             headers: req.headers.all(),
             responseBody: JSON.stringify(requestObject),
-            statusCode: "200"
+            statusCode: 200
+        }
+
+        const actualError = requestObject.endpointAddress === 'http://wavemaker.com/actualRespError'
+        const actualResponse: ProxyResponseI = {
+            headers: req.headers.all(),
+            responseBody: JSON.stringify(requestObject),
+            statusCode: 400
         }
 
         return res(
-            ctx.status(error ? 400 : 200),
-            ctx.json(error ? "Cannot process the request due to a client error" : proxyResponse)
+            ctx.status(error ? 400 : actualError ? 200 : 200),
+            ctx.json(error ? "Cannot process the request due to a client error" : actualError ? actualResponse : proxyResponse)
         )
     }),
 
@@ -165,6 +172,7 @@ export const handlers = [
             ctx.json(response)
         )
     })
+
 ]
 
 
