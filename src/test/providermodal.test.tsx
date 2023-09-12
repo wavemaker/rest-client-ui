@@ -4,7 +4,7 @@ import user from '@testing-library/user-event'
 import ProviderModal from '../core/components/ProviderModal'
 import { ProviderI } from '../core/components/ProviderModal';
 import { restImportConfigI } from '../core/components/WebServiceModal';
-import { restImportConfig } from './testdata';
+import { emptyConfig } from './testdata';
 import { Provider } from 'react-redux'
 import { server } from './mocks/server'
 import appStore from '../core/components/appStore/Store';
@@ -20,7 +20,7 @@ interface mockPropsI {
 const mockProps: mockPropsI = {
     handleOpen: true,
     handleClose: jest.fn(),
-    proxyObj: restImportConfig
+    proxyObj: emptyConfig
 }
 function renderComponent() {
     render(<Provider store={appStore}><ProviderModal {...mockProps} /></Provider >)
@@ -33,7 +33,7 @@ afterEach(() => server.restoreHandlers())
 afterAll(() => server.close())
 
 describe("Provider Modal", () => {
-    fit("Renders correctly", () => {
+    it("Renders correctly", () => {
         renderComponent()
         const modalhead = screen.getByRole('heading', {
             name: /select or add provider help/i
@@ -64,5 +64,11 @@ describe("Provider Modal", () => {
             name: /oauth provider configuration help/i
         });
         expect(config_modal).toBeInTheDocument();
+    }, 80000);
+
+    it("Default Provider Renders correctly", async () => {
+        renderComponent()
+        const default_provider_card = screen.getByText(/amazon/i)
+        expect(default_provider_card).toBeInTheDocument();
     }, 80000);
 })

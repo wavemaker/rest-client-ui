@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import ConfigModel from '../core/components/ConfigModel'
 import { ProviderI } from '../core/components/ProviderModal';
 import { restImportConfigI } from '../core/components/WebServiceModal';
-import { restImportConfig } from './testdata';
+import { emptyConfig } from './testdata';
 import { Provider } from 'react-redux'
 import appStore from '../core/components/appStore/Store';
 
@@ -18,7 +18,7 @@ interface mockPropsI {
 const mockProps: mockPropsI = {
     handleOpen: true,
     handleClose: jest.fn(),
-    proxyObj: restImportConfig
+    proxyObj: emptyConfig
 }
 
 describe("Config Modal", () => {

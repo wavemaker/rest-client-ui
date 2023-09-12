@@ -1,7 +1,5 @@
 import { rest } from "msw";
-import testData, { endPoints } from "../testdata";
-import { ProviderI } from "../../core/components/ProviderModal";
-
+import testData, { endPoints, responseHeaders } from "../testdata";
 
 export const handlers = [
   rest.get(endPoints.getUsers, (req, res, ctx) => {
@@ -13,7 +11,7 @@ export const handlers = [
       message: "User List fetched successfully",
     };
 
-    return res(ctx.status(200), ctx.json(response));
+    return res(ctx.set(responseHeaders), ctx.status(200), ctx.json(response));
   }),
 
   rest.post(endPoints.postLogin, (req, res, ctx) => {
@@ -109,18 +107,52 @@ export const handlers = [
   rest.post(endPoints.proxyServer, async (req, res, ctx) => {
     const requestObject = await req.json().then((data) => data);
     console.log(requestObject);
+    const error =
+      requestObject.endpointAddress === "http://wavemaker.com/proxyerror";
     const proxyResponse: ProxyResponseI = {
       headers: req.headers.all(),
       responseBody: JSON.stringify(requestObject),
-      statusCode: "200",
+      statusCode: 200,
     };
 
-    return res(ctx.status(200), ctx.json(proxyResponse));
+    const actualError =
+      requestObject.endpointAddress === "http://wavemaker.com/actualRespError";
+    const actualResponse: ProxyResponseI = {
+      headers: req.headers.all(),
+      responseBody: JSON.stringify(requestObject),
+      statusCode: 400,
+    };
+
+    return res(
+      ctx.status(error ? 400 : actualError ? 200 : 200),
+      ctx.json(
+        error
+          ? "Cannot process the request due to a client error"
+          : actualError
+          ? actualResponse
+          : proxyResponse
+      )
+    );
   }),
 
+  rest.get(endPoints.badRequest, (req, res, ctx) => {
+    return res(
+      ctx.status(400),
+      ctx.json("Cannot process the request due to a client error")
+    );
+  }),
+
+  rest.post(endPoints.postMultipartData, async (req, res, ctx) => {
+    const response: ResponseI = {
+      requestHeaders: req.headers.all(),
+      data: null,
+      queries: null,
+      pathParams: null,
+      message: "Multipart/form data received successfully",
+    };
+    return res(ctx.status(200), ctx.json(response));
+  }),
   rest.get(endPoints.getprovider, async (req, res, ctx) => {
-    const requestObject = await req.json().then((data) => data);
-    console.log(requestObject);
     const response = [
       {
         providerId: "provider",
@@ -154,8 +186,6 @@ export const handlers = [
   }),
 
   rest.get(endPoints.listProvider, async (req, res, ctx) => {
-    const requestObject = await req.json().then((data) => data);
-    console.log(requestObject);
     const response = [
       {
         accessTokenParamName: null,

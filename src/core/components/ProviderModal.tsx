@@ -116,6 +116,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                 return filtered;
             }, [])
             const sortedProviders = filtered_provider.slice().sort((a: { providerId: string; }, b: { providerId: any; }) => a.providerId.localeCompare(b.providerId));
+            console.log(sortedProviders)
             setAllProvider(sortedProviders)
         } else {
             console.log("Received an unexpected response:", response);
@@ -152,7 +153,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                 <DialogContent sx={{ backgroundColor: 'lightgray' }}>
                     <Grid spacing={5} sx={{ width: '100%', ml: 0, mt: 0, mb: 2 }} container>
                         <Grid item md={3}>
-                            <Card onClick={() => handleOpenConfig(null)} sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
+                            <Card onClick={() => handleOpenConfig(null)} data-testid="add-provider" sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
                                 <CardMedia
                                     sx={{ height: "35px", width: "35px", mt: 2 }}
                                     title={translate("ADD") + " " + translate("CUSTOM") + " " + translate("PROVIDER")}
@@ -168,7 +169,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                             </Card>
                         </Grid>
                         {allProvider.map((provider) =>
-                            <Grid item md={3} key={provider.providerId}>
+                            <Grid item md={3} key={provider.providerId} data-testid="default-provider">
                                 <Card title={provider.providerId} onClick={() => handleOpenConfig(provider)} sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
                                     <CardMedia
                                         sx={{ height: "35px", width: "35px", mt: 2 }}>
