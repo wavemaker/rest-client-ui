@@ -117,11 +117,11 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
 
     const handleChangeType = (event: SelectChangeEvent, currentIndex: number) => {
         const valueClone = [...value]
-        let newQueryString = ''
         valueClone.map((data, index) => {
             if (index === currentIndex) {
                 if (selectTypes.ServerSideProperties.find(e => e.value === event.target.value)) {
                     if (from === 'query') {
+                        let newQueryString = ''
                         const queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
                         const result = queryObjFromUrl && queryObjFromUrl[index]?.name === data.name && queryObjFromUrl[index]?.value === data.value
                         if (result) {  // Creating a URL with modified query parameter 
@@ -130,6 +130,8 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                         } else {  // Reconstructing the old URL
                             newQueryString = constructUpdatedQueryString(queryObjFromUrl)
                         }
+                        const originalURL = apiURL.split('?')[0]
+                        changeapiURL(originalURL + newQueryString)
                     }
                     data.type = event.target.value
                     data.value = ServerSidePropertiesMap.get(event.target.value) as string
@@ -139,9 +141,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             }
             return data
         })
-        const originalURL = apiURL.split('?')[0]
         setValue(valueClone)
-        changeapiURL(originalURL + newQueryString)
     }
 
 
@@ -190,7 +190,6 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                 uniqueValues.forEach((query, index) => {
                     valuesToBeAdded += index !== 0 ? `,${query.value}` : query.value
                 })
-                console.log(valuesToBeAdded)
                 if (uniqueValues.length) {
                     if (apiURL) {
                         let newQueryString = ''
@@ -199,7 +198,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                         if (queryObjFromUrl.some(query => query.name === lastRow.name)) {
                             updatedObj = queryObjFromUrl.map((queryFromUrl, index) => {
                                 if (queryFromUrl.name === lastRow.name) {
-                                    valueClone[index].value += `,${valuesToBeAdded}`
+                                    valueClone[valueClone.findIndex(data => data.name === lastRow.name)].value += `,${valuesToBeAdded}`
                                     valueClone.length = valueClone.length - 1
                                     return { name: lastRow.name, value: `${queryFromUrl.value},${valuesToBeAdded}`, type: lastRow.type }
                                 }
@@ -247,10 +246,10 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         if (from === 'query') {
             if (apiURL) {
                 let newQueryString = ''
-                const queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
-                const result = queryObjFromUrl && queryObjFromUrl[currentIndex]?.name === valueClone[currentIndex].name
+                let queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
+                const result = queryObjFromUrl && queryObjFromUrl.some(data => data.name === valueClone[currentIndex].name)
                 if (result) {
-                    queryObjFromUrl.splice(currentIndex, 1)
+                    queryObjFromUrl = queryObjFromUrl.filter(data => data.name !== valueClone[currentIndex].name)
                     newQueryString = constructUpdatedQueryString(queryObjFromUrl)
                     const originalURL = apiURL.split('?')[0]
                     changeapiURL(originalURL + newQueryString)
@@ -266,10 +265,12 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         if (from === 'query') {
             let newQueryString = ''
             if (apiURL) {
-                const queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
-                const result = queryObjFromUrl && queryObjFromUrl[currentIndex]?.name === valueClone[currentIndex].name
-                if (result) {  // Creating a URL with modified query parameter 
-                    queryObjFromUrl[currentIndex].value = valueClone[currentIndex].value
+                let queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
+                const result = queryObjFromUrl && currentIndex !== valueClone.length - 1
+                if (result) {
+                    queryObjFromUrl = queryObjFromUrl.map(query => {
+                        return query.name === valueClone[currentIndex].name ? { name: query.name, value: valueClone[currentIndex].value, type: 'string' } : query
+                    })
                     newQueryString = constructUpdatedQueryString(queryObjFromUrl)
                 } else {
                     newQueryString = constructUpdatedQueryString(queryObjFromUrl)

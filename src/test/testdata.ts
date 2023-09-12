@@ -138,7 +138,12 @@ export const endPoints = {
     proxyServer: "http://localhost:5000/restimport",
     invalidURL: "http://invalid$url",
     badRequest: "http://wavemaker.com/badrequest",
-    postMultipartData:"http://wavemaker.com/multipart"
+    postMultipartData: "http://wavemaker.com/multipart",
+    duplicatePathParams: "http://wavemaker.com/{path}/name/{path}",
+    emptyPathParam: "http://wavemaker.com/{}/name",
+    duplicateQueryParams: "http://wavemaker.com/query?id=2&id=5",
+    oneQueryParam: "http://wavemaker.com/query?id=2",
+    invalidQueryParam:"http://wavemaker.com/query?id="
 }
 
 export const wavemakerMoreInfoLink = "https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/"

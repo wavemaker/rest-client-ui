@@ -1,5 +1,5 @@
 /* eslint-disable jest/no-conditional-expect */
-import { render, screen, within, fireEvent } from '@testing-library/react';
+import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
 import user from '@testing-library/user-event'
 import WebServiceModal from '../core/components/WebServiceModal'
 import '@testing-library/jest-dom';
@@ -142,7 +142,7 @@ describe("Web Service Modal", () => {
         await user.type(urlTextField, endPoints.getVerifyHeader)
         await switchTab('HEADER PARAMS')
         for (let [index, header] of headersArray.entries()) {
-            await addHeadersOrQueryParamsInTheFields(header, index)
+            await addHeadersOrQueryParamsInTheFields(header, index, true)
         }
         await clickTestBtn()
         const response: ResponseI = await getResponse()
@@ -264,7 +264,7 @@ describe("Web Service Modal", () => {
         await user.type(urlTextField, endPoints.getVerifyHeader)
         await switchTab('HEADER PARAMS')
         for (let [index, header] of headersArray.entries()) {
-            await addHeadersOrQueryParamsInTheFields(header, index)
+            await addHeadersOrQueryParamsInTheFields(header, index, true)
         }
         await clickTestBtn()
         const response: ResponseI = await getResponse()
@@ -285,7 +285,7 @@ describe("Web Service Modal", () => {
         await user.type(urlTextField, endPoints.getQueryParams)
         await switchTab('QUERY PARAMS')
         for (let [index, query] of queriesArray.entries()) {
-            await addHeadersOrQueryParamsInTheFields(query, index)
+            await addHeadersOrQueryParamsInTheFields(query, index, true)
         }
         const constructedUrl = constructUrlWithQueryParams(endPoints.getQueryParams, queriesArray)
         expect(urlTextField.getAttribute('value')).toEqual(constructedUrl)
@@ -525,14 +525,13 @@ describe("Web Service Modal", () => {
         expect(errorDisplayed).toBeTruthy()
     }, 80000)
 
-    it("URL field accepts duplicate query params without any error", async () => {
-        const duplicateQueryStr = "?id=2&id=5"
+    it("URL field accepts multiple query parameters with same name without any error", async () => {
         user.setup()
         renderComponent(mockEmptyProps)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
-        await user.type(urlTextField, endPoints.getQueryParams + duplicateQueryStr)
-        await clickTestBtn()
-        expect(urlTextField).toHaveValue(endPoints.getQueryParams + duplicateQueryStr)
+        await user.type(urlTextField, endPoints.duplicateQueryParams)
+        await switchTab('QUERY PARAMS')
+        expect(urlTextField).toHaveValue(endPoints.duplicateQueryParams)
         const errorField = screen.queryByTestId('default-error')
         expect(errorField).toBeFalsy()
     }, 80000)
@@ -631,25 +630,186 @@ describe("Web Service Modal", () => {
             contentTypeSet.add(contentType)
         })
         expect(hasDuplicates).toBeFalsy()
-    })
+    }, 80000)
 
     it("Error Msg displayed when adding duplicate(already present in other parameters) path params on blur of the URL field", async () => {
         const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
-        const url = endPoints.getUsers
-        const header: HeaderParamI = {
-            name: "Accept", type: "String", value: "application/json;q=0.8"
-        }
+        const header: HeaderParamI = testData.headerParams[1]
         user.setup()
         renderComponent(mockEmptyProps)
         await switchTab('HEADER PARAMS')
-        await addHeadersOrQueryParamsInTheFields(header, 0)
+        await addHeadersOrQueryParamsInTheFields(header, 0, false)
         const urlTextField = screen.getByRole('textbox', { name: /url/i })
-        const urlWithPathParam = `${url}/{${header.name}}`
+        const urlWithPathParam = `${endPoints.getUsers}/{${header.name}}`
         fireEvent.change(urlTextField, { target: { value: urlWithPathParam } })
         urlTextField.focus()
         urlTextField.blur()
         const errorDisplayed = await isErrorMsgDisplayed(errorMethod, `Parameters cannot have duplicates, removed the duplicates[${header.name}]`)
         expect(errorDisplayed).toBeTruthy()
+        expect(urlTextField).toHaveValue(endPoints.getUsers)
+    }, 80000)
+
+    it("Error displayed when having duplicate path parameters in the URL", async () => {
+        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        fireEvent.change(urlTextField, { target: { value: endPoints.duplicatePathParams } })
+        urlTextField.focus()
+        urlTextField.blur()
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, 'Path parameters cannot have duplicates')
+        expect(errorDisplayed).toBeTruthy()
+    }, 80000)
+
+    it("Error displayed when having invalid(empty) path parameters in the URL", async () => {
+        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        fireEvent.change(urlTextField, { target: { value: endPoints.emptyPathParam } })
+        urlTextField.focus()
+        urlTextField.blur()
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, 'Please enter a valid path parameter')
+        expect(errorDisplayed).toBeTruthy()
+    }, 80000)
+
+    it("Query Parameters with same name are reflected in the Fields", async () => {
+        const duplicateQueries: QueryI[] = [{ name: 'id', value: '2,5', type: 'string' }]
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.duplicateQueryParams)
+        urlTextField.blur()
+        expect(urlTextField).toHaveValue(endPoints.duplicateQueryParams)
+        const errorField = screen.queryByTestId('default-error')
+        expect(errorField).toBeFalsy()
+        await switchTab('QUERY PARAMS')
+        await checkIfQueryParamsAreReflectedInFieldsFromURL(duplicateQueries)
+    }, 80000)
+
+    it("Adding Query Parameters with same name one by one", async () => {
+        const duplicateQueries: QueryI[] = [{ name: 'id', value: '2,5', type: 'string' }]
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.oneQueryParam)
+        await switchTab('QUERY PARAMS')
+        expect(urlTextField).toHaveValue(endPoints.oneQueryParam)
+        await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'id', value: '2', type: 'string' }])
+        await user.clear(urlTextField)
+        await user.type(urlTextField, endPoints.duplicateQueryParams)
+        urlTextField.blur()
+        await switchTab('QUERY PARAMS')
+        expect(urlTextField).toHaveValue(endPoints.duplicateQueryParams)
+        await checkIfQueryParamsAreReflectedInFieldsFromURL(duplicateQueries)
+    }, 80000)
+
+
+    it("Error displayed for invalid query parameter on blur of the URL field", async () => {
+        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.invalidQueryParam)
+        await switchTab('QUERY PARAMS')
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, `Please enter a valid query parameter`)
+        expect(errorDisplayed).toBeTruthy()
+    }, 80000)
+
+    it("Error Msg displayed when adding duplicate(already present in other parameters) query params on blur of the URL field", async () => {
+        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
+        const header: HeaderParamI = testData.headerParams[1]
+        user.setup()
+        renderComponent(mockEmptyProps)
+        await switchTab('HEADER PARAMS')
+        await addHeadersOrQueryParamsInTheFields(header, 0, false)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, `${endPoints.getQueryParams}?${header.name}=${header.value}`)
+        urlTextField.blur()
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, `Queries cannot have duplicates, removed the duplicates[${header.name}]`)
+        expect(errorDisplayed).toBeTruthy()
+        expect(urlTextField).toHaveValue(endPoints.getQueryParams)
+    }, 80000)
+
+    it("Query details from last index are automatically added to the URL when clicking TEST btn", async () => {
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.getQueryParams)
+        await switchTab('QUERY PARAMS')
+        await addHeadersOrQueryParamsInTheFields(testData.queries[0], 0, false)
+        expect(urlTextField).toHaveValue(endPoints.getQueryParams)
+        await clickTestBtn()
+        const updatedURL = constructUrlWithQueryParams(endPoints.getQueryParams, [testData.queries[0]])
+        expect(urlTextField).toHaveValue(updatedURL)
+    }, 80000)
+
+    it("Only unique query values are considered & added to the URL and Fields when clicking TEST btn[entered via fields]", async () => {
+        const queryData: QueryI[] = [{ name: 'id', value: '1,2', type: 'String' }, { name: 'id', value: '1,2,3,1', type: 'String' }]
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.getQueryParams)
+        await switchTab('QUERY PARAMS')
+        await addHeadersOrQueryParamsInTheFields(queryData[0], 0, true)
+        expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?id=1&id=2`)
+        await addHeadersOrQueryParamsInTheFields(queryData[1], 1, false)
+        await clickTestBtn()
+        expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?id=1&id=2&id=3`)
+        await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'id', value: '1,2,3', type: 'String' }])
+    }, 80000)
+
+    it("Only unique query values are considered & added to the fields on blur of URL field[entered one after another via url field]", async () => {
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, `${endPoints.getQueryParams}?id=1`)
+        await switchTab('QUERY PARAMS')
+        await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'id', value: '1', type: 'String' }])
+        await user.clear(urlTextField)
+        await user.type(urlTextField, `${endPoints.getQueryParams}?id=1&id=2&id=1&id=3`)
+        expect(urlTextField).toHaveFocus()
+        urlTextField.blur()
+        await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'id', value: '1,2,3', type: 'String' }])
+    }, 80000)
+
+    it("Only unique query values are considered & added to the fields on blur of URL field[entered at a time via url field]", async () => {
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, `${endPoints.getQueryParams}?id=1&id=1`)
+        await switchTab('QUERY PARAMS')
+        await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'id', value: '1', type: 'String' }])
+        expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?id=1`)
+    }, 80000)
+
+    it("Error displayed when clicking TEST btn with duplicate query[already present in other parameters] added in the last row", async () => {
+        const errorMethod = mockEmptyProps.restImportConfig.error.errorMethod
+        const header: HeaderParamI = testData.headerParams[1]
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, endPoints.getQueryParams)
+        await switchTab('HEADER PARAMS')
+        await addHeadersOrQueryParamsInTheFields(header, 0, false)
+        await switchTab('QUERY PARAMS')
+        await addHeadersOrQueryParamsInTheFields({ name: header.name, value: header.value, type: header.type }, 0, false)
+        await clickTestBtn()
+        const errorDisplayed = await isErrorMsgDisplayed(errorMethod, `parameter "${header.name}" already exists`)
+        expect(errorDisplayed).toBeTruthy()
+    }, 80000)
+
+    it("Doesn't allow to add already present query parameter[name=value] using field", async () => {
+        const queryData = { name: 'id', value: '1,2', type: 'String' }
+        user.setup()
+        renderComponent(mockEmptyProps)
+        const urlTextField = screen.getByRole('textbox', { name: /url/i })
+        await user.type(urlTextField, `${endPoints.getQueryParams}?id=1&id=2`)
+        await switchTab('QUERY PARAMS')
+        await checkIfQueryParamsAreReflectedInFieldsFromURL([queryData])
+        await addHeadersOrQueryParamsInTheFields(queryData, 1, true)
+        await checkIfQueryParamsAreReflectedInFieldsFromURL([queryData])
+        await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: '', value: '', type: 'String' }], 1)
     }, 80000)
 })
 
@@ -684,16 +844,22 @@ async function verifySubheadersAndTheirFieldsUnderHeaderandQueryTabs() {
     expect(screen.getByTestId("AddIcon")).toBeInTheDocument()
 }
 
-async function checkIfQueryParamsAreReflectedInFieldsFromURL(queriesArray: QueryI[]) {
+async function checkIfQueryParamsAreReflectedInFieldsFromURL(queriesArray: QueryI[], startIndex: number = 0) {
+    await waitFor(() => {
+        const queryNameFields = screen.queryAllByRole('combobox')
+        expect(queryNameFields.length).toBeGreaterThanOrEqual(1)
+    }, { timeout: 5000 })
+
     const queryValueTextFields: HTMLElement[] = []
-    const queryNames = await screen.findAllByRole('combobox');
-    const queryValueContainer = await screen.findAllByTestId("param-value")
+    const queryNames = await screen.findAllByRole('combobox', {}, { timeout: 5000 });
+    const queryValueContainer = screen.getAllByTestId("param-value")
     queryValueContainer.forEach((container) => {
         queryValueTextFields.push(within(container).getByRole("textbox"))
     })
     queriesArray.forEach((query, index) => {
-        expect(queryNames[index]).toHaveDisplayValue(query.name)
-        expect(queryValueTextFields[index]).toHaveDisplayValue(query.value)
+        expect(queryNames[startIndex]).toHaveDisplayValue(query.name)
+        expect(queryValueTextFields[startIndex]).toHaveDisplayValue(query.value)
+        startIndex++;
     })
 }
 
@@ -792,7 +958,7 @@ function constructObjToMatchWithProxyConfig(endpoint: string, httpMethod: httpMe
     return configWProxy
 }
 
-async function addHeadersOrQueryParamsInTheFields(data: GENERAL_PARAM_STRUCTURE, index: number) {
+async function addHeadersOrQueryParamsInTheFields(data: GENERAL_PARAM_STRUCTURE, index: number, clickAddAfterFilling: boolean) {
     const paramTypeFields: HTMLElement[] = []
     const paramValueFields: HTMLElement[] = []
     const combobox = await screen.findAllByRole('combobox', {}, { timeout: 5000 })
@@ -815,7 +981,7 @@ async function addHeadersOrQueryParamsInTheFields(data: GENERAL_PARAM_STRUCTURE,
     expect(paramValueFields.length).toBe(index + 1)
     await user.type(paramValueFields[index], data.value)
     const addIcon = screen.getByTestId("AddIcon")
-    await user.click(addIcon)
+    clickAddAfterFilling && await user.click(addIcon)
 }
 
 async function verifyPathLabelsAndEnterValues(pathParamsArray: PathParamI[]) {

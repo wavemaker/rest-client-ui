@@ -222,10 +222,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             else
                 setpathParams([])
         } catch (error: any) {
-            if (error.message)
-                handleToastError(error.message)
-            else
-                console.error(error)
+            handleToastError(error.message)
         }
     }
     const handlePathParamsChanges = (value: string, currentIndex: number) => {
@@ -290,7 +287,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const handleQueryChange = () => {
         try {
             if (apiURL !== '') {
-                console.log("From getQuery -> " + apiURL)
                 const query = apiURL?.split('?')[1]
                 const queries = query?.split('&')
                 if (query?.length > 0) {
@@ -307,7 +303,15 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                     break
                                 } else {
                                     updatedQueryParams = updatedQueryParams.map(data => {
-                                        return data.name === name ? { name: data.name, value: `${data.value},${value}`, type: data.type } : data
+                                        if (data.name === name) {
+                                            if (!data.value.split(',').includes(value)) {
+                                                return { name: data.name, value: `${data.value},${value}`, type: data.type }
+                                            } else {
+                                                setapiURL(apiURL.replace(`&${data.name}=${value}`, ''))
+                                                return data
+                                            }
+                                        } else
+                                            return data
                                     })
                                     newQuery = false
                                     break
@@ -324,7 +328,12 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             if (isThisNewQuery(key, value)) {
                                 if (updatedQueryParams.some(data => data.name === key)) {
                                     updatedQueryParams = updatedQueryParams.map(data => {
-                                        return data.name === key ? { name: data.name, value: `${data.value},${value}`, type: data.type } : data
+                                        if (data.name === key && !data.value.split(',').includes(value)) {
+                                            return { name: data.name, value: `${data.value},${value}`, type: data.type }
+                                        } else {
+                                            setapiURL(apiURL.replace(`&${key}=${value}`, ''))
+                                            return data
+                                        }
                                     })
                                 } else
                                     updatedQueryParams.push({ name: key, value, type: 'string' })
@@ -364,10 +373,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                 setqueryParams([{ name: '', value: '', type: 'string' }])
             }
         } catch (error: any) {
-            if (error.message)
-                handleToastError(error.message)
-            else
-                console.error(error)
+            handleToastError(error.message)
         }
     }
     const handleAddCustomContentType = () => {
@@ -583,10 +589,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             else
                 throw new Error(translate("VALID_URL_ALERT"))
         } catch (error: any) {
-            if (error.message)
-                handleToastError(error.message)
-            else
-                console.error(error)
+            handleToastError(error.message)
         }
     }
     function handleResponse(response: any): void {
