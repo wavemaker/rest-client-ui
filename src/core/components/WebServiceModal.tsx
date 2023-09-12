@@ -51,6 +51,7 @@ export interface restImportConfigI {
     contentType?: string,
     proxy_conf: APII,
     default_proxy_state: string,
+    state_val: string,
     oAuthConfig: APII,
     error: {
         errorMethod: "default" | "toast" | "customFunction",
@@ -406,18 +407,24 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                 if (httpAuth === "OAUTH2.0") {
                     let codeVerifier: string;
                     const clientId = selectedProvider.clientId;
-                    let redirectUri = restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
-                    // let redirectUri = `https://4319-117-200-155-252.ngrok-free.app/oauth2/${selectedProvider.providerId}/callback`;
+                    let redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback` : restImportConfig?.oAuthConfig?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
                     const responseType = "code";
-                    const state = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==";
+                    const state = restImportConfig.state_val
                     const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
                     let childWindow: any;
                     let authUrl: string
-                    // const isToken = window.sessionStorage.getItem(selectedProvider.providerId + "access_token");
-                    const isToken = null
+                    const expires_time = window.sessionStorage.getItem(selectedProvider.providerId + "expires_in");
+                    let expiresIn = expires_time ? parseInt(expires_time, 10) : 0;
+                    let currentTimestamp = Math.floor(Date.now() / 1000);
+                    if (currentTimestamp > expiresIn) {
+                        sessionStorage.removeItem(selectedProvider.providerId + "expires_in");
+                        sessionStorage.removeItem(selectedProvider.providerId + "access_token");
+                    }
+                    const isToken = window.sessionStorage.getItem(selectedProvider.providerId + "access_token");
                     if (isToken) {
-                        header['Authorization'] = `Bearer ` + isToken
-                        handleRestAPI(header);
+                        if (currentTimestamp < expiresIn) {
+                            header['Authorization'] = `Bearer ` + isToken
+                        }
                     } else {
                         if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
                             if (selectedProvider.providerId === "google") {
@@ -443,11 +450,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                     }) as any;
                                     client.requestAccessToken();
                                 }
-
                             } else {
-                                redirectUri = restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html'
-                                // redirectUri = 'https://4319-117-200-155-252.ngrok-free.app/oAuthCallback.html'
-
+                                redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html' : restImportConfig?.oAuthConfig?.base_path + '/oAuthCallback.html'
                                 const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
                                 codeVerifier = generateRandomCodeVerifier();
                                 const encoder = new TextEncoder();
@@ -455,7 +459,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 window.crypto.subtle.digest("SHA-256", data)
                                     .then(hashBuffer => {
                                         const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                        console.log(codeChallenge, "codeChallenge")
                                         authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
                                         childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                                     })
@@ -463,7 +466,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                         console.error("Error calculating code challenge:", error);
                                     });
                             }
-
                         } else {
                             authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
                             childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
@@ -479,15 +481,18 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                 }
                             }, 1000);
 
-                            const messageHandler = async (event: { origin: string; data: { accessToken: any; code: string; error: any } }) => {
-                                console.log(event.data)
+                            const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
                                 const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
-                                if (event.origin === basePath && event.data.accessToken) {
+                                if (event.origin === basePath && event.data.tokenData) {
                                     clearInterval(interval);
-                                    const token = event.data.accessToken
-                                    // window.sessionStorage.setItem(selectedProvider.providerId + "access_token", token);
+                                    const tokenData = JSON.parse(event.data.tokenData)
+                                    window.sessionStorage.setItem(selectedProvider.providerId + "access_token", tokenData.access_token);
+                                    const currentTimestamp = Math.floor(Date.now() / 1000);
+                                    const expiresIn = tokenData.expires_in
+                                    const expirationTimestamp = currentTimestamp + expiresIn;
+                                    window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
                                     setTimeout(() => {
-                                        header['Authorization'] = `Bearer ` + token
+                                        header['Authorization'] = `Bearer ` + tokenData.access_token
                                         handleRestAPI(header);
                                     }, 100);
                                     window.removeEventListener('message', messageHandler);
@@ -613,10 +618,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             grant_type: 'authorization_code',
             code: code,
             client_id: selectedProvider.clientId,
-            // client_secret: selectedProvider.clientSecret,
             code_verifier: codeVerifier,
             redirect_uri: restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html',
-            // redirect_uri: 'https://4319-117-200-155-252.ngrok-free.app/oAuthCallback.html',
         }
 
         const configToken: AxiosRequestConfig = {
@@ -627,28 +630,24 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             method: "POST",
             data: reqParams
         }
-
-        console.log(reqParams)
+        let header: any = {};
+        headerParams.forEach((data) => {
+            if (data.name && data.value)
+                header[data.name] = data.value
+        })
         const response: any = await Apicall(configToken)
         if (response.status === 200) {
-            let header: any = {};
-            headerParams.forEach((data) => {
-                if (data.name && data.value)
-                    header[data.name] = data.value
-            })
             header['Authorization'] = `Bearer ` + response.data.access_token
-            // const header = {
-            //     "Authorization": `Bearer ` + response.data.access_token
-            // }
-            // window.sessionStorage.setItem(selectedProvider.providerId + "access_token", response.data.access_token);
+            window.sessionStorage.setItem(selectedProvider.providerId + "access_token", response.data.access_token);
+            const currentTimestamp = Math.floor(Date.now() / 1000);
+            const expiresIn = response.data.expires_in
+            const expirationTimestamp = currentTimestamp + expiresIn;
+            window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
             handleRestAPI(header)
         } else {
-            const header = {
-                "Authorization": `Bearer ` + null
-            }
+            header['Authorization'] = `Bearer ` + null
             handleRestAPI(header)
         }
-
     }
 
 
