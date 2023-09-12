@@ -1,3 +1,4 @@
+import React from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -13,8 +14,8 @@ import { findDuplicateObjects, findDuplicatesAcrossArrays, getCurrentDateTime } 
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import { PathParamsI } from './WebServiceModal';
-import { useTranslation } from 'react-i18next';
-import React from 'react'
+import { useTranslation } from 'react-i18next'; 
+
 export interface HeaderAndQueryI {
     name: string
     type: string
@@ -248,7 +249,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         <TableContainer component={Paper}>
             <Table>
                 <TableHead>
-                    <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
+                    <TableRow sx={{ backgroundColor: '#d4e6f1' }} data-testid="subheaders">
                         <TableCell align='center'>{translate("NAME")}</TableCell>
                         <TableCell align='center'>{translate("TYPE")}</TableCell>
                         <TableCell align='center'>{translate("TEST") + " " + translate("VALUE")}</TableCell>
@@ -412,7 +413,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                             <TableCell>
                                 <FormControl size='small' sx={{ minWidth: 200 }}>
                                     <InputLabel>{translate('SELECT') + " " + translate('TYPE')}</InputLabel>
-                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')}>
+                                    <Select sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }} onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')}>
                                         <MenuItem value={'file'}>{translate("FILE")}</MenuItem>
                                         <MenuItem value={'text'}>{translate("TEXT")}</MenuItem>
                                         <MenuItem value={'plaintext'}>{translate("Text(Text/Plain)")}</MenuItem>

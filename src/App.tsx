@@ -3,11 +3,12 @@ import WebServiceModal from './core/components/WebServiceModal'
 import { restImportConfigI } from './core/components/WebServiceModal'
 import { Provider } from 'react-redux'
 import appStore from './core/components/appStore/Store';
+import { AxiosResponse } from 'axios';
 
 export default function App() {
   const config: restImportConfigI = {
     proxy_conf: {
-      base_path: "http://localhost:4000",
+      base_path: "http://localhost:5000",
       proxy_path: "/restimport",
       list_provider: "/get-default-provider",
       getprovider: "/getprovider",
@@ -26,12 +27,16 @@ export default function App() {
       authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl,
     },
     error: {
-      errorFunction: (msg: string) => {
+      errorFunction: (msg: string, response?: AxiosResponse) => {
         alert(msg)
       },
-      errorMethod: "default",
+      errorMethod: "customFunction",
       errorMessageTimeout: 5000
     },
+    handleResponse: (response?: AxiosResponse) => {
+    },
+    hideMonacoEditor: (value: boolean) => {
+    }
   }
 
   return (
