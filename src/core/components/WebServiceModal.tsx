@@ -8,8 +8,7 @@ import {
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
 import {
-    findDuplicateObjects, findDuplicatesAcrossArrays, getSubstring, httpStatusCodes, isValidUrl, removeDuplicatesByComparison,
-    removeDuplicatesKeepFirst
+    retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString, findDuplicatesByComparison, findDuplicateObjectsWithinArray, retrieveQueryDetailsFromURL
 } from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
@@ -121,7 +120,7 @@ declare global {
 
 
 export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
-    const defaultValueforHandQParams = { name: '', value: '', type: '' }
+    const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
     const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState<string>(restImportConfig?.url || '')
     const [httpMethod, sethttpMethod] = useState<"GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT">(restImportConfig?.httpMethod || 'GET')
@@ -186,40 +185,61 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     }
 
     const getPathParams = () => {
-        let paths = getSubstring(apiURL.split("?")[0], "{", "}")
-        if (paths.length > 0) {
-            const pathParamsClone = [...pathParams]
-            const newPathParams: PathParamsI[] = []
-            const checkPath = (name: string): boolean => {
-                let returnBool = false
-                pathParamsClone.forEach((obj, index) => {
-                    if (obj.name === name) {
-                        if (!newPathParams.some(e => e.name === name)) {
-                            pathParamsClone.splice(index, 1)
-                            returnBool = true
-                            newPathParams.push({ name: name, value: obj.value })
+        try {
+            let paths = retrievePathParamNamesFromURL(apiURL.split("?")[0], "{", "}")
+            if (paths.length > 0) {
+                const updatedPathParams: PathParamsI[] = []
+                const isThisANewPath = (name: string): boolean => {
+                    let newPath = true
+                    for (const pathParam of pathParams) {
+                        if (pathParam.name === name) {
+                            if (!updatedPathParams.some(e => e.name === name)) {
+                                updatedPathParams.push({ name, value: pathParam.value })
+                                newPath = false
+                                break
+                            }
                         }
                     }
+                    return newPath
+                }
+
+                paths.forEach((path) => {
+                    if (path) {
+                        if (isThisANewPath(path)) {
+                            if (!updatedPathParams.some(pathParam => pathParam.name === path))
+                                updatedPathParams.push({ name: path, value: "" })
+                            else {
+                                throw new Error('Path parameters cannot have duplicates')
+                            }
+                        }
+                    }
+                    else {
+                        throw new Error('Please enter a valid path parameter')
+                    }
                 })
-                return returnBool
+                const queryParamsFromUrl = retrieveQueryDetailsFromURL(apiURL)
+                const duplicates = findDuplicatesByComparison(updatedPathParams, [...headerParams, ...queryParamsFromUrl], "name")
+                if (duplicates.length > 0) {
+                    let updatedURL = apiURL
+                    let duplicatePathNames = ''
+                    setpathParams(removeDuplicatesByComparison(updatedPathParams, duplicates, "name"))
+                    duplicates.forEach((duplicate, index) => {
+                        const duplicatePath = duplicate.name
+                        duplicatePathNames += index !== duplicates.length - 1 ? `${duplicatePath},` : duplicatePath
+                        updatedURL = updatedURL.replace(`/{${duplicatePath}}`, '')
+                    })
+                    setapiURL(updatedURL)
+                    handleToastError(`Parameters cannot have duplicates, removed the duplicates[${duplicatePathNames}]`)
+
+                } else {
+                    setpathParams(updatedPathParams)
+                }
             }
-            paths = paths.filter((item, index) => paths.indexOf(item) === index)
-            paths.forEach((path) => {
-                if (!checkPath(path))
-                    if (path !== '')
-                        newPathParams.push({ name: path, value: "" })
-            })
-            const headerParamsClone = [...headerParams]
-            const queryParamsClone = [...queryParams]
-            const duplicates = findDuplicatesAcrossArrays([headerParamsClone.slice(0, headerParamsClone.length - 1), queryParamsClone.slice(0, queryParamsClone.length - 1), newPathParams], "name")
-            if (duplicates.length > 0) {
-                handleToastError(`Parameter "${duplicates[0].name}" already exists`)
-                setpathParams(removeDuplicatesByComparison(newPathParams, duplicates, "name"))
-            } else
-                setpathParams(newPathParams)
+            else
+                setpathParams([])
+        } catch (error: any) {
+            handleToastError(error.message)
         }
-        else
-            setpathParams([])
     }
     const handlePathParamsChanges = (value: string, currentIndex: number) => {
         const pathParamsClone = [...pathParams]
@@ -281,77 +301,99 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         setuseProxy(event.target.checked);
     }
     const handleQueryChange = () => {
-        if (apiURL !== '') {
-            const query = apiURL?.split('?')[1]
-            const queries = query?.split('&')
-            if (query) {
-                const queryNames = queries.map(query => {
-                    const data = {
-                        name: query.split('=')[0],
-                        value: query.split('=')[1]
-                    }
-                    return data
-                })
-                const newQueryParams: HeaderAndQueryI[] = []
-                const queryParamsClone = [...queryParams]
-                const checkQuery = (name: string, value: string): boolean => {
-                    let returnBool = false
-                    queryParamsClone.forEach((obj, index) => {
-                        if (queryParams.length === 1)
-                            return returnBool
-                        if (obj.name === name) {
-                            if (!newQueryParams.some(e => e.name === name)) {
-                                if (name !== '' && value !== '' && value !== undefined) {
-                                    queryParamsClone.splice(index, 1)
-                                    returnBool = true
-                                    newQueryParams.push({ name: name, value: value, type: obj.type })
+        try {
+            if (apiURL !== '') {
+                const query = apiURL?.split('?')[1]
+                const queries = query?.split('&')
+                if (query?.length > 0) {
+                    const queryNames = queries.map(query => ({ name: query.split('=')[0], value: query.split('=')[1] }))
+
+                    let updatedQueryParams: HeaderAndQueryI[] = []
+                    const isThisNewQuery = (name: string, value: string): boolean => {
+                        let newQuery = true
+                        for (const query of queryParams) {
+                            if (query.name === name) {
+                                if (!updatedQueryParams.some(data => data.name === name)) {
+                                    name && value && updatedQueryParams.push({ name, value, type: query.type })
+                                    newQuery = false
+                                    break
+                                } else {
+                                    updatedQueryParams = updatedQueryParams.map(data => {
+                                        if (data.name === name) {
+                                            if (!data.value.split(',').includes(value)) {
+                                                return { name: data.name, value: `${data.value},${value}`, type: data.type }
+                                            } else {
+                                                setapiURL(apiURL.replace(`&${data.name}=${value}`, ''))
+                                                return data
+                                            }
+                                        } else
+                                            return data
+                                    })
+                                    newQuery = false
+                                    break
                                 }
                             }
                         }
+                        return newQuery
+                    }
+
+                    queryNames.forEach(query => {
+                        const key = query.name
+                        const value = query.value
+                        if (key && value) {
+                            if (isThisNewQuery(key, value)) {
+                                if (updatedQueryParams.some(data => data.name === key)) {
+                                    updatedQueryParams = updatedQueryParams.map(data => {
+                                        if (data.name === key && !data.value.split(',').includes(value)) {
+                                            return { name: data.name, value: `${data.value},${value}`, type: data.type }
+                                        } else {
+                                            setapiURL(apiURL.replace(`&${key}=${value}`, ''))
+                                            return data
+                                        }
+                                    })
+                                } else
+                                    updatedQueryParams.push({ name: key, value, type: 'string' })
+                            }
+                        } else
+                            throw new Error('Please enter a valid query parameter')
                     })
-                    return returnBool
-                }
-                const nonDuplicate = removeDuplicatesKeepFirst(queryNames, "name")
-                const duplicates = findDuplicateObjects(queryNames, "name")
-                const headerParamsClone = [...headerParams]
-                const paths = getSubstring(apiURL.split("?")[0], "{", "}")
-                const pathParamsClone = paths.map(path => {
-                    return { "name": path }
-                })
-                const allDuplicates = findDuplicatesAcrossArrays([nonDuplicate, headerParamsClone.slice(0, headerParamsClone.length - 1), pathParamsClone], "name")
-                if (duplicates.length > 0) {
-                    let apiURLCopy = apiURL
-                    handleToastError("Queries cannot have duplicates, removed the dupicates")
-                    duplicates.forEach((data) => {
-                        apiURLCopy = apiURLCopy.replace(`&${data.name}=${data.value}`, '')
+                    const paths = retrievePathParamNamesFromURL(apiURL.split("?")[0], "{", "}")
+                    const pathParamsClone = paths.map(path => {
+                        return { "name": path }
                     })
-                    setapiURL(apiURLCopy)
-                }
-                if (allDuplicates.length > 0) {
-                    return handleToastError(`parameter "${allDuplicates[0].name}" already exists`)
+
+                    const duplicates = findDuplicatesByComparison(updatedQueryParams, [...headerParams, ...pathParamsClone], "name")
+
+                    if (duplicates.length > 0) {
+                        let duplicateQueryNames = ''
+                        const queryArrayWithoutDuplicates = removeDuplicatesByComparison(updatedQueryParams, duplicates, "name")
+                        queryArrayWithoutDuplicates.push({ name: '', value: '', type: 'string' })
+                        setqueryParams(queryArrayWithoutDuplicates)
+                        duplicates.forEach((duplicate, index) => {
+                            const duplicateQuery = duplicate.name
+                            duplicateQueryNames += index !== duplicates.length - 1 ? `${duplicateQuery},` : duplicateQuery
+                        })
+                        const newQueryPart = constructUpdatedQueryString(queryArrayWithoutDuplicates)
+                        const originalURL = apiURL.split('?')[0]
+                        setapiURL(originalURL + newQueryPart)
+                        handleToastError(`Queries cannot have duplicates, removed the duplicates[${duplicateQueryNames}]`)
+                    } else {
+                        updatedQueryParams.push({ name: '', value: '', type: 'string' })
+                        setqueryParams(updatedQueryParams)
+                    }
                 } else {
-                    nonDuplicate.forEach((data) => {
-                        const key = data.name
-                        const value = data.value
-                        if (!checkQuery(key, value)) {
-                            if (key !== '' && value !== '')
-                                newQueryParams.push({ name: key, value: value, type: "string" })
-                        }
-                    })
+                    setqueryParams([{ name: '', value: '', type: 'string' }])
                 }
-                newQueryParams.push({ name: '', value: '', type: '' })
-                setqueryParams(newQueryParams)
             }
             else {
-                setqueryParams([{ name: '', value: '', type: '' }])
+                setqueryParams([{ name: '', value: '', type: 'string' }])
             }
-        }
-        else {
-            setqueryParams([{ name: '', value: '', type: '' }])
+        } catch (error: any) {
+            handleToastError(error.message)
         }
     }
     const handleAddCustomContentType = () => {
-        if (!contentTypes.find(e => e.value === newContentType)) {
+        if (newContentType && !contentTypes.find(e => e.value === newContentType)) {
             const contentTypesClone = [...contentTypes]
             contentTypesClone.push({
                 label: newContentType,
@@ -361,10 +403,13 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             setaddCustomType(false)
             setcontentType(newContentType)
             setnewContentType("")
+        } else if (newContentType && contentTypes.find(e => e.value === newContentType)) {
+            setaddCustomType(false)
+            setcontentType(newContentType)
+            setnewContentType("")
         }
         else {
             setaddCustomType(false)
-            setcontentType(newContentType)
             setnewContentType("")
         }
     }
@@ -372,180 +417,239 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
         setresponseEditorValue(newValue)
     }
     const handleTestClick = async () => {
-        if (apiURL.length > 0) {
-            let header: any = {}, body;
-            let requestAPI = apiURL
-            pathParams.forEach((params) => {
-                if (params.value.trim() !== "")
-                    requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
-                else
-                    return handleToastError(translate("PATHPARAMSALERT"))
-            })
-            if (isValidUrl(requestAPI)) {
-                if (httpAuth === "BASIC") {
-                    if (userName.trim() === "")
-                        return handleToastError("Please enter a username for basic authentication")
-                    if (userPassword.trim() === "")
-                        return handleToastError("Please enter a password for basic authentication")
-                }
-                if (httpAuth === "BASIC") {
-                    header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
-                }
-                headerParams.forEach((data) => {
-                    if (data.name && data.value)
-                        header[data.name] = data.value
+        try {
+            if (apiURL.length > 0) {
+                let header: any = {}, body;
+                let requestAPI = apiURL
+                pathParams.forEach((params) => {
+                    if (params.value.trim() !== "")
+                        requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
+                    else
+                        throw new Error(translate("PATHPARAMSALERT"))
                 })
-                if (contentType === 'multipart/form-data') {
-                    const formData = new FormData()
-                    multipartParams.forEach((data, index) => {
-                        if (multipartParams.length - 1 !== index)
-                            formData.append(data.name, data.value)
+
+                if (queryParams && queryParams[queryParams.length - 1].name && queryParams[queryParams.length - 1].value) {
+                    const queryName = queryParams[queryParams.length - 1].name
+                    const queryValue = queryParams[queryParams.length - 1].value
+                    const queryParamsClone = [...queryParams]
+                    const lastRowValuesArray = queryValue.split(',')
+                    const lastRowValues = lastRowValuesArray.filter((value, index) => lastRowValuesArray.indexOf(value) === index)
+                    const uniqueValues: HeaderAndQueryI[] = []
+                    lastRowValues.forEach(value => {
+                        const query = `${queryName}=${value}`
+                        if (!requestAPI.includes(query)) {
+                            uniqueValues.push({ name: queryName, value: value, type: 'string' })
+                        }
                     })
-                    body = formData
-                }
-                if (httpAuth === "OAUTH2.0") {
-                    let codeVerifier: string;
-                    const clientId = selectedProvider.clientId;
-                    let redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback` : restImportConfig?.oAuthConfig?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
-                    const responseType = "code";
-                    const state = restImportConfig.state_val
-                    const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
-                    let childWindow: any;
-                    let authUrl: string
-                    const expires_time = window.sessionStorage.getItem(selectedProvider.providerId + "expires_in");
-                    let expiresIn = expires_time ? parseInt(expires_time, 10) : 0;
-                    let currentTimestamp = Math.floor(Date.now() / 1000);
-                    if (currentTimestamp > expiresIn) {
-                        sessionStorage.removeItem(selectedProvider.providerId + "expires_in");
-                        sessionStorage.removeItem(selectedProvider.providerId + "access_token");
-                    }
-                    const isToken = window.sessionStorage.getItem(selectedProvider.providerId + "access_token");
-                    if (isToken) {
-                        if (currentTimestamp < expiresIn) {
-                            header['Authorization'] = `Bearer ` + isToken
+                    let valuesToBeAdded = ''
+                    uniqueValues.forEach((query, index) => {
+                        valuesToBeAdded += index !== 0 ? `,${query.value}` : query.value
+                    })
+                    if (uniqueValues.length) {
+                        const duplicates = findDuplicatesByComparison(uniqueValues, [...headerParams, ...pathParams], "name")
+                        if (duplicates.length === 0) {
+                            const queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(requestAPI)
+                            let updatedObj: HeaderAndQueryI[] = [...queryObjFromUrl]
+                            if (queryObjFromUrl.some(query => query.name === queryName)) {
+                                updatedObj = queryObjFromUrl.map((queryFromUrl, index) => {
+                                    if (queryFromUrl.name === queryName) {
+                                        queryParamsClone[index].value += `,${valuesToBeAdded}`
+                                        queryParamsClone[queryParamsClone.length - 1] = { name: '', type: 'string', value: '' }
+                                        return { name: queryName, value: `${queryFromUrl.value},${valuesToBeAdded}`, type: queryFromUrl.type }
+                                    }
+                                    return queryFromUrl
+                                })
+                            } else {
+                                updatedObj.push({ name: queryName, value: valuesToBeAdded, type: 'string' })
+                                queryParamsClone.push({ name: '', type: 'string', value: '' })
+                            }
+                            let newQueryString = constructUpdatedQueryString(updatedObj)
+                            const urlWithoutQuery = requestAPI.split('?')[0]
+                            requestAPI = urlWithoutQuery + newQueryString
+                            setapiURL(requestAPI)
+                        } else {
+                            throw new Error(`parameter "${duplicates[0].name}" already exists`)
                         }
                     } else {
-                        if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
-                            if (selectedProvider.providerId === "google") {
-                                if (window && window?.google) {
-                                    const client = window?.google?.accounts.oauth2.initTokenClient({
-                                        client_id: clientId,
-                                        scope: scope,
-                                        callback: (tokenResponse: any) => {
-                                            if (tokenResponse && tokenResponse.access_token) {
-                                                header['Authorization'] = `Bearer ` + tokenResponse.access_token
-                                                handleRestAPI(header);
-                                                setloading(false)
-                                            }
-                                        },
-                                        error_callback: (error: any) => {
-                                            if (error.type === "popup_closed") {
-                                                header['Authorization'] = `Bearer ` + null
-                                                handleRestAPI(header)
-                                                setloading(false)
+                        queryParamsClone[queryParamsClone.length - 1] = { name: '', type: 'string', value: '' }
+                    }
+                    setqueryParams(queryParamsClone)
+                }
 
-                                            }
-                                        },
-                                    }) as any;
-                                    client.requestAccessToken();
-                                }
-                            } else {
-                                redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html' : restImportConfig?.oAuthConfig?.base_path + '/oAuthCallback.html'
+                if (isValidUrl(requestAPI)) {
+                    if (httpAuth === "BASIC") {
+                        if (userName.trim() === "")
+                            throw new Error("Please enter a username for basic authentication")
+                        if (userPassword.trim() === "")
+                            throw new Error("Please enter a password for basic authentication")
+                        header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
+                    }
 
-                                const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
-                                codeVerifier = generateRandomCodeVerifier();
-                                const encoder = new TextEncoder();
-                                const data = encoder.encode(codeVerifier);
-                                window.crypto.subtle.digest("SHA-256", data)
-                                    .then(hashBuffer => {
-                                        const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                        authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
-                                        childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
-                                    })
-                                    .catch(error => {
-                                        console.error("Error calculating code challenge:", error);
-                                    });
+                    headerParams.forEach((data, index) => {
+                        if (data.name && data.value) {
+                            if (data.name === 'Authorization' && header['Authorization'])
+                                throw new Error(`Parameter "Authorization" already exists`)
+                            header[data.name] = data.value
+                            index === headerParams.length - 1 && setheaderParams([...headerParams, { name: '', value: '', type: 'string' }])
+                        }
+                    })
+
+                    header['content-type'] = contentType
+                    if (contentType === 'multipart/form-data') {
+                        const formData = new FormData()
+                        multipartParams.forEach(data => {
+                            if (data.name && data.value)
+                                formData.append(data.name, data.value)
+                        })
+                        body = formData
+                    } else
+                        body = bodyParams
+
+                    if (httpAuth === "OAUTH2.0") {
+                        let codeVerifier: string;
+                        const clientId = selectedProvider.clientId;
+                        let redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback` : restImportConfig?.oAuthConfig?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
+                        const responseType = "code";
+                        const state = restImportConfig.state_val
+                        const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
+                        let childWindow: any;
+                        let authUrl: string
+                        const expires_time = window.sessionStorage.getItem(selectedProvider.providerId + "expires_in");
+                        let expiresIn = expires_time ? parseInt(expires_time, 10) : 0;
+                        let currentTimestamp = Math.floor(Date.now() / 1000);
+                        if (currentTimestamp > expiresIn) {
+                            sessionStorage.removeItem(selectedProvider.providerId + "expires_in");
+                            sessionStorage.removeItem(selectedProvider.providerId + "access_token");
+                        }
+                        const isToken = window.sessionStorage.getItem(selectedProvider.providerId + "access_token");
+                        if (isToken) {
+                            if (currentTimestamp < expiresIn) {
+                                header['Authorization'] = `Bearer ` + isToken
                             }
                         } else {
-                            authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
-                            childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
-                        }
-                        // providerAuthURL
-                        setloading(true)
-                        if ((selectedProvider.providerId === 'google' && !selectedProvider.oAuth2Pkce) || selectedProvider.providerId !== 'google') {
-                            const interval = setInterval(() => {
-                                if (childWindow.closed) {
-                                    clearInterval(interval);
-                                    header['Authorization'] = `Bearer ` + null
-                                    handleRestAPI(header)
-                                }
-                            }, 1000);
+                            if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
+                                if (selectedProvider.providerId === "google") {
+                                    if (window && window?.google) {
+                                        const client = window?.google?.accounts.oauth2.initTokenClient({
+                                            client_id: clientId,
+                                            scope: scope,
+                                            callback: (tokenResponse: any) => {
+                                                if (tokenResponse && tokenResponse.access_token) {
+                                                    header['Authorization'] = `Bearer ` + tokenResponse.access_token
+                                                    handleRestAPI(header);
+                                                    setloading(false)
+                                                }
+                                            },
+                                            error_callback: (error: any) => {
+                                                if (error.type === "popup_closed") {
+                                                    header['Authorization'] = `Bearer ` + null
+                                                    handleRestAPI(header)
+                                                    setloading(false)
 
-                            const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
-                                const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
-                                if (event.origin === basePath && event.data.tokenData) {
-                                    clearInterval(interval);
-                                    const tokenData = JSON.parse(event.data.tokenData)
-                                    window.sessionStorage.setItem(selectedProvider.providerId + "access_token", tokenData.access_token);
-                                    const currentTimestamp = Math.floor(Date.now() / 1000);
-                                    const expiresIn = tokenData.expires_in
-                                    const expirationTimestamp = currentTimestamp + expiresIn;
-                                    window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
-                                    setTimeout(() => {
-                                        header['Authorization'] = `Bearer ` + tokenData.access_token
-                                        handleRestAPI(header);
-                                    }, 100);
-                                    window.removeEventListener('message', messageHandler);
-
-                                } else if (event.origin === basePath && event.data.code) {
-                                    clearInterval(interval);
-                                    getAccessToken(event.data.code, codeVerifier)
-                                    setloading(false)
-                                    window.removeEventListener('message', messageHandler);
-
+                                                }
+                                            },
+                                        }) as any;
+                                        client.requestAccessToken();
+                                    }
                                 } else {
-                                    setloading(false)
+                                    redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html' : restImportConfig?.oAuthConfig?.base_path + '/oAuthCallback.html'
+
+                                    const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
+                                    codeVerifier = generateRandomCodeVerifier();
+                                    const encoder = new TextEncoder();
+                                    const data = encoder.encode(codeVerifier);
+                                    window.crypto.subtle.digest("SHA-256", data)
+                                        .then(hashBuffer => {
+                                            const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
+                                            authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
+                                            childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                        })
+                                        .catch(error => {
+                                            console.error("Error calculating code challenge:", error);
+                                        });
                                 }
+                            } else {
+                                authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
+                                childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             }
-                            window.addEventListener('message', messageHandler);
+                            // providerAuthURL
+                            setloading(true)
+                            if ((selectedProvider.providerId === 'google' && !selectedProvider.oAuth2Pkce) || selectedProvider.providerId !== 'google') {
+                                const interval = setInterval(() => {
+                                    if (childWindow.closed) {
+                                        clearInterval(interval);
+                                        header['Authorization'] = `Bearer ` + null
+                                        handleRestAPI(header)
+                                    }
+                                }, 1000);
+
+                                const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
+                                    const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
+                                    if (event.origin === basePath && event.data.tokenData) {
+                                        clearInterval(interval);
+                                        const tokenData = JSON.parse(event.data.tokenData)
+                                        window.sessionStorage.setItem(selectedProvider.providerId + "access_token", tokenData.access_token);
+                                        const currentTimestamp = Math.floor(Date.now() / 1000);
+                                        const expiresIn = tokenData.expires_in
+                                        const expirationTimestamp = currentTimestamp + expiresIn;
+                                        window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
+                                        setTimeout(() => {
+                                            header['Authorization'] = `Bearer ` + tokenData.access_token
+                                            handleRestAPI(header);
+                                        }, 100);
+                                        window.removeEventListener('message', messageHandler);
+
+                                    } else if (event.origin === basePath && event.data.code) {
+                                        clearInterval(interval);
+                                        getAccessToken(event.data.code, codeVerifier)
+                                        setloading(false)
+                                        window.removeEventListener('message', messageHandler);
+
+                                    } else {
+                                        setloading(false)
+                                    }
+                                }
+                                window.addEventListener('message', messageHandler);
+                            }
+                            return
                         }
-                        return
                     }
+                    const configWOProxy: AxiosRequestConfig = {
+                        url: requestAPI,
+                        headers: header,
+                        method: httpMethod,
+                        data: body
+                    }
+                    const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
+                    const configWProxy: AxiosRequestConfig = {
+                        url: url,
+                        data: {
+                            "endpointAddress": requestAPI,
+                            "method": httpMethod,
+                            "contentType": contentType,
+                            "requestBody": body,
+                            "headers": header,
+                            "authDetails": null
+                        },
+                        method: "POST",
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        withCredentials: true
+                    }
+                    setloading(true)
+                    const config = useProxy ? configWProxy : configWOProxy
+                    const response: any = await Apicall(config)
+                    handleResponse(response)
+                    setloading(false)
                 } else
-                    body = bodyParams
-                const configWOProxy: AxiosRequestConfig = {
-                    url: requestAPI,
-                    headers: header,
-                    method: httpMethod,
-                    data: body
-                }
-                const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
-                const configWProxy: AxiosRequestConfig = {
-                    url: url,
-                    data: {
-                        "endpointAddress": requestAPI,
-                        "method": httpMethod,
-                        "contentType": contentType,
-                        "requestBody": body,
-                        "headers": header,
-                        "authDetails": null
-                    },
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    withCredentials: true
-                }
-                setloading(true)
-                const config = useProxy ? configWProxy : configWOProxy
-                const response: any = await Apicall(config)
-                handleResponse(response)
-                setloading(false)
-            } else
-                handleToastError(translate("VALID_URL_ALERT"))
+                    throw new Error(translate("VALID_URL_ALERT"))
+            }
+            else
+                throw new Error(translate("VALID_URL_ALERT"))
+        } catch (error: any) {
+            handleToastError(error.message)
         }
-        else
-            handleToastError(translate("VALID_URL_ALERT"))
     }
     function handleResponse(response: any): void {
         let responseValue;
@@ -693,7 +797,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             <TextField onBlur={() => {
                                 getPathParams()
                                 handleQueryChange()
-                            }} autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value)} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
+                            }} autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
                             <Button onClick={handleTestClick} disabled={btnDisable} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
                     </Grid>

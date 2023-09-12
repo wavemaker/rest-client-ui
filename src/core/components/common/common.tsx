@@ -1,3 +1,5 @@
+import { HeaderAndQueryI } from "../Table";
+
 export function convertToUTC(): number {
   const date = new Date();
   const year = date.getUTCFullYear();
@@ -33,19 +35,15 @@ export function getCurrentDateTime(
   return returnValue;
 }
 
-export function getSubstring(
-  str: string,
-  start: string,
-  end: string
-): string[] {
-  const words = [];
-  for (let i = 0; i < str.length; i++) {
-    if (str.charAt(i) === start) {
-      const stopIndex = str.indexOf(end, i);
-      if (stopIndex !== -1) words.push(str.substring(i + 1, stopIndex));
+export function retrievePathParamNamesFromURL(url: string, start: string, end: string): string[] {
+  const pathNames = []
+  for (let i = 0; i < url.length; i++) {
+    if (url.charAt(i) === start) {
+      const endIndex = url.indexOf(end, i)
+      endIndex !== -1 && pathNames.push(url.slice(i + 1, i = endIndex))
     }
   }
-  return words;
+  return pathNames
 }
 
 export const httpStatusCodes = new Map([
@@ -125,16 +123,12 @@ export const removeDuplicatesKeepFirst = (arr: any[], key: string) => {
   }
   return result;
 };
-export const findDuplicateObjects = (array: any[], property: string) => {
+export const findDuplicateObjectsWithinArray = (array: any[], property: string) => {
   const seen: any = {};
   const duplicates = [];
   for (const obj of array) {
     const value = obj[property];
-    if (seen[value]) {
-      duplicates.push(obj);
-    } else {
-      seen[value] = true;
-    }
+    value && (seen[value] ? duplicates.push(obj) : seen[value] = true)
   }
   return duplicates;
 };
@@ -166,14 +160,9 @@ export function findDuplicatesAcrossArrays(
   for (const arr of arrays) {
     for (const obj of arr) {
       const propertyValue = obj[propertyName];
-      if (!seen[propertyValue]) {
-        seen[propertyValue] = true;
-      } else {
-        duplicates.push(obj);
-      }
+      propertyValue && (!seen[propertyValue] ? seen[propertyValue] = true : duplicates.push(obj))
     }
   }
-
   return duplicates;
 }
 
@@ -182,10 +171,11 @@ export function removeDuplicatesByComparison(
   comparisonArray: any[],
   key: string
 ) {
-  return originalArray.filter(
-    (item) =>
-      !comparisonArray.some((compareItem) => compareItem[key] === item[key])
-  );
+  return originalArray.filter(item => !comparisonArray.some((compareItem) => compareItem[key] === item[key]));
+}
+
+export function findDuplicatesByComparison(concernedArray: any[], collection: any[], key: string) {
+  return concernedArray.filter(obj => collection.some(objFromCollection => objFromCollection[key] === obj[key]))
 }
 
 export const isValidUrl = (urlString: string) => {
@@ -201,3 +191,40 @@ export const isValidUrl = (urlString: string) => {
 
   return urlPattern.test(urlString);
 };
+
+export function retrieveQueryDetailsFromURL(url: string) {
+  const query = url?.split('?')[1]
+  const queries = query?.split('&')
+  let queryObjFromUrl: HeaderAndQueryI[] = []
+  if (queries) {
+    queries.forEach(query => {
+      const queryName = query.slice(0, query.indexOf('='))
+      const queryValue = query.slice(query.indexOf('=') + 1)
+      if (queryObjFromUrl.some((data: any) => data.name === queryName)) {
+        queryObjFromUrl = queryObjFromUrl.map((data: HeaderAndQueryI) => {
+          return data.name === queryName ? { name: data.name, value: `${data.value},${queryValue}`, type: 'string' } : data
+        })
+      } else {
+        queryObjFromUrl.push({ name: queryName, value: queryValue, type: 'string' })
+      }
+    })
+  }
+  return queryObjFromUrl
+}
+
+export function constructUpdatedQueryString(updatedQueryObj: HeaderAndQueryI[]) {
+  let newQueryString = ''
+  updatedQueryObj.forEach((query, index) => {
+    if (query.name && query.value) {
+      const queryValues = query.value.split(',')
+      if (queryValues.length === 1) {
+        newQueryString += index === 0 ? `?${query.name}=${query.value}` : `&${query.name}=${query.value}`
+      } else {
+        queryValues.forEach((value, valueIndex) => {
+          newQueryString += (index === 0 && valueIndex === 0) ? `?${query.name}=${value}` : `&${query.name}=${value}`
+        })
+      }
+    }
+  })
+  return newQueryString
+}
