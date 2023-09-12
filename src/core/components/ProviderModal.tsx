@@ -116,7 +116,6 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                 return filtered;
             }, [])
             const sortedProviders = filtered_provider.slice().sort((a: { providerId: string; }, b: { providerId: any; }) => a.providerId.localeCompare(b.providerId));
-            console.log(sortedProviders)
             setAllProvider(sortedProviders)
         } else {
             console.log("Received an unexpected response:", response);
@@ -132,7 +131,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
         handleDefaultProviderList()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [providers])
-
+    
     return (
         <>
             <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose}>

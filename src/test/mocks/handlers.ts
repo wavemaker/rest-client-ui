@@ -155,29 +155,38 @@ export const handlers = [
   rest.get(endPoints.getprovider, async (req, res, ctx) => {
     const response = [
       {
-        providerId: "provider",
-        authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
-        accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
+        providerId: "swagger_petstore_auth",
+        authorizationUrl: "https://petstore.swagger.io/oauth/authorize",
+        accessTokenUrl: "",
+        clientId:
+          "238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com",
+        clientSecret: "",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: "Bearer",
+        oAuth2Pkce: { enabled: false, challengeMethod: "" },
+        scopes: [
+          { name: "read:pets", value: "read your pets" },
+          { name: "write:pets", value: "modify pets in your account" },
+        ],
+        oauth2Flow: "IMPLICIT",
+        responseType: "token",
+      },
+      {
+        providerId: "google",
+        authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+        accessTokenUrl: "https://oauth2.googleapis.com/token",
         clientId:
           "238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com",
         clientSecret: "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",
         sendAccessTokenAs: "HEADER",
         accessTokenParamName: "Bearer",
-        oAuth2Pkce: null,
-        scopes: [],
-        oauth2Flow: "AUTHORIZATION_CODE",
-        responseType: "token",
-      },
-      {
-        providerId: "provider 2",
-        authorizationUrl: "1",
-        accessTokenUrl: "1",
-        clientId: "1",
-        clientSecret: "1",
-        sendAccessTokenAs: "HEADER",
-        accessTokenParamName: "Bearer",
-        oAuth2Pkce: null,
-        scopes: [],
+        oAuth2Pkce: { enabled: true, challengeMethod: "S256" },
+        scopes: [
+          {
+            name: "profile",
+            value: "https://www.googleapis.com/auth/userinfo.profile",
+          },
+        ],
         oauth2Flow: "AUTHORIZATION_CODE",
         responseType: "token",
       },
@@ -188,10 +197,19 @@ export const handlers = [
   rest.get(endPoints.listProvider, async (req, res, ctx) => {
     const response = [
       {
+        providerId: "amazon",
+        authorizationUrl: "https://www.amazon.com/ap/oa",
+        accessTokenUrl: "https://api.amazon.com/auth/o2/token",
+        sendAccessTokenAs: "HEADER",
         accessTokenParamName: null,
-        accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
-        authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
+        scopes: [{ name: "Basic Profile", value: "profile" }],
+      },
+      {
         providerId: "google",
+        authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
+        accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: null,
         scopes: [
           {
             name: "Calendar",
@@ -204,7 +222,6 @@ export const handlers = [
               "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.photos.readonly",
           },
         ],
-        sendAccessTokenAs: "HEADER",
       },
     ];
     return res(ctx.status(200), ctx.json(response));

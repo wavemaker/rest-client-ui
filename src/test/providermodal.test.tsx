@@ -68,7 +68,34 @@ describe("Provider Modal", () => {
 
     it("Default Provider Renders correctly", async () => {
         renderComponent()
-        const default_provider_card = screen.getByText(/amazon/i)
+        const default_provider_card = await screen.findByText(/amazon/i, {}, { timeout: 1000 })
         expect(default_provider_card).toBeInTheDocument();
+    }, 80000);
+
+
+    it("Custom Provider Renders correctly", async () => {
+        renderComponent()
+        const custom_provider_card = await screen.findByText(/swagger_petstore_auth/i, {}, { timeout: 1000 })
+        expect(custom_provider_card).toBeInTheDocument();
+    }, 80000);
+
+    it("Select Saved Provider", async () => {
+        user.setup()
+        renderComponent()
+        const select_provider = await screen.findByText(/google/i, {}, { timeout: 1000 })
+        expect(select_provider).toBeInTheDocument();
+        await user.click(select_provider);
+    }, 80000);
+
+    it("Select unsaved Provider", async () => {
+        user.setup()
+        renderComponent()
+        const select_provider = await screen.findByText(/amazon/i, {}, { timeout: 1000 })
+        expect(select_provider).toBeInTheDocument();
+        await user.click(select_provider);
+        const config_modal = screen.getByRole('heading', {
+            name: /oauth provider configuration help/i
+        });
+        expect(config_modal).toBeInTheDocument();
     }, 80000);
 })
