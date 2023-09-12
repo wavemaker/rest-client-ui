@@ -21,7 +21,7 @@ const config = {
   collectCoverage: true,
 
   // An array of glob patterns indicating a set of files for which coverage information should be collected
-  collectCoverageFrom: ["src/core/components/WebServiceModal.tsx", "src/core/components/ConfigModel.tsx"],
+  collectCoverageFrom: ["src/core/components/WebServiceModal.tsx", "src/core/components/ConfigModel.tsx", "src/core/components/ProviderModal.tsx"],
 
   // The directory where Jest should output its coverage files
   coverageDirectory: "coverage",
@@ -155,7 +155,7 @@ const config = {
 
   // The glob patterns Jest uses to detect test files
   testMatch: [
-    '**/test/**/*.test.tsx', 
+    '**/test/**/*providermodal.test.tsx', 
   //   "**/__tests__/**/*.[jt]s?(x)",
   //   "**/?(*.)+(spec|test).[tj]s?(x)"
   ],

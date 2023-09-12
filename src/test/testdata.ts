@@ -175,6 +175,8 @@ export const endPoints = {
   deleteResource: "https://wavemaker.com/delete",
   proxyServer: "http://localhost:5000/restimport",
   invalidURL: "http://invalid$url",
+  listProvider : 'http://localhost:4000/get-default-provider',
+  getprovider : 'http://localhost:4000/getprovider',
 };
 
 export const wavemakerMoreInfoLink =
@@ -182,7 +184,7 @@ export const wavemakerMoreInfoLink =
 
 export const restImportConfig: restImportConfigI = {
   proxy_conf: {
-    base_path: "http://localhost:5000",
+    base_path: "http://localhost:4000",
     proxy_path: "/restimport",
     list_provider: "/get-default-provider",
     getprovider: "/getprovider",
