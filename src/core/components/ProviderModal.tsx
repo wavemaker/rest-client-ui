@@ -131,10 +131,10 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
         handleDefaultProviderList()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [providers])
-
+    
     return (
         <>
-            <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose}>
+            <Dialog className='rest-import-ui' maxWidth={'md'} data-testid='provider-modal' open={handleOpen} onClose={handleClose}>
                 <DialogTitle>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                         <Typography variant='h6' fontWeight={600}>{translate("SELECT") + " " + translate("OR") + " " + translate("ADD") + " " + translate("PROVIDER")}</Typography>
@@ -152,7 +152,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                 <DialogContent sx={{ backgroundColor: 'lightgray' }}>
                     <Grid spacing={5} sx={{ width: '100%', ml: 0, mt: 0, mb: 2 }} container>
                         <Grid item md={3}>
-                            <Card onClick={() => handleOpenConfig(null)} sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
+                            <Card onClick={() => handleOpenConfig(null)} data-testid="add-provider" sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
                                 <CardMedia
                                     sx={{ height: "35px", width: "35px", mt: 2 }}
                                     title={translate("ADD") + " " + translate("CUSTOM") + " " + translate("PROVIDER")}
@@ -168,7 +168,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                             </Card>
                         </Grid>
                         {allProvider.map((provider) =>
-                            <Grid item md={3} key={provider.providerId}>
+                            <Grid item md={3} key={provider.providerId} data-testid="default-provider">
                                 <Card title={provider.providerId} onClick={() => handleOpenConfig(provider)} sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
                                     <CardMedia
                                         sx={{ height: "35px", width: "35px", mt: 2 }}>

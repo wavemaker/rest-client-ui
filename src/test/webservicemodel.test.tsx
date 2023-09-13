@@ -946,7 +946,7 @@ function constructUrlWithPathParams(url: string, pathParams: PathParamI[], remov
 
 function constructObjToMatchWithProxyConfig(endpoint: string, httpMethod: httpMethods = "GET") {
     const configWProxy: AxiosRequestConfig = {
-        url: "http://localhost:5000/restimport",
+        url: "http://localhost:4000/restimport",
         data: {
             "endpointAddress": endpoint,
             "method": httpMethod,

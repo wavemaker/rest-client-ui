@@ -885,7 +885,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                         </Grid>
                                         <Grid item md={9}>
                                             <Stack spacing={2} direction={'row'}>
-                                                <TextField disabled size='small' value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
+                                                <TextField disabled size='small' data-testid="provider_name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
                                                 {
                                                     providerId && (
                                                         <Tooltip title={translate("Edit Provider")}>

@@ -136,7 +136,7 @@ export const endPoints = {
   putResource: "https://wavemaker.com/update",
   getQueryParams: "https://wavemaker.com/query",
   deleteResource: "https://wavemaker.com/delete",
-  proxyServer: "http://localhost:5000/restimport",
+  proxyServer: "http://localhost:4000/restimport",
   invalidURL: "http://invalid$url",
   badRequest: "http://wavemaker.com/badrequest",
   postMultipartData: "http://wavemaker.com/multipart",
@@ -144,15 +144,20 @@ export const endPoints = {
   emptyPathParam: "http://wavemaker.com/{}/name",
   duplicateQueryParams: "http://wavemaker.com/query?id=2&id=5",
   oneQueryParam: "http://wavemaker.com/query?id=2",
-  invalidQueryParam: "http://wavemaker.com/query?id="
-  
+  invalidQueryParam: "http://wavemaker.com/query?id=",
+  listProvider : 'http://localhost:4000/get-default-provider',
+  getprovider : 'http://localhost:4000/getprovider',
+  authorizationUrl : 'http://localhost:4000/authorizationUrl/google',
+  listProviderWavemaker : 'https://www.wavemakeronline.com/studio/services/oauth2/providers/default',
+  getproviderWavemaker : 'https://www.wavemakeronline.com/studio/services/projects/oauth2/providers',
+  authorizationURLWavemaker : 'https://www.wavemakeronline.com/studio/services/projects/oauth2/authorizationUrl/google'
 }
 
 export const wavemakerMoreInfoLink = "https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/"
 
 export const emptyConfig: restImportConfigI = {
   proxy_conf: {
-    base_path: "http://localhost:5000",
+    base_path: "http://localhost:4000",
     proxy_path: "/restimport",
     list_provider: "/get-default-provider",
     getprovider: "/getprovider",
@@ -211,7 +216,7 @@ const configWithData: restImportConfigI = {
   ],
   contentType: "multipart/form-data",
   proxy_conf: {
-    base_path: "http://localhost:5000",
+    base_path: "http://localhost:4000",
     proxy_path: "/restimport",
     list_provider: "/get-default-provider",
     getprovider: "/getprovider",
