@@ -49,6 +49,7 @@ export interface restImportConfigI {
     contentType?: string,
     proxy_conf: APII,
     default_proxy_state: string,
+    state_val: string,
     oAuthConfig: APII,
     error: {
         errorMethod: "default" | "toast" | "customFunction",
@@ -58,7 +59,6 @@ export interface restImportConfigI {
     handleResponse: (response?: AxiosResponse) => void,
     hideMonacoEditor: (value: boolean) => void
 }
-
 interface APII {
     base_path: string,
     proxy_path: string,
@@ -112,6 +112,13 @@ const defaultContentTypes = [
     },
 ]
 
+declare global {
+    interface Window {
+        google: any;
+    }
+}
+
+
 export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
     const { t: translate, i18n } = useTranslation();
@@ -141,9 +148,21 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const [btnDisable, setBtnDisable] = useState(false)
     const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
+    const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
+
+    useEffect(() => {
+        if (!window.google) {
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            document.head.appendChild(script);
+        }
+    }, [])
+
     useEffect(() => {
         setProviderId(selectedProvider.providerId)
         setBtnDisable(false)
+
     }, [selectedProvider])
 
     useEffect(() => {
@@ -251,8 +270,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
     const handleChangehttpAuth = (event: SelectChangeEvent) => {
         if (event.target.value === 'OAUTH2.0' && !selectedProvider.providerId) {
             setBtnDisable(true)
-        } else
+        } else {
             setBtnDisable(false)
+        }
         sethttpAuth(event.target.value as any)
     }
     const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => {
@@ -488,69 +508,111 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                     if (httpAuth === "OAUTH2.0") {
                         let codeVerifier: string;
                         const clientId = selectedProvider.clientId;
-                        let redirectUri = restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
+                        let redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback` : restImportConfig?.oAuthConfig?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
                         const responseType = "code";
-                        const state = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==";
+                        const state = restImportConfig.state_val
                         const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
                         let childWindow: any;
                         let authUrl: string
-                        if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
-                            redirectUri = restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html'
-                            const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
-                            codeVerifier = generateRandomCodeVerifier();
-                            const encoder = new TextEncoder();
-                            const data = encoder.encode(codeVerifier);
-
-                            window.crypto.subtle.digest("SHA-256", data)
-                                .then(hashBuffer => {
-                                    const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                    authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
-                                    childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
-                                })
-                                .catch(error => {
-                                    console.error("Error calculating code challenge:", error);
-                                });
+                        const expires_time = window.sessionStorage.getItem(selectedProvider.providerId + "expires_in");
+                        let expiresIn = expires_time ? parseInt(expires_time, 10) : 0;
+                        let currentTimestamp = Math.floor(Date.now() / 1000);
+                        if (currentTimestamp > expiresIn) {
+                            sessionStorage.removeItem(selectedProvider.providerId + "expires_in");
+                            sessionStorage.removeItem(selectedProvider.providerId + "access_token");
+                        }
+                        const isToken = window.sessionStorage.getItem(selectedProvider.providerId + "access_token");
+                        if (isToken) {
+                            if (currentTimestamp < expiresIn) {
+                                header['Authorization'] = `Bearer ` + isToken
+                            }
                         } else {
-                            authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
-                            childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                            if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
+                                if (selectedProvider.providerId === "google") {
+                                    if (window && window?.google) {
+                                        const client = window?.google?.accounts.oauth2.initTokenClient({
+                                            client_id: clientId,
+                                            scope: scope,
+                                            callback: (tokenResponse: any) => {
+                                                if (tokenResponse && tokenResponse.access_token) {
+                                                    header['Authorization'] = `Bearer ` + tokenResponse.access_token
+                                                    handleRestAPI(header);
+                                                    setloading(false)
+                                                }
+                                            },
+                                            error_callback: (error: any) => {
+                                                if (error.type === "popup_closed") {
+                                                    header['Authorization'] = `Bearer ` + null
+                                                    handleRestAPI(header)
+                                                    setloading(false)
 
-                        }
-                        // providerAuthURL
-                        setloading(true)
+                                                }
+                                            },
+                                        }) as any;
+                                        client.requestAccessToken();
+                                    }
+                                } else {
+                                    redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html' : restImportConfig?.oAuthConfig?.base_path + '/oAuthCallback.html'
 
-                        const interval = setInterval(() => {
-                            if (childWindow.closed) {
-                                clearInterval(interval);
-                                header['Authorization'] = `Bearer ` + null
-                                handleRestAPI(header)
-                            }
-                        }, 1000);
-
-                        const messageHandler = async (event: { origin: string; data: { accessToken: any; code: string; error: any } }) => {
-                            const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
-                            if (event.origin === basePath && event.data.accessToken) {
-                                clearInterval(interval);
-                                const token = event.data.accessToken
-                                setTimeout(() => {
-                                    header['Authorization'] = `Bearer ` + token
-                                    handleRestAPI(header);
-                                }, 100);
-                                window.removeEventListener('message', messageHandler);
-
-                            } else if (event.origin === basePath && event.data.code) {
-                                clearInterval(interval);
-                                getAccessToken(event.data.code, codeVerifier)
-                                setloading(false)
-                                window.removeEventListener('message', messageHandler);
-
+                                    const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
+                                    codeVerifier = generateRandomCodeVerifier();
+                                    const encoder = new TextEncoder();
+                                    const data = encoder.encode(codeVerifier);
+                                    window.crypto.subtle.digest("SHA-256", data)
+                                        .then(hashBuffer => {
+                                            const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
+                                            authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
+                                            childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                        })
+                                        .catch(error => {
+                                            console.error("Error calculating code challenge:", error);
+                                        });
+                                }
                             } else {
-                                setloading(false)
+                                authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
+                                childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             }
+                            // providerAuthURL
+                            setloading(true)
+                            if ((selectedProvider.providerId === 'google' && !selectedProvider.oAuth2Pkce) || selectedProvider.providerId !== 'google') {
+                                const interval = setInterval(() => {
+                                    if (childWindow.closed) {
+                                        clearInterval(interval);
+                                        header['Authorization'] = `Bearer ` + null
+                                        handleRestAPI(header)
+                                    }
+                                }, 1000);
+
+                                const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
+                                    const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
+                                    if (event.origin === basePath && event.data.tokenData) {
+                                        clearInterval(interval);
+                                        const tokenData = JSON.parse(event.data.tokenData)
+                                        window.sessionStorage.setItem(selectedProvider.providerId + "access_token", tokenData.access_token);
+                                        const currentTimestamp = Math.floor(Date.now() / 1000);
+                                        const expiresIn = tokenData.expires_in
+                                        const expirationTimestamp = currentTimestamp + expiresIn;
+                                        window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
+                                        setTimeout(() => {
+                                            header['Authorization'] = `Bearer ` + tokenData.access_token
+                                            handleRestAPI(header);
+                                        }, 100);
+                                        window.removeEventListener('message', messageHandler);
+
+                                    } else if (event.origin === basePath && event.data.code) {
+                                        clearInterval(interval);
+                                        getAccessToken(event.data.code, codeVerifier)
+                                        setloading(false)
+                                        window.removeEventListener('message', messageHandler);
+
+                                    } else {
+                                        setloading(false)
+                                    }
+                                }
+                                window.addEventListener('message', messageHandler);
+                            }
+                            return
                         }
-                        window.addEventListener('message', messageHandler);
-
-
-                        return
                     }
                     const configWOProxy: AxiosRequestConfig = {
                         url: requestAPI,
@@ -660,10 +722,10 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             grant_type: 'authorization_code',
             code: code,
             client_id: selectedProvider.clientId,
-            // client_secret: selectedProvider.clientSecret,
             code_verifier: codeVerifier,
             redirect_uri: restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html',
         }
+
         const configToken: AxiosRequestConfig = {
             url: selectedProvider.accessTokenUrl,
             "headers": {
@@ -672,16 +734,22 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             method: "POST",
             data: reqParams
         }
+        let header: any = {};
+        headerParams.forEach((data) => {
+            if (data.name && data.value)
+                header[data.name] = data.value
+        })
         const response: any = await Apicall(configToken)
         if (response.status === 200) {
-            const header = {
-                "Authorization": `Bearer ` + response.data.access_token
-            }
+            header['Authorization'] = `Bearer ` + response.data.access_token
+            window.sessionStorage.setItem(selectedProvider.providerId + "access_token", response.data.access_token);
+            const currentTimestamp = Math.floor(Date.now() / 1000);
+            const expiresIn = response.data.expires_in
+            const expirationTimestamp = currentTimestamp + expiresIn;
+            window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
             handleRestAPI(header)
         } else {
-            const header = {
-                "Authorization": `Bearer ` + null
-            }
+            header['Authorization'] = `Bearer ` + null
             handleRestAPI(header)
         }
     }
