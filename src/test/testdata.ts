@@ -147,6 +147,10 @@ export const endPoints = {
   invalidQueryParam: "http://wavemaker.com/query?id=",
   listProvider : 'http://localhost:4000/get-default-provider',
   getprovider : 'http://localhost:4000/getprovider',
+  authorizationUrl : 'http://localhost:4000/authorizationUrl/google',
+  listProviderWavemaker : 'https://www.wavemakeronline.com/studio/services/oauth2/providers/default',
+  getproviderWavemaker : 'https://www.wavemakeronline.com/studio/services/projects/oauth2/providers',
+  authorizationURLWavemaker : 'https://www.wavemakeronline.com/studio/services/projects/oauth2/authorizationUrl/google'
 }
 
 export const wavemakerMoreInfoLink = "https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/"

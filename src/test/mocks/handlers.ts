@@ -155,7 +155,7 @@ export const handlers = [
   rest.get(endPoints.getprovider, async (req, res, ctx) => {
     const response = [
       {
-        providerId: "swagger_petstore_auth",
+        providerId: "Provider Sample",
         authorizationUrl: "https://petstore.swagger.io/oauth/authorize",
         accessTokenUrl: "",
         clientId:
@@ -164,11 +164,8 @@ export const handlers = [
         sendAccessTokenAs: "HEADER",
         accessTokenParamName: "Bearer",
         oAuth2Pkce: { enabled: false, challengeMethod: "" },
-        scopes: [
-          { name: "read:pets", value: "read your pets" },
-          { name: "write:pets", value: "modify pets in your account" },
-        ],
-        oauth2Flow: "IMPLICIT",
+        scopes: [],
+        oauth2Flow: "AUTHORIZATION_CODE",
         responseType: "token",
       },
       {
@@ -186,6 +183,23 @@ export const handlers = [
             name: "profile",
             value: "https://www.googleapis.com/auth/userinfo.profile",
           },
+        ],
+        oauth2Flow: "AUTHORIZATION_CODE",
+        responseType: "token",
+      },
+      {
+        providerId: "linkedin",
+        authorizationUrl:
+          "https://www.linkedin.com/oauth/native-pkce/authorization",
+        accessTokenUrl: "https://www.linkedin.com/oauth/v2/accessToken",
+        clientId: "86rh0h4enp46vz",
+        clientSecret: "ABKxJudpga7ONoir",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: "Bearer",
+        oAuth2Pkce: { enabled: true, challengeMethod: "S256" },
+        scopes: [
+          { name: "profile", value: "profile" },
+          { name: "email", value: "email" },
         ],
         oauth2Flow: "AUTHORIZATION_CODE",
         responseType: "token",
@@ -224,6 +238,98 @@ export const handlers = [
         ],
       },
     ];
+    return res(ctx.status(200), ctx.json(response));
+  }),
+
+  rest.get(endPoints.listProviderWavemaker, async (req, res, ctx) => {
+    const response = [
+      {
+        providerId: "outlook",
+        authorizationUrl:
+          "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+        accessTokenUrl:
+          "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: null,
+        scopes: [],
+      },
+      {
+        providerId: "dropbox",
+        authorizationUrl: "https://www.dropbox.com/1/oauth2/authorize",
+        accessTokenUrl: "https://api.dropbox.com/1/oauth2/token",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: null,
+        scopes: [],
+      },
+    ];
+    return res(ctx.status(200), ctx.json(response));
+  }),
+
+  rest.get(endPoints.getproviderWavemaker, async (req, res, ctx) => {
+    const response = [
+      {
+        providerId: "Provider Sample",
+        authorizationUrl: "https://petstore.swagger.io/oauth/authorize",
+        accessTokenUrl: "",
+        clientId:
+          "238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com",
+        clientSecret: "",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: "Bearer",
+        oAuth2Pkce: { enabled: false, challengeMethod: "" },
+        scopes: [],
+        oauth2Flow: "AUTHORIZATION_CODE",
+        responseType: "token",
+      },
+      {
+        providerId: "google",
+        authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+        accessTokenUrl: "https://oauth2.googleapis.com/token",
+        clientId:
+          "238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com",
+        clientSecret: "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",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: "Bearer",
+        oAuth2Pkce: { enabled: true, challengeMethod: "S256" },
+        scopes: [
+          {
+            name: "profile",
+            value: "https://www.googleapis.com/auth/userinfo.profile",
+          },
+        ],
+        oauth2Flow: "AUTHORIZATION_CODE",
+        responseType: "token",
+      },
+      {
+        providerId: "linkedin",
+        authorizationUrl:
+          "https://www.linkedin.com/oauth/native-pkce/authorization",
+        accessTokenUrl: "https://www.linkedin.com/oauth/v2/accessToken",
+        clientId: "86rh0h4enp46vz",
+        clientSecret: "ABKxJudpga7ONoir",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: "Bearer",
+        oAuth2Pkce: { enabled: true, challengeMethod: "S256" },
+        scopes: [
+          { name: "profile", value: "profile" },
+          { name: "email", value: "email" },
+        ],
+        oauth2Flow: "AUTHORIZATION_CODE",
+        responseType: "token",
+      },
+    ];
+    return res(ctx.status(200), ctx.json(response));
+  }),
+
+  rest.get(endPoints.authorizationUrl, async (req, res, ctx) => {
+    const response =
+      "https://accounts.google.com/o/oauth2/v2/auth?client_id=238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com&redirect_uri=https://www.wavemakeronline.com/remote-studio/11.4.1/services/oauth2/google/callback&response_type=code&state=eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExODA5MTE1MzI2ZGYifQ==&scope=https://www.googleapis.com/auth/userinfo.profile";
+    return res(ctx.status(200), ctx.json(response));
+  }),
+
+  rest.get(endPoints.authorizationURLWavemaker, async (req, res, ctx) => {
+    const response =
+      "https://accounts.google.com/o/oauth2/v2/auth?client_id=238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com&redirect_uri=https://www.wavemakeronline.com/remote-studio/11.4.1/services/oauth2/google/callback&response_type=code&state=eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExODA5MTE1MzI2ZGYifQ==&scope=https://www.googleapis.com/auth/userinfo.profile";
     return res(ctx.status(200), ctx.json(response));
   }),
 ];

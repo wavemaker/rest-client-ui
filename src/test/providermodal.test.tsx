@@ -8,7 +8,7 @@ import { emptyConfig } from './testdata';
 import { Provider } from 'react-redux'
 import { server } from './mocks/server'
 import appStore from '../core/components/appStore/Store';
-
+import { AxiosResponse } from 'axios';
 interface mockPropsI {
     handleOpen: boolean,
     handleClose: () => void,
@@ -19,9 +19,48 @@ interface mockPropsI {
 
 const mockProps: mockPropsI = {
     handleOpen: true,
-    handleClose: jest.fn(),
+    handleClose: jest.fn(() => console.log("closed")),
     proxyObj: emptyConfig
 }
+
+export const ProxyOFFConfig: restImportConfigI = {
+    proxy_conf: {
+        base_path: "http://localhost:4000",
+        proxy_path: "/restimport",
+        list_provider: "/get-default-provider",
+        getprovider: "/getprovider",
+        addprovider: "/addprovider",
+        authorizationUrl: "/authorizationUrl",
+    },
+    default_proxy_state: "OFF", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
+    oAuthConfig: {
+        base_path: "https://www.wavemakeronline.com/studio/services",
+        proxy_path: "/proxy_path",
+        project_id: "",
+        list_provider: "/oauth2/providers/default",
+        getprovider: "/projects/oauth2/providers", // /projects/{projectID}/oauth2/providers
+        addprovider: "/projects/oauth2/addprovider", // /projects/{projectID}/oauth2/providers
+        authorizationUrl: "/projects/oauth2/authorizationUrl", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+    },
+    error: {
+        errorFunction: (msg: string) => {
+            alert(msg);
+        },
+        errorMessageTimeout: 5000,
+        errorMethod: "default",
+    },
+    handleResponse: (response?: AxiosResponse) => {
+    },
+    hideMonacoEditor: (value: boolean) => {
+    }
+}
+
+const mockProxyOFFProps: mockPropsI = {
+    handleOpen: true,
+    handleClose: jest.fn(() => console.log("closed")),
+    proxyObj: ProxyOFFConfig
+}
+
 function renderComponent() {
     render(<Provider store={appStore}><ProviderModal {...mockProps} /></Provider >)
 }
@@ -75,7 +114,7 @@ describe("Provider Modal", () => {
 
     it("Custom Provider Renders correctly", async () => {
         renderComponent()
-        const custom_provider_card = await screen.findByText(/swagger_petstore_auth/i, {}, { timeout: 1000 })
+        const custom_provider_card = await screen.findByText(/Provider Sample/i, {}, { timeout: 1000 })
         expect(custom_provider_card).toBeInTheDocument();
     }, 80000);
 
@@ -85,6 +124,7 @@ describe("Provider Modal", () => {
         const select_provider = await screen.findByText(/google/i, {}, { timeout: 1000 })
         expect(select_provider).toBeInTheDocument();
         await user.click(select_provider);
+
     }, 80000);
 
     it("Select unsaved Provider", async () => {
@@ -97,5 +137,23 @@ describe("Provider Modal", () => {
             name: /oauth provider configuration help/i
         });
         expect(config_modal).toBeInTheDocument();
+        const client_id = screen.getByRole('textbox', {
+            name: /client id/i
+        })
+        expect(client_id.getAttribute('value')).toEqual('')
+    }, 80000);
+
+    it("Close Provider Modal Using Close Icon", async () => {
+        user.setup()
+        renderComponent()
+        const close_icon = screen.getByTestId('CloseIcon')
+        await user.click(close_icon);
+    }, 80000);
+
+    it("Default Provider List Proxy OFF", async () => {
+        render(<Provider store={appStore}><ProviderModal {...mockProxyOFFProps} /></Provider >)
+        const select_provider = await screen.findByText(/google/i, {}, { timeout: 1000 })
+        expect(select_provider).toBeInTheDocument();
+        await user.click(select_provider);
     }, 80000);
 })
