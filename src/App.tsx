@@ -15,6 +15,7 @@ export default function App() {
       addprovider: "/addprovider",
       authorizationUrl: "/authorizationUrl",
     },
+    state_val : "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
     default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
     oAuthConfig: {
       base_path: "https://www.wavemakeronline.com/studio/services",
@@ -23,7 +24,7 @@ export default function App() {
       list_provider: "/oauth2/providers/default",
       getprovider: "", // /projects/{projectID}/oauth2/providers
       addprovider: "", // /projects/{projectID}/oauth2/providers
-      authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+      authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl,
     },
     error: {
       errorFunction: (msg: string, response?: AxiosResponse) => {

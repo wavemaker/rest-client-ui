@@ -19,7 +19,7 @@ function App() {
     if (fullScreenView) {
       window.RestImport({
         dom_id: "#full-screen",
-        language: 'en',
+        language: "en",
         config: {
           proxy_conf: {
             base_path: "http://localhost:5000",
@@ -29,6 +29,8 @@ function App() {
             addprovider: "/addprovider",
             authorizationUrl: "/authorizationUrl",
           },
+          state_val:
+            "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
           default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
           oAuthConfig: {
             base_path: "https://www.wavemakeronline.com/studio/services",
