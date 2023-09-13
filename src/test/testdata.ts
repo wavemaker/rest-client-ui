@@ -136,7 +136,7 @@ export const endPoints = {
   putResource: "https://wavemaker.com/update",
   getQueryParams: "https://wavemaker.com/query",
   deleteResource: "https://wavemaker.com/delete",
-  proxyServer: "http://localhost:5000/restimport",
+  proxyServer: "http://localhost:4000/restimport",
   invalidURL: "http://invalid$url",
   badRequest: "http://wavemaker.com/badrequest",
   postMultipartData: "http://wavemaker.com/multipart",
