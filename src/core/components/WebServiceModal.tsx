@@ -413,9 +413,9 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             setnewContentType("")
         }
     }
-    const handleResponseEditorChange = (newValue: string) => {
-        setresponseEditorValue(newValue)
-    }
+    // const handleResponseEditorChange = (newValue: string) => {
+    //     setresponseEditorValue(newValue)
+    // }
     const handleTestClick = async () => {
         try {
             if (apiURL.length > 0) {
@@ -545,7 +545,6 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                                     header['Authorization'] = `Bearer ` + null
                                                     handleRestAPI(header)
                                                     setloading(false)
-
                                                 }
                                             },
                                         }) as any;
@@ -556,8 +555,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
 
                                     const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
                                     codeVerifier = generateRandomCodeVerifier();
-                                    const encoder = new TextEncoder();
-                                    const data = encoder.encode(codeVerifier);
+                                    const data = Uint8Array.from(codeVerifier.split("").map(x => x.charCodeAt(0)))
                                     window.crypto.subtle.digest("SHA-256", data)
                                         .then(hashBuffer => {
                                             const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
@@ -576,7 +574,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             setloading(true)
                             if ((selectedProvider.providerId === 'google' && !selectedProvider.oAuth2Pkce) || selectedProvider.providerId !== 'google') {
                                 const interval = setInterval(() => {
-                                    if (childWindow.closed) {
+                                    if (childWindow?.closed) {
                                         clearInterval(interval);
                                         header['Authorization'] = `Bearer ` + null
                                         handleRestAPI(header)
@@ -593,10 +591,8 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                         const expiresIn = tokenData.expires_in
                                         const expirationTimestamp = currentTimestamp + expiresIn;
                                         window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
-                                        setTimeout(() => {
-                                            header['Authorization'] = `Bearer ` + tokenData.access_token
-                                            handleRestAPI(header);
-                                        }, 100);
+                                        header['Authorization'] = `Bearer ` + tokenData.access_token
+                                        handleRestAPI(header);
                                         window.removeEventListener('message', messageHandler);
 
                                     } else if (event.origin === basePath && event.data.code) {
@@ -885,7 +881,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                         </Grid>
                                         <Grid item md={9}>
                                             <Stack spacing={2} direction={'row'}>
-                                                <TextField disabled size='small' data-testid="provider_name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
+                                                <TextField disabled size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
                                                 {
                                                     providerId && (
                                                         <Tooltip title={translate("Edit Provider")}>
@@ -895,7 +891,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                                         </Tooltip>
                                                     )
                                                 }
-                                                <Button onClick={() => setproviderOpen(true)} variant='contained'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
+                                                <Button onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
                                             </Stack>
                                         </Grid>
                                     </>}
