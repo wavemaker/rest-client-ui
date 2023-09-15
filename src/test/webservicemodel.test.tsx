@@ -10,7 +10,7 @@ import { ResponseI } from './mocks/handlers';
 import { AxiosRequestConfig } from 'axios';
 import { httpStatusCodes } from '../core/components/common/common';
 import { createHash } from 'crypto';
-// import { server } from './mocks/server'
+import { sessionData } from '../setupTests';
 
 type httpMethods = "GET" | "POST" | "PUT" | "HEAD" | "PATCH" | "DELETE"
 type authMethods = "None" | "Basic" | "OAuth 2.0"
@@ -20,41 +20,6 @@ type options = httpMethods | authMethods | contentTypes | multipartFileTypes
 type dropdownIDs = "http-auth" | "http-method" | "select-content-type" | "multipart-type" | "param-type"
 type tabs = "AUTHORIZATION" | "HEADER PARAMS" | "BODY PARAMS" | "QUERY PARAMS" | "PATH PARAMS" | "RESPONSE BODY" | "RESPONSE HEADER" | "RESPONSE STATUS"
 
-Object.defineProperties(window, {
-  matchMedia: {
-    writable: true,
-    value: jest.fn().mockImplementation((query) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
-    })),
-  },
-  open: {
-    writable: true,
-    value: jest.fn().mockImplementation((url, target, features) => ({
-      closed: true,
-    })),
-  },
-
-  google: {
-    value: {
-      accounts: {
-        oauth2: {
-          initTokenClient: (data: any) => ({
-            requestAccessToken: () => {
-              data.client_id.includes('google') ? data.callback({ access_token: 'google_implicit_flow_accessToken' }) : data.error_callback({
-                type: "popup_closed"
-              })
-            }
-          })
-        }
-      }
-    }
-  }
-});
 
 describe("Web Service Modal", () => {
 
@@ -759,32 +724,33 @@ describe("Web Service Modal", () => {
   }, 80000)
 
   it("Only unique query values are considered & added to the URL and Fields when clicking TEST btn[entered via fields]", async () => {
-    const queryData: QueryI[] = [{ name: 'id', value: '1,2', type: 'String' }, { name: 'id', value: '1,2,3,1', type: 'String' }]
+    const queryData: QueryI[] = [{ name: 'name', value: 'xyz', type: 'String' }, { name: 'id', value: '1,2', type: 'String' }, { name: 'id', value: '1,2,3,1', type: 'String' }]
     user.setup()
     renderComponent(mockEmptyProps)
     const urlTextField = screen.getByRole('textbox', { name: /url/i })
     await user.type(urlTextField, endPoints.getQueryParams)
     await switchTab('QUERY PARAMS')
     await addHeadersOrQueryParamsInTheFields(queryData[0], 0, true)
-    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?id=1&id=2`)
-    await addHeadersOrQueryParamsInTheFields(queryData[1], 1, false)
+    await addHeadersOrQueryParamsInTheFields(queryData[1], 1, true)
+    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?name=xyz&id=1&id=2`)
+    await addHeadersOrQueryParamsInTheFields(queryData[2], 2, false)
     await clickTestBtn()
-    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?id=1&id=2&id=3`)
-    await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'id', value: '1,2,3', type: 'String' }])
+    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?name=xyz&id=1&id=2&id=3`)
+    await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'name', value: 'xyz', type: 'String' }, { name: 'id', value: '1,2,3', type: 'String' }])
   }, 80000)
 
   it("Only unique query values are considered & added to the fields on blur of URL field[entered one after another via url field]", async () => {
     user.setup()
     renderComponent(mockEmptyProps)
     const urlTextField = screen.getByRole('textbox', { name: /url/i })
-    await user.type(urlTextField, `${endPoints.getQueryParams}?id=1`)
+    await user.type(urlTextField, `${endPoints.getQueryParams}?name=xyz&id=1`)
     await switchTab('QUERY PARAMS')
-    await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'id', value: '1', type: 'String' }])
+    await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'name', value: 'xyz', type: 'String' }, { name: 'id', value: '1', type: 'String' }])
     await user.clear(urlTextField)
-    await user.type(urlTextField, `${endPoints.getQueryParams}?id=1&id=2&id=1&id=3`)
+    await user.type(urlTextField, `${endPoints.getQueryParams}?name=xyz&id=1&id=2&id=1&id=3`)
     expect(urlTextField).toHaveFocus()
     urlTextField.blur()
-    await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'id', value: '1,2,3', type: 'String' }])
+    await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'name', value: 'xyz', type: 'String' }, { name: 'id', value: '1,2,3', type: 'String' }])
   }, 80000)
 
   it("Only unique query values are considered & added to the fields on blur of URL field[entered at a time via url field]", async () => {
@@ -855,7 +821,8 @@ describe("Web Service Modal", () => {
     await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: '', value: '', type: 'String' }], 1)
   }, 80000)
 
-  it("Test OAuth 2.0", async () => {
+  it("Test OAuth 2.0 - Normal Flow", async () => {
+    sessionData.clear()
     user.setup();
     renderComponent(mockEmptyProps);
     await selectOptionFromDropdown("http-auth", "OAuth 2.0");
@@ -871,6 +838,7 @@ describe("Web Service Modal", () => {
   }, 100000);
 
   it("Test OAuth 2.0 [PKCE Negative Flow]", async () => {
+    sessionData.clear()
     defineCryptoPropertyOnWindow(true)
     const header: HeaderParamI = testData.headerParams[0]
     user.setup();
@@ -890,6 +858,7 @@ describe("Web Service Modal", () => {
   }, 100000);
 
   it("Test OAuth 2.0 [PKCE Flow - Code Challenge Error]", async () => {
+    sessionData.clear()
     defineCryptoPropertyOnWindow(false)
     user.setup();
     renderComponent(mockEmptyProps);
@@ -903,6 +872,7 @@ describe("Web Service Modal", () => {
   }, 100000);
 
   it("Test OAuth 2.0 [PKCE Flow]", async () => {
+    sessionData.clear()
     defineCryptoPropertyOnWindow(true)
     user.setup();
     renderComponent(mockEmptyProps);
@@ -919,6 +889,7 @@ describe("Web Service Modal", () => {
   }, 100000);
 
   it("Test OAuth 2.0 [Google Implicit Flow]", async () => {
+    sessionData.clear()
     user.setup();
     renderComponent(mockEmptyProps);
     await selectOptionFromDropdown("http-auth", "OAuth 2.0");
@@ -933,6 +904,7 @@ describe("Web Service Modal", () => {
   }, 100000);
 
   it("Test OAuth 2.0 [Google Implicit Flow - Error]", async () => {
+    sessionData.clear()
     const props = getCustomizedProps(undefined, undefined, "/getprovider_error")
     user.setup();
     renderComponent(props);
@@ -945,6 +917,27 @@ describe("Web Service Modal", () => {
     await clickTestBtn();
     const googleImplicitResponse = await getResponse();
     expect(googleImplicitResponse).toEqual(`401 ${httpStatusCodes.get(401)}`);
+  }, 100000);
+
+  it("Test OAuth 2.0 - Testing session storage", async () => {
+    sessionData.clear()
+    user.setup();
+    renderComponent(mockEmptyProps);
+    await selectOptionFromDropdown("http-auth", "OAuth 2.0");
+    await user.click(await screen.findByTestId("select-provider"));
+    await user.click(await screen.findByText(/github/i, {}, { timeout: 5000 }));
+    expect(within(await screen.findByTestId("provider-name", {}, { timeout: 2000 })).getByRole("textbox", { hidden: true, })).toHaveValue("github");
+    const urlTextField = await screen.findByRole("textbox", { name: /url/i }, { timeout: 5000 });
+    await user.type(urlTextField, endPoints.githubUserInfo);
+    expect(window.sessionStorage.getItem("githubaccess_token")).toBeUndefined()
+    await clickTestBtn();
+    fireEvent(window, new MessageEvent("message", { origin: "http://localhost:4000", data: eventMessage, }));
+    const githubOAuthResponse = await getResponse();
+    expect(githubOAuthResponse).toEqual(githubOrGoogleUserInfoResponse);
+    expect(window.sessionStorage.getItem("githubaccess_token")).toBe("github-access-token")
+    await clickTestBtn()
+    const githubOAuthResponseUsingSesion = await getResponse();
+    expect(githubOAuthResponseUsingSesion).toEqual(githubOrGoogleUserInfoResponse);
   }, 100000);
 });
 
