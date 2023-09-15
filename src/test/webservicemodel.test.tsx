@@ -919,7 +919,7 @@ describe("Web Service Modal", () => {
     expect(googleImplicitResponse).toEqual(`401 ${httpStatusCodes.get(401)}`);
   }, 100000);
 
-  it("Test OAuth 2.0 - Testing session storage", async () => {
+  it("Test OAuth 2.0 - Testing whether token is stored in session storage", async () => {
     sessionData.clear()
     user.setup();
     renderComponent(mockEmptyProps);

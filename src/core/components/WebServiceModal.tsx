@@ -453,7 +453,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                             if (queryObjFromUrl.some(query => query.name === queryName)) {
                                 updatedObj = queryObjFromUrl.map((queryFromUrl, index) => {
                                     if (queryFromUrl.name === queryName) {
-                                        queryParamsClone[index].value += `,${valuesToBeAdded}`
+                                        queryParamsClone[queryParamsClone.findIndex(data => data.name === queryName)].value += `,${valuesToBeAdded}`
                                         queryParamsClone[queryParamsClone.length - 1] = { name: '', type: 'string', value: '' }
                                         return { name: queryName, value: `${queryFromUrl.value},${valuesToBeAdded}`, type: queryFromUrl.type }
                                     }
