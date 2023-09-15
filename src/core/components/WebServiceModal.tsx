@@ -885,7 +885,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
                                                 {
                                                     providerId && (
                                                         <Tooltip title={translate("Edit Provider")}>
-                                                            <IconButton onClick={() => setConfigOpen(true)}>
+                                                            <IconButton onClick={() => setConfigOpen(true)} data-testid='edit-provider'>
                                                                 <EditOutlinedIcon />
                                                             </IconButton>
                                                         </Tooltip>

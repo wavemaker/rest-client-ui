@@ -939,6 +939,19 @@ describe("Web Service Modal", () => {
     const githubOAuthResponseUsingSesion = await getResponse();
     expect(githubOAuthResponseUsingSesion).toEqual(githubOrGoogleUserInfoResponse);
   }, 100000);
+
+  it("Test OAuth 2.0 - Clicking edit icon opens the configuration modal", async () => {
+    sessionData.clear()
+    user.setup();
+    renderComponent(mockEmptyProps);
+    await selectOptionFromDropdown("http-auth", "OAuth 2.0");
+    await user.click(await screen.findByTestId("select-provider"));
+    await user.click(await screen.findByText(/github/i, {}, { timeout: 5000 }));
+    expect(within(await screen.findByTestId("provider-name", {}, { timeout: 2000 })).getByRole("textbox", { hidden: true, })).toHaveValue("github");
+    await user.click(await screen.findByTestId('edit-provider', {}, { timeout: 5000 }))
+    const modalTitle = screen.getByRole('heading', { name: /oauth provider configuration help/i })
+    expect(modalTitle).toBeInTheDocument();
+  }, 100000);
 });
 
 function renderComponent(mockProps: mockPropsI) {
