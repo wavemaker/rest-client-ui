@@ -255,34 +255,41 @@ export const handlers = [
   }),
 
   rest.get(endPoints.listProvider, async (req, res, ctx) => {
-    const response = [
-      {
-        providerId: "amazon",
-        authorizationUrl: "https://www.amazon.com/ap/oa",
-        accessTokenUrl: "https://api.amazon.com/auth/o2/token",
-        sendAccessTokenAs: "HEADER",
-        accessTokenParamName: null,
-        scopes: [{ name: "Basic Profile", value: "profile" }],
-      },
-      {
-        providerId: "google",
-        authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
-        accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
-        sendAccessTokenAs: "HEADER",
-        accessTokenParamName: null,
-        scopes: [
-          {
-            name: "Calendar",
-            value:
-              "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.readonly",
-          },
-          {
-            name: "Google Drive",
-            value:
-              "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.photos.readonly",
-          },
-        ],
-      },
+    const response = [{
+      providerId: "dropbox",
+      authorizationUrl: "https://www.dropbox.com/1/oauth2/authorize",
+      accessTokenUrl: "https://api.dropbox.com/1/oauth2/token",
+      sendAccessTokenAs: "HEADER",
+      accessTokenParamName: null,
+      scopes: [],
+    },
+    {
+      providerId: "amazon",
+      authorizationUrl: "https://www.amazon.com/ap/oa",
+      accessTokenUrl: "https://api.amazon.com/auth/o2/token",
+      sendAccessTokenAs: "HEADER",
+      accessTokenParamName: null,
+      scopes: [{ name: "Basic Profile", value: "profile" }],
+    },
+    {
+      providerId: "google",
+      authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
+      accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
+      sendAccessTokenAs: "HEADER",
+      accessTokenParamName: null,
+      scopes: [
+        {
+          name: "Calendar",
+          value:
+            "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.readonly",
+        },
+        {
+          name: "Google Drive",
+          value:
+            "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.photos.readonly",
+        },
+      ],
+    },
     ];
     return res(ctx.status(200), ctx.json(response));
   }),
