@@ -45,7 +45,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     const customProviderList = useSelector((store: any) => store.slice.providerList)
     useEffect(() => {
-        const base_path = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path: proxyObj?.oAuthConfig?.base_path
+        const base_path = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path : proxyObj?.oAuthConfig?.base_path
         setBasePath(base_path)
     }, [proxyObj])
 
@@ -118,7 +118,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         }
     }
     const handleCopyClick = (text: string) => {
-        clipboardCopy(text)
+         clipboardCopy(text)
             .then(() => {
                 setTooltipTitle('Copied!');
             })
@@ -159,8 +159,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         if (!providerId) {
             setAlertMsg(translate("PROVIDERID_ALERT"))
         } else if (providerExists && !providerConf) {
-            setAlertMsg( translate('PROVIDER')+ ` ("${providerId}") ` +translate('ALREADY_EXIST')+ `!`)
-        }  else if (!authorizationUrl) {
+            setAlertMsg(translate('PROVIDER') + ` ("${providerId}") ` + translate('ALREADY_EXIST') + `!`)
+        } else if (!authorizationUrl) {
             setAlertMsg(translate('AUTHORIZATIONURL_ALERT'))
         } else if (!accessTokenUrl) {
             setAlertMsg(translate('ACCESSTOKEN_ALERT'))
@@ -169,7 +169,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         } else if (!clientSecret && !PKCE) {
             setAlertMsg(translate('CLIENTSECRET_ALERT'))
         } else {
-            
+
             setloading(true)
             setShowErrorAlert(false);
             const scopes_val: { name: string; value: string }[] = scopes.filter(item => item.checked).map(({ checked, ...rest }) => rest);
@@ -193,7 +193,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 ...(PKCE ? { oAuth2Pkce: { enabled: PKCE, challengeMethod: codeMethod } } : {})
             }
             const filteredProviders = customProviderList.filter((provider: { providerId: string; }) => provider.providerId !== providerId);
-            console.log(filteredProviders)
             const newProviderList = [...filteredProviders, newProvider];
             const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.addprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.addprovider;
             const configWProvider: AxiosRequestConfig = {
@@ -212,7 +211,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                     position: 'top-right',
                     duration: 5000
                 })
-                if(!configModel){
+                if (!configModel) {
                     handleProviderList()
                 }
                 handleAuthorizationUrl()
@@ -253,17 +252,17 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         }
     }
 
-    useEffect(() =>{
-        let callbackurl =  providerConf
-        ? basePath + `/oauth2/${providerConf.providerId}/callback`
-        : providerId
-            ? basePath + `/oauth2/${providerId}/callback`
-            : basePath + `/oauth2/{providerId}/callback`
-        if(PKCE) {
+    useEffect(() => {
+        let callbackurl = providerConf
+            ? basePath + `/oauth2/${providerConf.providerId}/callback`
+            : providerId
+                ? basePath + `/oauth2/${providerId}/callback`
+                : basePath + `/oauth2/{providerId}/callback`
+        if (PKCE) {
             callbackurl = basePath + '/oAuthCallback.html'
         }
         setCallbackUrl(callbackurl)
-    },[providerConf,providerId,PKCE])
+    }, [providerConf, providerId, PKCE])
 
     return (
         <>
@@ -285,7 +284,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
                     {showErrorAlert && (
-                        <Alert sx={{ py: 0 }} severity="error">{alertMsg} </Alert>
+                        <Alert sx={{ py: 0 }} data-testid="config-alert" severity="error">{alertMsg} </Alert>
                     )}
                     <Grid spacing={2} mt={0.3} className='cmnflx' sx={{ width: '100%' }} container>
                         <Grid item md={3}>
@@ -315,7 +314,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     label={translate('CALLBACK') + ' ' + translate('URL')}
                                     placeholder={translate('CALLBACK') + ' ' + translate('URL')}
                                 />
-                                <Tooltip onMouseLeave={handleTooltipMouseLeave} onClick={() => handleCopyClick(callback_url)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
+                                <Tooltip onMouseLeave={handleTooltipMouseLeave} data-testid="callback-copy" onClick={() => handleCopyClick(callback_url)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
                                     <IconButton>
                                         <ContentCopyIcon />
                                     </IconButton>
@@ -328,6 +327,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         <Grid item md={9}>
                             <FormControl sx={{ width: "30em" }} size='small' disabled={!!providerConf}>
                                 <Select
+                                    data-testid="flow"
                                     value={Flow}
                                     onChange={handleChangeFlow}
                                 >
@@ -342,7 +342,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             </Typography>
                         </Grid>
                         <Grid item md={PKCE ? 2 : 9}>
-                            <Checkbox
+                            <Checkbox data-testid='pkce-checkbox'
                                 checked={PKCE}
                                 onChange={handleChangePKCE}
                             />
@@ -361,6 +361,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                 <Grid item md={7}>
                                     <FormControl size='small'>
                                         <Select
+                                            data-testid="challenge-method"
                                             value={codeMethod}
                                             onChange={handleChangecodeMethod}
                                         >
@@ -408,6 +409,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         <Grid item md={9}>
                             <FormControl sx={{ width: "30em" }} size='small'>
                                 <Select
+                                    data-testid="send-accesstoken"
                                     value={sendTokenAs}
                                     onChange={handleChangesendTokenAs}
                                 >
@@ -424,7 +426,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             <Grid className='cmnflx' spacing={1} container>
                                 <Grid item md={12}>
                                     <Stack>
-                                        {scopes.map(scope => <FormControlLabel key={scope.name} control={<Checkbox checked={scope.checked} onChange={(e) => handleScopeChange(e, scope.name)} />} label={scope.name} />)}
+                                        {scopes.map(scope => <FormControlLabel key={scope.name} control={<Checkbox data-testid={scope.name} checked={scope.checked} onChange={(e) => handleScopeChange(e, scope.name)} />} label={scope.name} />)}
                                     </Stack>
                                 </Grid>
                                 <Grid item md={4}>

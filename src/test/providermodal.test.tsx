@@ -4,11 +4,12 @@ import user from '@testing-library/user-event'
 import ProviderModal from '../core/components/ProviderModal'
 import { ProviderI } from '../core/components/ProviderModal';
 import { restImportConfigI } from '../core/components/WebServiceModal';
-import { emptyConfig } from './testdata';
+import { ERROR_MESSAGES, emptyConfig } from './testdata';
 import { Provider } from 'react-redux'
 import { server } from './mocks/server'
 import appStore from '../core/components/appStore/Store';
 import { AxiosResponse } from 'axios';
+import e from 'express';
 interface mockPropsI {
     handleOpen: boolean,
     handleClose: () => void,
@@ -17,11 +18,12 @@ interface mockPropsI {
     proxyObj: restImportConfigI
 }
 
-const mockProps: mockPropsI = {
-    handleOpen: true,
-    handleClose: jest.fn(() => console.log("closed")),
-    proxyObj: emptyConfig
-}
+
+beforeAll(() => server.listen())
+
+afterEach(() => server.restoreHandlers())
+
+afterAll(() => server.close())
 
 export const ProxyOFFConfig: restImportConfigI = {
     proxy_conf: {
@@ -62,15 +64,39 @@ const mockProxyOFFProps: mockPropsI = {
     proxyObj: ProxyOFFConfig
 }
 
-function renderComponent() {
-    render(<Provider store={appStore}><ProviderModal {...mockProps} /></Provider >)
+const proxyObjConfig = emptyConfig
+
+let mockProps: mockPropsI = {
+    handleOpen: true,
+    handleClose: jest.fn(() => console.log("closed")),
+    proxyObj: proxyObjConfig
 }
 
-beforeAll(() => server.listen())
+function renderComponent(type?: string) {
+    const copymockProps = { ...mockProps }
+    if (type == 'withErrorAPI') {
+        copymockProps.proxyObj.proxy_conf['getprovider'] = '/getproviderError'
+        copymockProps.proxyObj.proxy_conf['list_provider'] = '/getproviderError'
+    } else if (type == 'withErrorAPIAfterSelectProvider') {
+        copymockProps.proxyObj.proxy_conf['authorizationUrl'] = '/authorizationUrlError'
+    }
+    render(<Provider store={appStore}><ProviderModal {...copymockProps} /></Provider >)
+}
 
-afterEach(() => server.restoreHandlers())
 
-afterAll(() => server.close())
+export const providerObj = {
+    providerId: "ProviderTest",
+    authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+    accessTokenUrl: "https://oauth2.googleapis.com/token",
+    clientId:
+        "987654321.apps.googleusercontent.com",
+    clientSecret: "CLIENT_SECRET",
+    sendAccessTokenAs: "HEADER",
+    accessTokenParamName: "Bearer",
+    scopes: [{ name: "Basic Profile", value: "profile" }],
+    oauth2Flow: "AUTHORIZATION_CODE",
+    responseType: "token",
+}
 
 describe("Provider Modal", () => {
     it("Renders correctly", () => {
@@ -88,14 +114,7 @@ describe("Provider Modal", () => {
         expect(addprovider_text).toBeInTheDocument();
     }, 80000);
 
-    it("Click Add Provider", async () => {
-        user.setup()
-        renderComponent()
-        const addprovider_card = await screen.findByTestId('add-provider')
-        await user.click(addprovider_card);
-    }, 80000);
-
-    it("OAuth Provider Configuration Modal render ", async () => {
+    it("Click Add Provider - OAuth Provider Configuration Modal Render ", async () => {
         user.setup()
         renderComponent()
         const addprovider_card = await screen.findByTestId('add-provider')
@@ -112,7 +131,6 @@ describe("Provider Modal", () => {
         expect(default_provider_card).toBeInTheDocument();
     }, 80000);
 
-
     it("Custom Provider Renders correctly", async () => {
         renderComponent()
         const custom_provider_card = await screen.findByText(/Provider Sample/i, {}, { timeout: 1000 })
@@ -125,7 +143,7 @@ describe("Provider Modal", () => {
         const select_provider = await screen.findByText(/google/i, {}, { timeout: 1000 })
         expect(select_provider).toBeInTheDocument();
         await user.click(select_provider);
-
+        expect(mockProps.handleClose).toBeCalled()
     }, 80000);
 
     it("Select unsaved Provider", async () => {
@@ -149,6 +167,7 @@ describe("Provider Modal", () => {
         renderComponent()
         const close_icon = screen.getByTestId('CloseIcon')
         await user.click(close_icon);
+        expect(mockProps.handleClose).toBeCalled()
     }, 80000);
 
     it("Default Provider List Proxy OFF", async () => {
@@ -156,5 +175,90 @@ describe("Provider Modal", () => {
         const select_provider = await screen.findByText(/google/i, {}, { timeout: 1000 })
         expect(select_provider).toBeInTheDocument();
         await user.click(select_provider);
+        expect(mockProxyOFFProps.handleClose).toBeCalled()
     }, 80000);
+
+    it("Check if the Provider ID already exist", async () => {
+        user.setup()
+        renderComponent()
+        const addprovider_card = await screen.findByTestId('add-provider')
+        await user.click(addprovider_card);
+        const config_modal = screen.getByRole('heading', {
+            name: /oauth provider configuration help/i
+        });
+        expect(config_modal).toBeInTheDocument();
+        const providerId = screen.getByRole('textbox', {
+            name: /provider id/i
+        })
+        await user.type(providerId, 'google')
+
+        const saveBtn = screen.getByRole('button', { name: /save/i })
+        expect(saveBtn).toBeInTheDocument()
+        await user.click(saveBtn)
+        const errorField = await screen.findByTestId('config-alert')
+        expect(errorField.textContent).toBe(ERROR_MESSAGES.ALREADY_EXIST)
+    }, 80000);
+
+    it("Select Saved Provider for Error Response", async () => {
+        user.setup()
+        renderComponent('withErrorAPIAfterSelectProvider')
+        const select_provider = await screen.findByText(/google/i, {}, { timeout: 1000 })
+        expect(select_provider).toBeInTheDocument();
+        await user.click(select_provider);
+        expect(mockProps.handleClose).toBeCalled()
+
+    }, 80000);
+
+    it("Check the Modal Config Modal close", async () => {
+        user.setup()
+        renderComponent()
+        const addprovider_card = await screen.findByTestId('add-provider')
+        await user.click(addprovider_card);
+
+        const providerId = screen.getByRole('textbox', {
+            name: /provider id/i
+        })
+        await user.type(providerId, providerObj.providerId)
+
+        // Authorization Url
+        const authorizationURL = screen.getByRole('textbox', {
+            name: /authorization url/i
+        })
+        await user.type(authorizationURL, providerObj.authorizationUrl)
+
+        // AccessTokenUrl
+        const accessTokenUrl = screen.getByRole('textbox', {
+            name: /access token url/i
+        })
+
+        await user.type(accessTokenUrl, providerObj.accessTokenUrl)
+
+        // ClientId
+        const clientId = screen.getByRole('textbox', {
+            name: /client id/i
+        })
+        await user.type(clientId, providerObj.clientId)
+
+        const clientSecret = screen.getByRole('textbox', {
+            name: /client secret/i
+        })
+        await user.type(clientSecret, providerObj.clientSecret)
+        const saveBtn = screen.getByRole('button', { name: /save/i })
+        expect(saveBtn).toBeInTheDocument()
+        await user.click(saveBtn)
+        const modalTitle = screen.queryByRole('heading', { name: /oauth provider configuration help/i })
+        expect(modalTitle).not.toBeVisible();
+
+    }, 80000);
+
+    it("Handle API Error Response", async () => {
+        user.setup()
+        renderComponent('withErrorAPI')
+        const modalhead = screen.getByRole('heading', {
+            name: /select or add provider help/i
+        });
+        expect(modalhead).toBeInTheDocument();
+    }, 80000);
+
+
 })
