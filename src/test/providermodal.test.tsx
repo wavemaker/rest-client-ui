@@ -95,7 +95,7 @@ describe("Provider Modal", () => {
         await user.click(addprovider_card);
     }, 80000);
 
-    it("OAuth Provider Configuration Modal render ", async () => {
+    it("OAuth Provider Configuration Modal render", async () => {
         user.setup()
         renderComponent()
         const addprovider_card = await screen.findByTestId('add-provider')
@@ -131,7 +131,7 @@ describe("Provider Modal", () => {
     it("Select unsaved Provider", async () => {
         user.setup()
         renderComponent()
-        const select_provider = await screen.findByText(/amazon/i, {}, { timeout: 1000 })
+        const select_provider = await screen.findByText(/dropbox/i, {}, { timeout: 1000 })
         expect(select_provider).toBeInTheDocument();
         await user.click(select_provider);
         const config_modal = screen.getByRole('heading', {
