@@ -102,6 +102,51 @@ const testData: TestData = {
   ],
 };
 
+export const githubOrGoogleUserInfoResponse = {
+  id: "1024312046741520124",
+  name: "John Doe",
+  given_name: "John",
+  family_name: "Doe",
+  picture: "https://lh3.gitgoogleusercontent.com/a/ACg8ogAJ47YWegWNFpw=s96-c",
+  locale: "en",
+};
+
+export const amazonUserInfoResponse = {
+  id: "1024312046741520124",
+};
+
+export const githubTokenDataObj = {
+  access_token: "github-access-token",
+  expires_in: 3599,
+  scope: "https://www.githubapis.com/auth/userinfo.profile",
+  token_type: "Bearer",
+  id_token: "github-token-id",
+};
+export const eventMessage = {
+  tokenData: JSON.stringify(githubTokenDataObj),
+  code: "",
+  error: "",
+};
+
+// export const eventMessagePKCE = {
+//   tokenData: "",
+//   code: "pkce-access-code",
+//   error: "",
+// };
+
+export const getPKCEeventMsg = (success: boolean) => ({
+  tokenData: "",
+  code: `${success ? 'success' : 'failure'}-pkce-access-code`,
+  error: "",
+})
+export const amazonTokenDataObj = {
+  access_token: "amazon-access-token",
+  expires_in: 3599,
+  scope: "https://www.amazonapis.com/auth/userinfo.profile",
+  token_type: "Bearer",
+  id_token: "amazon-token-id",
+};
+
 export const responseHeaders = {
   "accept-language": "en-US",
   "content-encoding": "gzip",
@@ -217,10 +262,18 @@ export const endPoints = {
   addProviderErrorResponse: "http://localhost:4000/addErrorproviders",
   getproviderErrorResponse: "http://localhost:4000/getproviderError",
   authorizationUrlGoogleErrorResponse: "http://localhost:4000/authorizationUrlError/google",
+  googleUserInfo: "https://www.googleapis.com/oauth2/v1/userinfo",
+  amazonUserInfo: "https://api.amazon.com/user/profile",
+  amazonAccessTokenUrl: "https://api.amazon.com/auth/o2/token",
+  githubUserInfo: "https://api.github.com/user",
+  getProviderError: "http://localhost:4000/getprovider_error",
+  proxy: "http://localhost:4000"
 };
 
 export const wavemakerMoreInfoLink =
   "https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/";
+
+
 
 export const emptyConfig: restImportConfigI = {
   proxy_conf: {
@@ -285,7 +338,7 @@ const configWithData: restImportConfigI = {
     base_path: "http://localhost:4000",
     proxy_path: "/restimport",
     list_provider: "/get-default-provider",
-    getprovider: "/getprovider",
+    getprovider: "/getprovider_error",
     addprovider: "/addprovider",
     authorizationUrl: "/authorizationUrl",
   },
@@ -359,11 +412,28 @@ export type GENERAL_PARAM_STRUCTURE = HeaderParamI | QueryI | PathParamI;
 
 export default testData;
 
-
-export function getCustomizedError(errMethod: typeof emptyConfig.error.errorMethod, errFunction?: typeof emptyConfig.error.errorFunction) {
+export function getCustomizedProps(
+  errMethod?: typeof emptyConfig.error.errorMethod,
+  errFunction?: typeof emptyConfig.error.errorFunction,
+  getProviderUrl?: string
+) {
   const data: mockPropsI = {
-    language: 'en',
-    restImportConfig: { ...emptyConfig, error: { ...emptyConfig.error, errorMethod: errMethod, errorFunction: errMethod === 'customFunction' ? errFunction! : (msg) => console.log("custom function") } }
-  }
-  return data
+    language: "en",
+    restImportConfig: {
+      ...emptyConfig,
+      proxy_conf: {
+        ...emptyConfig.proxy_conf,
+        getprovider: getProviderUrl || emptyConfig.proxy_conf.getprovider
+      },
+      error: {
+        ...emptyConfig.error,
+        errorMethod: errMethod || "default",
+        errorFunction:
+          errMethod === "customFunction"
+            ? errFunction!
+            : (msg) => console.log("custom function"),
+      },
+    },
+  };
+  return data;
 }

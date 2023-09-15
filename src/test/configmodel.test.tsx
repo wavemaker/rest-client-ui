@@ -6,7 +6,6 @@ import { ProviderI } from '../core/components/ProviderModal';
 import { restImportConfigI } from '../core/components/WebServiceModal';
 import { ERROR_MESSAGES, SEND_ACCESSTOKEN, emptyConfig } from './testdata';
 import { Provider } from 'react-redux'
-import { server } from './mocks/server'
 import appStore from '../core/components/appStore/Store';
 
 interface mockPropsI {
@@ -16,13 +15,6 @@ interface mockPropsI {
     providerConf?: ProviderI | null,
     proxyObj: restImportConfigI
 }
-
-
-beforeAll(() => server.listen())
-
-afterEach(() => server.restoreHandlers())
-
-afterAll(() => server.close())
 
 const providerObj = {
     providerId: "ProviderTest",

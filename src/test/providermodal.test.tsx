@@ -6,10 +6,8 @@ import { ProviderI } from '../core/components/ProviderModal';
 import { restImportConfigI } from '../core/components/WebServiceModal';
 import { ERROR_MESSAGES, emptyConfig } from './testdata';
 import { Provider } from 'react-redux'
-import { server } from './mocks/server'
 import appStore from '../core/components/appStore/Store';
 import { AxiosResponse } from 'axios';
-import e from 'express';
 interface mockPropsI {
     handleOpen: boolean,
     handleClose: () => void,
@@ -17,13 +15,6 @@ interface mockPropsI {
     providerConf?: ProviderI | null,
     proxyObj: restImportConfigI
 }
-
-
-beforeAll(() => server.listen())
-
-afterEach(() => server.restoreHandlers())
-
-afterAll(() => server.close())
 
 export const ProxyOFFConfig: restImportConfigI = {
     proxy_conf: {
@@ -149,7 +140,7 @@ describe("Provider Modal", () => {
     it("Select unsaved Provider", async () => {
         user.setup()
         renderComponent()
-        const select_provider = await screen.findByText(/amazon/i, {}, { timeout: 1000 })
+        const select_provider = await screen.findByText(/dropbox/i, {}, { timeout: 1000 })
         expect(select_provider).toBeInTheDocument();
         await user.click(select_provider);
         const config_modal = screen.getByRole('heading', {
