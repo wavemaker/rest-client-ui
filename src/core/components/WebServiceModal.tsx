@@ -413,9 +413,7 @@ export default function WebServiceModal({ language, restImportConfig }: { langua
             setnewContentType("")
         }
     }
-    // const handleResponseEditorChange = (newValue: string) => {
-    //     setresponseEditorValue(newValue)
-    // }
+
     const handleTestClick = async () => {
         try {
             if (apiURL.length > 0) {
