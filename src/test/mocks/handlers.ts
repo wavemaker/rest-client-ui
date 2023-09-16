@@ -234,7 +234,7 @@ export const handlers = [
       authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
       accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
       clientId: "error_client_id",
-      clientSecret: "GOCSPX-6YQjis6vege4tg-7x3Q_-rbV-5x",
+      clientSecret: "JHFOLSKJDID",
       sendAccessTokenAs: "HEADER",
       accessTokenParamName: "Bearer",
       oAuth2Pkce: {
@@ -325,8 +325,8 @@ export const handlers = [
         authorizationUrl: "https://petstore.swagger.io/oauth/authorize",
         accessTokenUrl: "",
         clientId:
-          "238489563324-6rdc711u4jskjs78o1p33vdvsfwfbapps.googleusercontent.com",
-        clientSecret: "",
+          "63934jds9823.googleusercontent.com",
+        clientSecret: "SDFSDWRTRG",
         sendAccessTokenAs: "HEADER",
         accessTokenParamName: "Bearer",
         oAuth2Pkce: { enabled: false, challengeMethod: "" },
@@ -339,8 +339,8 @@ export const handlers = [
         authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
         accessTokenUrl: "https://oauth2.googleapis.com/token",
         clientId:
-          "238489563324-6rdc711ufqg45jj.apps.googleusercontent.com",
-        clientSecret: "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V-5x",
+          "98hj783439sjkd83.apps.googleusercontent.com",
+        clientSecret: "AKLSDISDKSDIS",
         sendAccessTokenAs: "HEADER",
         accessTokenParamName: "Bearer",
         oAuth2Pkce: null,
@@ -354,7 +354,7 @@ export const handlers = [
         responseType: "token",
       },
       {
-        providerId: "linkedin",
+        providerId: "outlook",
         authorizationUrl:
           "https://www.linkedin.com/oauth/native-pkce/authorization",
         accessTokenUrl: "https://www.linkedin.com/oauth/v2/accessToken",
@@ -363,10 +363,7 @@ export const handlers = [
         sendAccessTokenAs: "HEADER",
         accessTokenParamName: "Bearer",
         oAuth2Pkce: { enabled: true, challengeMethod: "S256" },
-        scopes: [
-          { name: "profile", value: "profile" },
-          { name: "email", value: "email" },
-        ],
+        scopes: [{ name: "user", value: "User.Read" }],
         oauth2Flow: "AUTHORIZATION_CODE",
         responseType: "token",
       },
@@ -374,18 +371,68 @@ export const handlers = [
     return res(ctx.status(200), ctx.json(response));
   }),
 
-  rest.get(endPoints.authorizationUrl, async (req, res, ctx) => {
+  rest.get(endPoints.authorizationUrlGoogle, async (req, res, ctx) => {
     const response =
       "https://accounts.google.com/o/oauth2/v2/auth?client_id=238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com&redirect_uri=https://www.wavemakeronline.com/remote-studio/11.4.1/services/oauth2/google/callback&response_type=code&state=eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExODA5MTE1MzI2ZGYifQ==&scope=https://www.googleapis.com/auth/userinfo.profile";
     return res(ctx.status(200), ctx.json(response));
   }),
 
-  rest.get(endPoints.authorizationURLWavemaker, async (req, res, ctx) => {
+  rest.get(endPoints.authorizationURLWavemakerGoogle, async (req, res, ctx) => {
     const response =
       "https://accounts.google.com/o/oauth2/v2/auth?client_id=238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com&redirect_uri=https://www.wavemakeronline.com/remote-studio/11.4.1/services/oauth2/google/callback&response_type=code&state=eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExODA5MTE1MzI2ZGYifQ==&scope=https://www.googleapis.com/auth/userinfo.profile";
     return res(ctx.status(200), ctx.json(response));
   }),
 
+  rest.get(endPoints.authorizationUrlProviderTest, async (req, res, ctx) => {
+    const response =
+      "https://accounts.google.com/o/oauth2/v2/auth?client_id=238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com&redirect_uri=https://www.wavemakeronline.com/remote-studio/11.4.1/services/oauth2/google/callback&response_type=code&state=eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExODA5MTE1MzI2ZGYifQ==&scope=https://www.googleapis.com/auth/userinfo.profile";
+    return res(ctx.status(200), ctx.json(response));
+  }),
+
+  rest.post(endPoints.addprovider, async (req, res, ctx) => {
+    const response = {
+      requestHeaders: {},
+      queries: null,
+      pathParams: null,
+      message: "Provider saved successfully",
+    };
+
+    return res(ctx.status(200), ctx.json(response));
+  }),
+
+  rest.post(endPoints.addproviderWavemaker, async (req, res, ctx) => {
+    const response = {
+      requestHeaders: {},
+      queries: null,
+      pathParams: null,
+      message: "Provider saved successfully",
+    };
+
+    return res(ctx.status(200), ctx.json(response));
+  }),
+
+  rest.post(endPoints.addProviderErrorResponse, async (req, res, ctx) => {
+    const response = {
+      requestHeaders: {},
+      queries: null,
+      pathParams: null,
+      message: "Bad Request",
+    };
+
+    return res(ctx.status(400), ctx.json(response));
+  }),
+  rest.get(endPoints.getproviderErrorResponse, async (req, res, ctx) => {
+    const response: any[] = [];
+    return res(ctx.status(400), ctx.json(response));
+  }),
+
+  rest.get(
+    endPoints.authorizationUrlGoogleErrorResponse,
+    async (req, res, ctx) => {
+      const response = "";
+      return res(ctx.status(400), ctx.json(response));
+    }
+  ),
   rest.get(endPoints.googleUserInfo, async (req, res, ctx) => {
     const requestHeaders = req.headers.all();
     const statusCode = requestHeaders["authorization"] === `Bearer google_implicit_flow_accessToken` ? 200 : 401;

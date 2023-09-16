@@ -174,6 +174,13 @@ export const ERROR_MESSAGES = {
   EMPTY_PATH_PARAM_VALUE: "Please provide the path parameter value",
   DUPLICATE_QUERY_PARAM:
     "Queries cannot have duplicates, removed the dupicates",
+  PROVIDERID_ALERT: "Provider Id is required ",
+  AUTHORIZATIONURL_ALERT: "Authorization URL is required ",
+  ACCESSTOKEN_ALERT: "Access Token URL is required ",
+  CLIENTID_ALERT: "Client ID is required ",
+  CLIENTSECRET_ALERT: "Client Secret is required ",
+  ALREADY_EXIST: 'Provider ("google") already exists! ',
+  SUCCESS_MSG: "Saved Successfully",
 };
 export const HEADER_NAME_OPTIONS = [
   "Accept",
@@ -219,6 +226,8 @@ export const CONTENT_TYPE = [
 
 export const SUBHEADER_UNDER_TABS = ["Name", "Type", "Test Value", "Actions"];
 
+export const SEND_ACCESSTOKEN = ["Header", "Query"];
+
 export const endPoints = {
   getUsers: "https://wavemaker.unittest.com/users",
   postLogin: "https://wavemaker.unittest.com/login",
@@ -238,10 +247,21 @@ export const endPoints = {
   invalidQueryParam: "http://wavemaker.com/query?id=",
   listProvider: "http://localhost:4000/get-default-provider",
   getprovider: "http://localhost:4000/getprovider",
-  authorizationUrl: "http://localhost:4000/authorizationUrl/google",
-  listProviderWavemaker: "https://www.wavemakeronline.com/studio/services/oauth2/providers/default",
-  getproviderWavemaker: "https://www.wavemakeronline.com/studio/services/projects/oauth2/providers",
-  authorizationURLWavemaker: "https://www.wavemakeronline.com/studio/services/projects/oauth2/authorizationUrl/google",
+  authorizationUrlGoogle: "http://localhost:4000/authorizationUrl/google",
+  listProviderWavemaker:
+    "https://www.wavemakeronline.com/studio/services/oauth2/providers/default",
+  getproviderWavemaker:
+    "https://www.wavemakeronline.com/studio/services/projects/oauth2/providers",
+  authorizationURLWavemakerGoogle:
+    "https://www.wavemakeronline.com/studio/services/projects/oauth2/authorizationUrl/google",
+  addprovider: "http://localhost:4000/addprovider",
+  authorizationUrlProviderTest:
+    "http://localhost:4000/authorizationUrl/ProviderTest",
+    authorizationUrlWavemakerProviderTest : "https://www.wavemakeronline.com/studio/services/projects/oauth2/authorizationUrl/ProviderTest",
+  addproviderWavemaker: "https://www.wavemakeronline.com/studio/services/projects/oauth2/addprovider",
+  addProviderErrorResponse: "http://localhost:4000/addErrorproviders",
+  getproviderErrorResponse: "http://localhost:4000/getproviderError",
+  authorizationUrlGoogleErrorResponse: "http://localhost:4000/authorizationUrlError/google",
   googleUserInfo: "https://www.googleapis.com/oauth2/v1/userinfo",
   amazonUserInfo: "https://api.amazon.com/user/profile",
   amazonAccessTokenUrl: "https://api.amazon.com/auth/o2/token",
@@ -252,6 +272,9 @@ export const endPoints = {
 
 export const wavemakerMoreInfoLink =
   "https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/";
+
+
+
 export const emptyConfig: restImportConfigI = {
   proxy_conf: {
     base_path: "http://localhost:4000",
@@ -266,12 +289,12 @@ export const emptyConfig: restImportConfigI = {
   default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
   oAuthConfig: {
     base_path: "https://www.wavemakeronline.com/studio/services",
-    proxy_path: "",
+    proxy_path: "/proxy_path",
     project_id: "",
     list_provider: "/oauth2/providers/default",
-    getprovider: "", // /projects/{projectID}/oauth2/providers
-    addprovider: "", // /projects/{projectID}/oauth2/providers
-    authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+    getprovider: "/projects/oauth2/providers", // /projects/{projectID}/oauth2/providers
+    addprovider: "/projects/oauth2/addprovider", // /projects/{projectID}/oauth2/providers
+    authorizationUrl: "/projects/oauth2/authorizationUrl", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
   },
   error: {
     errorFunction: (msg: string) => {
@@ -280,8 +303,8 @@ export const emptyConfig: restImportConfigI = {
     errorMessageTimeout: 5000,
     errorMethod: "default",
   },
-  handleResponse: (response?: AxiosResponse) => { },
-  hideMonacoEditor: (value: boolean) => { },
+  handleResponse: (response?: AxiosResponse) => {},
+  hideMonacoEditor: (value: boolean) => {},
 };
 export const mockEmptyProps: mockPropsI = {
   language: "en",
@@ -338,8 +361,8 @@ const configWithData: restImportConfigI = {
     errorMethod: "toast",
     errorMessageTimeout: 5000,
   },
-  handleResponse: (response?: AxiosResponse) => { },
-  hideMonacoEditor: (value: boolean) => { },
+  handleResponse: (response?: AxiosResponse) => {},
+  hideMonacoEditor: (value: boolean) => {},
 };
 
 export const preLoadedProps: mockPropsI = {
