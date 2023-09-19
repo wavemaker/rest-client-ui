@@ -8,7 +8,15 @@ declare const RestImport: any;
 })
 export class ModalComponent implements OnInit {
   @Input() configtype: boolean | undefined;
-  constructor(public activeModal: NgbActiveModal) { }
+  constructor(public activeModal: NgbActiveModal) {}
+  public editorOptions = {
+    theme: 'vs-dark',
+    language: 'json',
+    domReadOnly: true,
+    readOnly: true,
+  };
+  public code: string = '';
+  public hideMonacoEditor: boolean = false;
   ngOnInit(): void {
     if (this.configtype) {
       RestImport({
@@ -38,7 +46,7 @@ export class ModalComponent implements OnInit {
           ],
           contentType: 'multipart/form-data',
           proxy_conf: {
-            base_path: 'http://localhost:5000',
+            base_path: 'http://localhost:4000',
             proxy_path: '/restimport',
             list_provider: '/get-default-provider',
             getprovider: '/getprovider',
@@ -55,19 +63,17 @@ export class ModalComponent implements OnInit {
           },
           error: {
             errorFunction: (msg: string) => {
-<<<<<<< HEAD
               alert(msg);
             },
             errorMethod: 'toast',
             errorMessageTimeout: 5000,
           },
-=======
-              alert(msg)
-            },
-            errorMethod: "default",
-            errorMessageTimeout: 5000
-          }
->>>>>>> ab65688857d258dafc36c7ded9eb66afefc850b1
+          handleResponse: (response: { data: any }) => {
+            this.code = JSON.stringify(response?.data, null, 2);
+          },
+          hideMonacoEditor: (value: any) => {
+            this.hideMonacoEditor = value;
+          },
         },
       });
     } else {
@@ -93,23 +99,19 @@ export class ModalComponent implements OnInit {
           },
           error: {
             errorFunction: (msg: string) => {
-<<<<<<< HEAD
               alert(msg);
             },
             errorMethod: 'toast',
             errorMessageTimeout: 5000,
           },
-=======
-              alert(msg)
-            },
-            errorMethod: "default",
-            errorMessageTimeout: 5000
-          }
->>>>>>> ab65688857d258dafc36c7ded9eb66afefc850b1
+          handleResponse: (response: { data: any }) => {
+            this.code = JSON.stringify(response?.data, null, 2);
+          },
+          hideMonacoEditor: (value: any) => {
+            this.hideMonacoEditor = value;
+          },
         },
       });
     }
-
-    console.log(this.configtype);
   }
 }
