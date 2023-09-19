@@ -8,11 +8,7 @@ function App() {
   const [open, setOpen] = useState(false);
   const [fullScreenView, setFullScreenView] = useState(false);
   const [defaultData, setDefaultData] = useState(true);
-  const data = {
-    test: true,
-    newSda: "rwef "
-  }
-  const [monacoEditorValue, setmonacoEditorValue] = useState(JSON.stringify(data, null, 2))
+  const [monacoEditorValue, setmonacoEditorValue] = useState()
   const [hideMonacoEditor, sethideMonacoEditor] = useState(true)
 
   useEffect(() => {
@@ -137,7 +133,7 @@ function App() {
           variant="contained"
           onClick={() => {
             setFullScreenView(!fullScreenView);
-            sethideMonacoEditor(false)
+            sethideMonacoEditor((hide) => !hide)
           }}
         >
           Full Screen
@@ -156,8 +152,6 @@ function App() {
         handleOpen={open}
         handleClose={handleClose}
         defaultData={defaultData}
-        sethideMonacoEditor={sethideMonacoEditor}
-        setmonacoEditorValue={setmonacoEditorValue}
       />
       <div id="configModalUI"></div>
       {fullScreenView && <div id="full-screen"></div>}'
@@ -168,6 +162,7 @@ function App() {
         path={'file.json'}
         theme="vs-dark"
         value={monacoEditorValue}
+        defaultValue=""
         options={{
           domReadOnly: true,
           readOnly: true,

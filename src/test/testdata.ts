@@ -1,5 +1,5 @@
 import { AxiosResponse } from "axios";
-import { restImportConfigI } from "../core/components/RestImportModal";
+import { restImportConfigI } from "../core/components/RestImport";
 
 export interface mockPropsI {
   language: string;

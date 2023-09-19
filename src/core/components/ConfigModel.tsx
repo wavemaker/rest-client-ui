@@ -13,7 +13,7 @@ import { ProviderI, ScopeI } from './ProviderModal';
 import Apicall, { getProviderList } from './common/apicall';
 import { AxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast'
-import { restImportConfigI } from './RestImportModal'
+import { restImportConfigI } from './RestImport'
 import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
 import { useDispatch, useSelector } from 'react-redux';
 import FallbackSpinner from './common/loader';

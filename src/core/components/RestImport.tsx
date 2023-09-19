@@ -115,7 +115,7 @@ declare global {
 }
 
 
-export default function RestImportModal({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
+export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
     const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState<string>(restImportConfig?.url || '')

@@ -8,13 +8,13 @@ import logs from "core/plugins/logs"
 import App from "core/components/app"
 import BaseLayout from "core/components/layouts/base"
 import ConfigLayout from "core/components/layouts/config"
-import RestImportModal from "../../jsx/core/components/RestImportModal"
+import RestImport from "../../jsx/core/components/RestImport"
 import ConfigModel from "../../jsx/core/components/ConfigModel"
 export default function () {
   let coreComponents = {
     components: {
       App,
-      RestImportModal,
+      RestImport,
       ConfigModel,
       BaseLayout,
       ConfigLayout
