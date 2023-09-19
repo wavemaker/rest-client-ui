@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import user from '@testing-library/user-event'
 import ProviderModal from '../core/components/ProviderModal'
 import { ProviderI } from '../core/components/ProviderModal';
-import { restImportConfigI } from '../core/components/WebServiceModal';
+import { restImportConfigI } from '../core/components/RestImportModal';
 import { ERROR_MESSAGES, emptyConfig } from './testdata';
 import { Provider } from 'react-redux'
 import appStore from '../core/components/appStore/Store';

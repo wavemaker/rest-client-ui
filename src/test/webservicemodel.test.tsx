@@ -1,7 +1,7 @@
 /* eslint-disable jest/no-conditional-expect */
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
 import user from '@testing-library/user-event'
-import WebServiceModal from '../core/components/WebServiceModal'
+import RestImportModal from '../core/components/RestImportModal'
 import '@testing-library/jest-dom';
 import testData, { mockEmptyProps, endPoints, HTTP_METHODS, REQUEST_TABS, RESPONSE_TABS, ERROR_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI, QueryI, AUTH_OPTIONS, HEADER_NAME_OPTIONS, HEADER_TYPE_OPTIONS, CONTENT_TYPE, SUBHEADER_UNDER_TABS, wavemakerMoreInfoLink, mockPropsI, preLoadedProps, getCustomizedProps, responseHeaders, HeaderParamI, eventMessage, getPKCEeventMsg, amazonUserInfoResponse, githubOrGoogleUserInfoResponse, } from './testdata'
 import { Provider } from 'react-redux'
@@ -957,7 +957,7 @@ describe("Web Service Modal", () => {
 function renderComponent(mockProps: mockPropsI) {
   render(
     <Provider store={appStore}>
-      <WebServiceModal {...mockProps} />
+      <RestImportModal {...mockProps} />
     </Provider>
   );
 }

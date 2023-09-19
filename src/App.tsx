@@ -1,6 +1,6 @@
 import { Stack } from '@mui/material'
-import WebServiceModal from './core/components/WebServiceModal'
-import { restImportConfigI } from './core/components/WebServiceModal'
+import RestImportModal from './core/components/RestImportModal'
+import { restImportConfigI } from './core/components/RestImportModal'
 import { Provider } from 'react-redux'
 import appStore from './core/components/appStore/Store';
 import { AxiosResponse } from 'axios';
@@ -42,7 +42,7 @@ export default function App() {
   return (
     <Provider store={appStore}>
       <Stack className='rest-import-ui'>
-        <WebServiceModal restImportConfig={config} language='en' />
+        <RestImportModal restImportConfig={config} language='en' />
       </Stack>
     </Provider>
   )
