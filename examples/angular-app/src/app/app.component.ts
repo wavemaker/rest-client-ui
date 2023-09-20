@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 
 import { NgbModal, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ModalComponent } from './modal/modal.component';
+
 declare const RestImport: any;
 declare const configImport: any;
 
@@ -19,6 +20,7 @@ export class AppComponent {
   enableFullScreen() {
     this.fullScreen = !this.fullScreen;
   }
+
 
   openModal(type: number) {
     const modalRef = this.modalService.open(ModalComponent, {
@@ -41,10 +43,10 @@ export class AppComponent {
         accessTokenUrl: 'https://www.googleapis.com/oauth2/v3/token',
         authorizationUrl: 'https://accounts.google.com/o/oauth2/auth',
         clientId:
-          '238489563324-6rdc711u4jskjs78o1p2b0qkvgcbhbda.apps.googleusercontent.com  ',
-        clientSecret: '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',
+          '74834293428jsjas.apps.googleusercontent.com  ',
+        clientSecret: 'LKJHFHS-KSDHOSDMNSDH',
         oauth2Flow: 'AUTHORIZATION_CODE',
-        providerId: '',
+        providerId: 'ProviderTest',
         scopes: [],
         sendAccessTokenAs: 'HEADER',
       },

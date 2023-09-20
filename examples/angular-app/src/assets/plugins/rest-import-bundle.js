@@ -1,1 +1,1 @@
-C:/Users/Ashok/Documents/My Projects/rest-client-ui/dist/rest-import-bundle.js
+D:/TechConative/workspace-test/rest-client-ui/dist/rest-import-bundle.js

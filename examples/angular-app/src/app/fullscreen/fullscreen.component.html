@@ -1,1 +1,6 @@
-    <div id="rest-import-ui"></div>
+<div>
+    <div id="full-screen"></div>
+    <div style="height: 200px" *ngIf="!hideMonacoEditor" class="px-3">
+        <ngx-monaco-editor style="height: 100%" [options]="editorOptions" [(ngModel)]="code"></ngx-monaco-editor>
+    </div>
+</div>
