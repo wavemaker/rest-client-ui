@@ -8,7 +8,7 @@ import {
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
 import {
-    retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString, findDuplicatesByComparison, retrieveQueryDetailsFromURL
+    retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString, findDuplicatesByComparison, retrieveQueryDetailsFromURL, constructCommaSeparatedUniqueQueryValuesString
 } from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
@@ -310,21 +310,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         for (const query of queryParams) {
                             if (query.name === name) {
                                 if (!updatedQueryParams.some(data => data.name === name)) {
-                                    name && value && updatedQueryParams.push({ name, value, type: query.type })
+                                    const valueArray = value.split(',')
+                                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueArray)
+                                    updatedQueryParams.push({ name, value: valueToSet, type: query.type })
                                     newQuery = false
                                     break
                                 } else {
-                                    updatedQueryParams = updatedQueryParams.map(data => {
-                                        if (data.name === name) {
-                                            if (!data.value.split(',').includes(value)) {
-                                                return { name: data.name, value: `${data.value},${value}`, type: data.type }
-                                            } else {
-                                                setapiURL(apiURL.replace(`&${data.name}=${value}`, ''))
-                                                return data
-                                            }
-                                        } else
-                                            return data
-                                    })
+                                    const queryIndex = updatedQueryParams.findIndex(data => data.name === name)
+                                    const valueCollection = [...updatedQueryParams[queryIndex].value.split(','), ...value.split(',')]
+                                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueCollection)
+                                    updatedQueryParams[queryIndex].value = valueToSet
                                     newQuery = false
                                     break
                                 }
@@ -339,16 +334,15 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         if (key && value) {
                             if (isThisNewQuery(key, value)) {
                                 if (updatedQueryParams.some(data => data.name === key)) {
-                                    updatedQueryParams = updatedQueryParams.map(data => {
-                                        if (data.name === key && !data.value.split(',').includes(value)) {
-                                            return { name: data.name, value: `${data.value},${value}`, type: data.type }
-                                        } else {
-                                            setapiURL(apiURL.replace(`&${key}=${value}`, ''))
-                                            return data
-                                        }
-                                    })
-                                } else
-                                    updatedQueryParams.push({ name: key, value, type: 'string' })
+                                    const queryIndex = updatedQueryParams.findIndex(data => data.name === key)
+                                    const valueCollection = [...updatedQueryParams[queryIndex].value.split(','), ...value.split(',')]
+                                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueCollection)
+                                    updatedQueryParams[queryIndex].value = valueToSet
+                                } else {
+                                    const valueArray = value.split(',')
+                                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueArray)
+                                    updatedQueryParams.push({ name: key, value: valueToSet, type: 'string' })
+                                }
                             }
                         } else
                             throw new Error('Please enter a valid query parameter')
@@ -376,6 +370,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     } else {
                         updatedQueryParams.push({ name: '', value: '', type: 'string' })
                         setqueryParams(updatedQueryParams)
+                        const newQueryPart = constructUpdatedQueryString(updatedQueryParams)
+                        const originalURL = apiURL.split('?')[0]
+                        setapiURL(originalURL + newQueryPart)
                     }
                 } else {
                     setqueryParams([{ name: '', value: '', type: 'string' }])
@@ -422,54 +419,39 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         throw new Error(translate("PATHPARAMSALERT"))
                 })
 
-                if (queryParams && queryParams[queryParams.length - 1].name && queryParams[queryParams.length - 1].value) {
-                    const queryName = queryParams[queryParams.length - 1].name
-                    const queryValue = queryParams[queryParams.length - 1].value
-                    const queryParamsClone = [...queryParams]
-                    const lastRowValuesArray = queryValue.split(',')
-                    const lastRowValues = lastRowValuesArray.filter((value, index) => lastRowValuesArray.indexOf(value) === index)
-                    const uniqueValues: HeaderAndQueryI[] = []
-                    lastRowValues.forEach(value => {
-                        const query = `${queryName}=${value}`
-                        if (!requestAPI.includes(query)) {
-                            uniqueValues.push({ name: queryName, value: value, type: 'string' })
-                        }
-                    })
-                    let valuesToBeAdded = ''
-                    uniqueValues.forEach((query, index) => {
-                        valuesToBeAdded += index !== 0 ? `,${query.value}` : query.value
-                    })
-                    if (uniqueValues.length) {
-                        const duplicates = findDuplicatesByComparison(uniqueValues, [...headerParams, ...pathParams], "name")
+                const validateAndAddQueryAtLastRow = () => {
+                    if (queryParams && queryParams[queryParams.length - 1].name && queryParams[queryParams.length - 1].value) {
+                        const queryName = queryParams[queryParams.length - 1].name
+                        const queryValue = queryParams[queryParams.length - 1].value
+                        const queryParamsClone = [...queryParams]
+                        const lastRowValuesArray = queryValue.split(',')
+                        const lastRowValues = lastRowValuesArray.filter((value, index) => value && lastRowValuesArray.indexOf(value) === index)
+                        const duplicates = findDuplicatesByComparison([{ name: queryName, value: queryValue, type: 'string' }], [...headerParams, ...pathParams], "name")
                         if (duplicates.length === 0) {
-                            const queryObjFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(requestAPI)
-                            let updatedObj: HeaderAndQueryI[] = [...queryObjFromUrl]
-                            if (queryObjFromUrl.some(query => query.name === queryName)) {
-                                updatedObj = queryObjFromUrl.map((queryFromUrl, index) => {
-                                    if (queryFromUrl.name === queryName) {
-                                        queryParamsClone[queryParamsClone.findIndex(data => data.name === queryName)].value += `,${valuesToBeAdded}`
-                                        queryParamsClone[queryParamsClone.length - 1] = { name: '', type: 'string', value: '' }
-                                        return { name: queryName, value: `${queryFromUrl.value},${valuesToBeAdded}`, type: queryFromUrl.type }
-                                    }
-                                    return queryFromUrl
-                                })
+                            const queriesArrayFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(requestAPI)
+                            if (queriesArrayFromUrl.some(query => query.name === queryName)) {
+                                const queryIndex = queriesArrayFromUrl.findIndex(data => data.name === queryName)
+                                const valueCollection = [...queriesArrayFromUrl[queryIndex].value.split(','), ...lastRowValues]
+                                const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueCollection)
+                                queriesArrayFromUrl[queryIndex].value = valueToSet
+                                queryParamsClone[queryParamsClone.findIndex(data => data.name === queryName)].value = valueToSet
+                                queryParamsClone[queryParamsClone.length - 1] = { name: '', type: 'string', value: '' }
                             } else {
-                                updatedObj.push({ name: queryName, value: valuesToBeAdded, type: 'string' })
+                                queriesArrayFromUrl.push({ name: queryName, value: lastRowValues.join(','), type: 'string' })
                                 queryParamsClone.push({ name: '', type: 'string', value: '' })
                             }
-                            let newQueryString = constructUpdatedQueryString(updatedObj)
+                            const newQueryString = constructUpdatedQueryString(queriesArrayFromUrl)
                             const urlWithoutQuery = requestAPI.split('?')[0]
                             requestAPI = urlWithoutQuery + newQueryString
                             setapiURL(requestAPI)
+                            setqueryParams(queryParamsClone)
                         } else {
-                            throw new Error(`parameter "${duplicates[0].name}" already exists`)
+                            throw new Error(`parameter "${queryName}" already exists`)
                         }
-                    } else {
-                        queryParamsClone[queryParamsClone.length - 1] = { name: '', type: 'string', value: '' }
                     }
-                    setqueryParams(queryParamsClone)
                 }
 
+                validateAndAddQueryAtLastRow()
                 if (isValidUrl(requestAPI)) {
                     if (httpAuth === "BASIC") {
                         if (userName.trim() === "")
@@ -647,15 +629,19 @@ export default function RestImport({ language, restImportConfig }: { language: s
             if (response.status >= 200 && response.status < 300)
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
                     responseValue = { data: response.data.responseBody !== "" ? JSON.parse(response.data.responseBody) : response.data.responseBody, status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
-                else
+                else {
                     responseValue = { data: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
+                    handleToastError(httpStatusCodes.get(response.response?.status) as string, response)
+                }
             else
                 responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
         } else {
             if (response.status >= 200 && response.status < 300)
                 responseValue = { data: response?.data, status: response?.status + " " + httpStatusCodes.get(response?.status), headers: response?.headers }
-            else if (response.response !== undefined)
+            else if (response.response !== undefined) {
                 responseValue = { data: response?.response.status + " " + httpStatusCodes.get(response.response?.status), status: response?.response.status + " " + httpStatusCodes.get(response.response?.status), headers: response.response?.headers }
+                handleToastError(httpStatusCodes.get(response.response?.status) as string, response)
+            }
             else
                 responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
         }

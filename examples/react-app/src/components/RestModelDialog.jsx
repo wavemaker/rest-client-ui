@@ -42,8 +42,9 @@ export default function RestModal({ handleOpen, handleClose, defaultData }) {
               authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
             },
             error: {
-              errorFunction: (msg) => {
+              errorFunction: (msg, response) => {
                 alert(msg)
+                console.log(response)
               },
               errorMethod: "default",
               errorMessageTimeout: 5000
@@ -84,8 +85,9 @@ export default function RestModal({ handleOpen, handleClose, defaultData }) {
               authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
             },
             error: {
-              errorFunction: (msg) => {
+              errorFunction: (msg, response) => {
                 alert(msg)
+                console.log(response)
               },
               errorMethod: "default",
               errorMessageTimeout: 5000

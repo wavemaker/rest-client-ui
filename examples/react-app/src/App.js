@@ -38,10 +38,11 @@ function App() {
             authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
           },
           error: {
-            errorFunction: (msg) => {
+            errorFunction: (msg, response) => {
               alert(msg)
+              console.log(response)
             },
-            errorMethod: "default",
+            errorMethod: "customFunction",
             errorMessageTimeout: 5000
           },
           handleResponse: (response) => {
