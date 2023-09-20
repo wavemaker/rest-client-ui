@@ -1,5 +1,5 @@
 import { AxiosResponse } from "axios";
-import { restImportConfigI } from "../core/components/WebServiceModal";
+import { restImportConfigI } from "../core/components/RestImport";
 
 export interface mockPropsI {
   language: string;
@@ -127,12 +127,6 @@ export const eventMessage = {
   code: "",
   error: "",
 };
-
-// export const eventMessagePKCE = {
-//   tokenData: "",
-//   code: "pkce-access-code",
-//   error: "",
-// };
 
 export const getPKCEeventMsg = (success: boolean) => ({
   tokenData: "",

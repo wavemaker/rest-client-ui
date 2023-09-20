@@ -8,15 +8,11 @@ import {
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
 import {
-    retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString, findDuplicatesByComparison, findDuplicateObjectsWithinArray, retrieveQueryDetailsFromURL
+    retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString, findDuplicatesByComparison, retrieveQueryDetailsFromURL
 } from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
 import DoneIcon from '@mui/icons-material/Done'
-// // import AceEditor from "react-ace"
-// import "ace-builds/src-noconflict/mode-json"
-// import "ace-builds/src-noconflict/theme-dracula"
-// import "ace-builds/src-noconflict/ext-language_tools"
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import Apicall from './common/apicall'
 import { encode } from 'js-base64';
@@ -119,7 +115,7 @@ declare global {
 }
 
 
-export default function WebServiceModal({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
+export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
     const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState<string>(restImportConfig?.url || '')

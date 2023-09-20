@@ -13,7 +13,7 @@ import { ChangeEvent } from 'react';
 import { constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison, getCurrentDateTime, retrieveQueryDetailsFromURL } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
-import { PathParamsI } from './WebServiceModal';
+import { PathParamsI } from './RestImport';
 import { useTranslation } from 'react-i18next'; 
 
 export interface HeaderAndQueryI {

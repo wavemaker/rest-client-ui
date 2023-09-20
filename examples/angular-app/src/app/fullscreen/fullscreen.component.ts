@@ -41,7 +41,7 @@ export class FullscreenComponent implements OnInit {
           authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
         },
         error: {
-          errorFunction: (msg: any) => {
+          errorFunction: (msg: string) => {
             alert(msg);
           },
           errorMethod: 'default',
