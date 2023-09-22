@@ -184,7 +184,7 @@ export const isValidUrl = (urlString: string) => {
     "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // validate domain name
     "((\\d{1,3}\\.){3}\\d{1,3}))" + // validate OR ip (v4) address
     "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // validate port and path
-    "(\\?[;&a-z\\d%_.~+=-]*)?" + // validate query string
+    "(\\?([;&a-z\\d%_.~+=-]*,?)+)?" + // validate query string
     "(\\#[-a-z\\d_]*)?$",
     "i"
   ); // validate fragment locator'
@@ -195,36 +195,35 @@ export const isValidUrl = (urlString: string) => {
 export function retrieveQueryDetailsFromURL(url: string) {
   const query = url?.split('?')[1]
   const queries = query?.split('&')
-  let queryObjFromUrl: HeaderAndQueryI[] = []
+  let queriesArrayFromUrl: HeaderAndQueryI[] = []
   if (queries) {
     queries.forEach(query => {
       const queryName = query.slice(0, query.indexOf('='))
       const queryValue = query.slice(query.indexOf('=') + 1)
-      if (queryObjFromUrl.some((data: any) => data.name === queryName)) {
-        queryObjFromUrl = queryObjFromUrl.map((data: HeaderAndQueryI) => {
+      if (queriesArrayFromUrl.some((data: any) => data.name === queryName)) {
+        queriesArrayFromUrl = queriesArrayFromUrl.map((data: HeaderAndQueryI) => {
           return data.name === queryName ? { name: data.name, value: `${data.value},${queryValue}`, type: 'string' } : data
         })
       } else {
-        queryObjFromUrl.push({ name: queryName, value: queryValue, type: 'string' })
+        queriesArrayFromUrl.push({ name: queryName, value: queryValue, type: 'string' })
       }
     })
   }
-  return queryObjFromUrl
+  return queriesArrayFromUrl
 }
 
 export function constructUpdatedQueryString(updatedQueryObj: HeaderAndQueryI[]) {
   let newQueryString = ''
   updatedQueryObj.forEach((query, index) => {
     if (query.name && query.value) {
-      const queryValues = query.value.split(',')
-      if (queryValues.length === 1) {
-        newQueryString += index === 0 ? `?${query.name}=${query.value}` : `&${query.name}=${query.value}`
-      } else {
-        queryValues.forEach((value, valueIndex) => {
-          newQueryString += (index === 0 && valueIndex === 0) ? `?${query.name}=${value}` : `&${query.name}=${value}`
-        })
-      }
+      newQueryString += index === 0 ? `?${query.name}=${query.value}` : `&${query.name}=${query.value}`
     }
   })
   return newQueryString
+}
+
+export function constructCommaSeparatedUniqueQueryValuesString(valueCollection: string[]) {
+  const uniqueArray = valueCollection.filter((value, index) => value && valueCollection.indexOf(value) === index)
+  const valueToSet = uniqueArray.join(',')
+  return valueToSet
 }

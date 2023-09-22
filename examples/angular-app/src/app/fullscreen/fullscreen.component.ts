@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { AxiosResponse } from 'axios'
 
 declare const RestImport: any;
 
@@ -41,10 +42,11 @@ export class FullscreenComponent implements OnInit {
           authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
         },
         error: {
-          errorFunction: (msg: string) => {
+          errorFunction: (msg: string, response?: AxiosResponse) => {
             alert(msg);
+            console.log(response)
           },
-          errorMethod: 'default',
+          errorMethod: 'customFunction',
           errorMessageTimeout: 5000,
         },
         handleResponse: (response: { data: any }) => {

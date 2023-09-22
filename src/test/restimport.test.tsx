@@ -509,13 +509,13 @@ describe("Web Service Modal", () => {
     expect(errorDisplayed).toBeTruthy()
   }, 80000)
 
-  it("URL field accepts multiple query parameters with same name without any error", async () => {
+  it("URL field accepts multiple comma separated query values for the same query name without any error", async () => {
     user.setup()
     renderComponent(mockEmptyProps)
     const urlTextField = screen.getByRole('textbox', { name: /url/i })
-    await user.type(urlTextField, endPoints.duplicateQueryParams)
+    await user.type(urlTextField, `${endPoints.getQueryParams}?id=1,2`)
     await switchTab('QUERY PARAMS')
-    expect(urlTextField).toHaveValue(endPoints.duplicateQueryParams)
+    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?id=1,2`)
     const errorField = screen.queryByTestId('default-error')
     expect(errorField).toBeFalsy()
   }, 80000)
@@ -659,7 +659,8 @@ describe("Web Service Modal", () => {
     const urlTextField = screen.getByRole('textbox', { name: /url/i })
     await user.type(urlTextField, endPoints.duplicateQueryParams)
     urlTextField.blur()
-    expect(urlTextField).toHaveValue(endPoints.duplicateQueryParams)
+    await switchTab('QUERY PARAMS')
+    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?id=2,5`)
     const errorField = screen.queryByTestId('default-error')
     expect(errorField).toBeFalsy()
     await switchTab('QUERY PARAMS')
@@ -679,7 +680,7 @@ describe("Web Service Modal", () => {
     await user.type(urlTextField, endPoints.duplicateQueryParams)
     urlTextField.blur()
     await switchTab('QUERY PARAMS')
-    expect(urlTextField).toHaveValue(endPoints.duplicateQueryParams)
+    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?id=2,5`)
     await checkIfQueryParamsAreReflectedInFieldsFromURL(duplicateQueries)
   }, 80000)
 
@@ -732,10 +733,10 @@ describe("Web Service Modal", () => {
     await switchTab('QUERY PARAMS')
     await addHeadersOrQueryParamsInTheFields(queryData[0], 0, true)
     await addHeadersOrQueryParamsInTheFields(queryData[1], 1, true)
-    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?name=xyz&id=1&id=2`)
+    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?name=xyz&id=1,2`)
     await addHeadersOrQueryParamsInTheFields(queryData[2], 2, false)
     await clickTestBtn()
-    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?name=xyz&id=1&id=2&id=3`)
+    expect(urlTextField).toHaveValue(`${endPoints.getQueryParams}?name=xyz&id=1,2,3`)
     await checkIfQueryParamsAreReflectedInFieldsFromURL([{ name: 'name', value: 'xyz', type: 'String' }, { name: 'id', value: '1,2,3', type: 'String' }])
   }, 80000)
 

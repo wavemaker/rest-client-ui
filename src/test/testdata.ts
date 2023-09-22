@@ -236,7 +236,7 @@ export const endPoints = {
   postMultipartData: "http://wavemaker.com/multipart",
   duplicatePathParams: "http://wavemaker.com/{path}/name/{path}",
   emptyPathParam: "http://wavemaker.com/{}/name",
-  duplicateQueryParams: "http://wavemaker.com/query?id=2&id=5",
+  duplicateQueryParams: "https://wavemaker.com/query?id=2&id=5",
   oneQueryParam: "http://wavemaker.com/query?id=2",
   invalidQueryParam: "http://wavemaker.com/query?id=",
   listProvider: "http://localhost:4000/get-default-provider",
