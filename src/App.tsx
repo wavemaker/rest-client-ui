@@ -29,7 +29,6 @@ export default function App() {
     error: {
       errorFunction: (msg: string, response?: AxiosResponse) => {
         alert(msg)
-        console.log("Response ", response)
       },
       errorMethod: "customFunction",
       errorMessageTimeout: 5000
