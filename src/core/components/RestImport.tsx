@@ -108,12 +108,13 @@ const defaultContentTypes = [
     },
 ]
 
-declare global {
-    interface Window {
-        google: any;
-    }
-}
+// declare global {
+//     interface Window {
+//         google: any;
+//     }
+// }
 
+// var window:any;
 
 export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
@@ -147,12 +148,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
 
     useEffect(() => {
-        if (!window.google) {
-            const script = document.createElement('script');
-            script.src = 'https://accounts.google.com/gsi/client';
-            script.async = true;
-            document.head.appendChild(script);
-        }
+        // if (window !== undefined) {
+        //     if (!window.google) {
+        //         const script = document.createElement('script');
+        //         script.src = 'https://accounts.google.com/gsi/client';
+        //         script.async = true;
+        //         document.head.appendChild(script);
+        //     }
+        // }
     }, [])
 
     useEffect(() => {
@@ -490,14 +493,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
                         let childWindow: any;
                         let authUrl: string
-                        const expires_time = window.sessionStorage.getItem(selectedProvider.providerId + "expires_in");
+                        const expires_time =` window.sessionStorage.getItem(selectedProvider.providerId + "expires_in");`
                         let expiresIn = expires_time ? parseInt(expires_time, 10) : 0;
                         let currentTimestamp = Math.floor(Date.now() / 1000);
                         if (currentTimestamp > expiresIn) {
                             sessionStorage.removeItem(selectedProvider.providerId + "expires_in");
                             sessionStorage.removeItem(selectedProvider.providerId + "access_token");
                         }
-                        const isToken = window.sessionStorage.getItem(selectedProvider.providerId + "access_token");
+                        const isToken = `window.sessionStorage.getItem(selectedProvider.providerId + "access_token");`
                         if (isToken) {
                             if (currentTimestamp < expiresIn) {
                                 header['Authorization'] = `Bearer ` + isToken
@@ -505,46 +508,46 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         } else {
                             if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
                                 if (selectedProvider.providerId === "google") {
-                                    if (window && window?.google) {
-                                        const client = window?.google?.accounts.oauth2.initTokenClient({
-                                            client_id: clientId,
-                                            scope: scope,
-                                            callback: (tokenResponse: any) => {
-                                                if (tokenResponse && tokenResponse.access_token) {
-                                                    header['Authorization'] = `Bearer ` + tokenResponse.access_token
-                                                    handleRestAPI(header);
-                                                    setloading(false)
-                                                }
-                                            },
-                                            error_callback: (error: any) => {
-                                                if (error.type === "popup_closed") {
-                                                    header['Authorization'] = `Bearer ` + null
-                                                    handleRestAPI(header)
-                                                    setloading(false)
-                                                }
-                                            },
-                                        }) as any;
-                                        client.requestAccessToken();
-                                    }
+                                    // if (window && window?.google) {
+                                    //     const client = window?.google?.accounts.oauth2.initTokenClient({
+                                    //         client_id: clientId,
+                                    //         scope: scope,
+                                    //         callback: (tokenResponse: any) => {
+                                    //             if (tokenResponse && tokenResponse.access_token) {
+                                    //                 header['Authorization'] = `Bearer ` + tokenResponse.access_token
+                                    //                 handleRestAPI(header);
+                                    //                 setloading(false)
+                                    //             }
+                                    //         },
+                                    //         error_callback: (error: any) => {
+                                    //             if (error.type === "popup_closed") {
+                                    //                 header['Authorization'] = `Bearer ` + null
+                                    //                 handleRestAPI(header)
+                                    //                 setloading(false)
+                                    //             }
+                                    //         },
+                                    //     }) as any;
+                                    //     client.requestAccessToken();
+                                    // }
                                 } else {
                                     redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html' : restImportConfig?.oAuthConfig?.base_path + '/oAuthCallback.html'
 
                                     const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
                                     codeVerifier = generateRandomCodeVerifier();
                                     const data = Uint8Array.from(codeVerifier.split("").map(x => x.charCodeAt(0)))
-                                    window.crypto.subtle.digest("SHA-256", data)
-                                        .then(hashBuffer => {
-                                            const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                            authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
-                                            childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
-                                        })
-                                        .catch(error => {
-                                            console.error("Error calculating code challenge:", error);
-                                        });
+                                    // window.crypto.subtle.digest("SHA-256", data)
+                                    //     .then(hashBuffer => {
+                                    //         const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
+                                    //         authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
+                                    //         // childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                    //     })
+                                    //     .catch(error => {
+                                    //         console.error("Error calculating code challenge:", error);
+                                    //     });
                                 }
                             } else {
                                 authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
-                                childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                // childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             }
                             // providerAuthURL
                             setloading(true)
@@ -562,26 +565,26 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     if (event.origin === basePath && event.data.tokenData) {
                                         clearInterval(interval);
                                         const tokenData = JSON.parse(event.data.tokenData)
-                                        window.sessionStorage.setItem(selectedProvider.providerId + "access_token", tokenData.access_token);
+                                        // window.sessionStorage.setItem(selectedProvider.providerId + "access_token", tokenData.access_token);
                                         const currentTimestamp = Math.floor(Date.now() / 1000);
                                         const expiresIn = tokenData.expires_in
                                         const expirationTimestamp = currentTimestamp + expiresIn;
-                                        window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
+                                        // window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
                                         header['Authorization'] = `Bearer ` + tokenData.access_token
                                         handleRestAPI(header);
-                                        window.removeEventListener('message', messageHandler);
+                                        // window.removeEventListener('message', messageHandler);
 
                                     } else if (event.origin === basePath && event.data.code) {
                                         clearInterval(interval);
                                         getAccessToken(event.data.code, codeVerifier)
                                         setloading(false)
-                                        window.removeEventListener('message', messageHandler);
+                                        // window.removeEventListener('message', messageHandler);
 
                                     } else {
                                         setloading(false)
                                     }
                                 }
-                                window.addEventListener('message', messageHandler);
+                                // window.addEventListener('message', messageHandler);
                             }
                             return
                         }
@@ -686,7 +689,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
 
     function generateRandomCodeVerifier() {
         const array = new Uint32Array(56 / 2);
-        window.crypto.getRandomValues(array);
+        // window.crypto.getRandomValues(array);
         return Array.from(array, dec => ('0' + dec.toString(16)).substr(-2)).join('');
     }
     const base64URLEncode = (arrayBuffer: ArrayBuffer): string => {
@@ -718,11 +721,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const response: any = await Apicall(configToken)
         if (response.status === 200) {
             header['Authorization'] = `Bearer ` + response.data.access_token
-            window.sessionStorage.setItem(selectedProvider.providerId + "access_token", response.data.access_token);
+            // window.sessionStorage.setItem(selectedProvider.providerId + "access_token", response.data.access_token);
             const currentTimestamp = Math.floor(Date.now() / 1000);
             const expiresIn = response.data.expires_in
             const expirationTimestamp = currentTimestamp + expiresIn;
-            window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
+            // window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
             handleRestAPI(header)
         } else {
             header['Authorization'] = `Bearer ` + null

@@ -1,1 +1,1 @@
-C:/Users/Ashok/Documents/My Projects/new/rest-client-ui/dist/config-import-bundle.js
+C:/Users/sivar/src/gitrepo/rest-client-ui/dist/config-import-bundle.js

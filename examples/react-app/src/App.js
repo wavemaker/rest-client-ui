@@ -14,7 +14,7 @@ function App() {
   useEffect(() => {
     if (fullScreenView) {
       window.RestImport({
-        dom_id: "#full-screen",
+        dom_id: "#full-",
         language: "en",
         config: {
           proxy_conf: {

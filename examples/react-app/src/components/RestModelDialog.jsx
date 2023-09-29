@@ -11,7 +11,7 @@ export default function RestModal({ handleOpen, handleClose, defaultData }) {
     if (handleOpen && !defaultData) {
       setTimeout(() => {
         window.RestImport({
-          dom_id: "#reactImport",
+          dom_id: "#testing",
           language: "en",
           config: {
             url: "https://jsonplaceholder.typicode.com/posts/{id}?test=true",
