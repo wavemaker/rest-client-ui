@@ -118,7 +118,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         }
     }
     const handleCopyClick = (text: string) => {
-         clipboardCopy(text)
+        clipboardCopy(text)
             .then(() => {
                 setTooltipTitle('Copied!');
             })
@@ -152,7 +152,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     }
 
     const handleValidation = async () => {
-       
+
         const providerExists = customProviderList.some((provider: { providerId: string; }) => provider.providerId === providerId);
 
         setShowErrorAlert(true);
@@ -262,6 +262,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             callbackurl = basePath + '/oAuthCallback.html'
         }
         setCallbackUrl(callbackurl)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [providerConf, providerId, PKCE])
 
     return (

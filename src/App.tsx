@@ -30,7 +30,7 @@ export default function App() {
       errorFunction: (msg: string, response?: AxiosResponse) => {
         alert(msg)
       },
-      errorMethod: "customFunction",
+      errorMethod: "default",
       errorMessageTimeout: 5000
     },
     handleResponse: (response?: AxiosResponse) => {
