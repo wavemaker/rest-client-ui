@@ -3,7 +3,7 @@ import RestImport from './core/components/RestImport'
 import { restImportConfigI } from './core/components/RestImport'
 import { Provider } from 'react-redux'
 import appStore from './core/components/appStore/Store';
-import { AxiosResponse } from 'axios';
+import { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export default function App() {
   const config: restImportConfigI = {
@@ -33,7 +33,8 @@ export default function App() {
       errorMethod: "default",
       errorMessageTimeout: 5000
     },
-    handleResponse: (response?: AxiosResponse) => {
+    handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse) => {
+      console.log(request, response)
     },
     hideMonacoEditor: (value: boolean) => {
     }

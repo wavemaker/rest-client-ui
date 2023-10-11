@@ -1,4 +1,4 @@
-import { AxiosResponse } from "axios";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { restImportConfigI } from "../core/components/RestImport";
 
 export interface mockPropsI {
@@ -130,9 +130,9 @@ export const eventMessage = {
 
 export const getPKCEeventMsg = (success: boolean) => ({
   tokenData: "",
-  code: `${success ? 'success' : 'failure'}-pkce-access-code`,
+  code: `${success ? "success" : "failure"}-pkce-access-code`,
   error: "",
-})
+});
 export const amazonTokenDataObj = {
   access_token: "amazon-access-token",
   expires_in: 3599,
@@ -251,23 +251,24 @@ export const endPoints = {
   addprovider: "http://localhost:4000/addprovider",
   authorizationUrlProviderTest:
     "http://localhost:4000/authorizationUrl/ProviderTest",
-    authorizationUrlWavemakerProviderTest : "https://www.wavemakeronline.com/studio/services/projects/oauth2/authorizationUrl/ProviderTest",
-  addproviderWavemaker: "https://www.wavemakeronline.com/studio/services/projects/oauth2/addprovider",
+  authorizationUrlWavemakerProviderTest:
+    "https://www.wavemakeronline.com/studio/services/projects/oauth2/authorizationUrl/ProviderTest",
+  addproviderWavemaker:
+    "https://www.wavemakeronline.com/studio/services/projects/oauth2/addprovider",
   addProviderErrorResponse: "http://localhost:4000/addErrorproviders",
   getproviderErrorResponse: "http://localhost:4000/getproviderError",
-  authorizationUrlGoogleErrorResponse: "http://localhost:4000/authorizationUrlError/google",
+  authorizationUrlGoogleErrorResponse:
+    "http://localhost:4000/authorizationUrlError/google",
   googleUserInfo: "https://www.googleapis.com/oauth2/v1/userinfo",
   amazonUserInfo: "https://api.amazon.com/user/profile",
   amazonAccessTokenUrl: "https://api.amazon.com/auth/o2/token",
   githubUserInfo: "https://api.github.com/user",
   getProviderError: "http://localhost:4000/getprovider_error",
-  proxy: "http://localhost:4000"
+  proxy: "http://localhost:4000",
 };
 
 export const wavemakerMoreInfoLink =
   "https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/";
-
-
 
 export const emptyConfig: restImportConfigI = {
   proxy_conf: {
@@ -297,7 +298,7 @@ export const emptyConfig: restImportConfigI = {
     errorMessageTimeout: 5000,
     errorMethod: "default",
   },
-  handleResponse: (response?: AxiosResponse) => {},
+  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {},
   hideMonacoEditor: (value: boolean) => {},
 };
 export const mockEmptyProps: mockPropsI = {
@@ -355,7 +356,7 @@ const configWithData: restImportConfigI = {
     errorMethod: "toast",
     errorMessageTimeout: 5000,
   },
-  handleResponse: (response?: AxiosResponse) => {},
+  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {},
   hideMonacoEditor: (value: boolean) => {},
 };
 
@@ -417,7 +418,7 @@ export function getCustomizedProps(
       ...emptyConfig,
       proxy_conf: {
         ...emptyConfig.proxy_conf,
-        getprovider: getProviderUrl || emptyConfig.proxy_conf.getprovider
+        getprovider: getProviderUrl || emptyConfig.proxy_conf.getprovider,
       },
       error: {
         ...emptyConfig.error,

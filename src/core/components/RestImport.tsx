@@ -3,7 +3,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table,
     TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button,
-    TextareaAutosize, Alert
+    TextareaAutosize, Alert, createTheme, ThemeProvider
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
@@ -23,6 +23,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ConfigModel from './ConfigModel'
 import { useSelector } from 'react-redux'
 import '../../i18n';
+
 interface TabPanelProps {
     children?: ReactNode
     index: number
@@ -52,9 +53,18 @@ export interface restImportConfigI {
         errorFunction: (msg: string, response?: AxiosResponse) => void,
         errorMessageTimeout: number
     },
-    handleResponse: (response?: AxiosResponse) => void,
+    handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse) => void,
     hideMonacoEditor: (value: boolean) => void
 }
+
+export interface ICustomAxiosConfig extends AxiosRequestConfig {
+    useproxy?: boolean,
+    authDetails?: null | {
+        type: string,
+        providerId?: string,
+    },
+}
+
 interface APII {
     base_path: string,
     proxy_path: string,
@@ -116,6 +126,11 @@ declare global {
 
 
 export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
+    const theme = createTheme({
+        typography: {
+            fontSize: 20, // Adjust the font size as needed
+        },
+    });
     const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
     const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState<string>(restImportConfig?.url || '')
@@ -144,6 +159,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [btnDisable, setBtnDisable] = useState(false)
     const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
+    const [requestConfig, setrequestConfig] = useState<ICustomAxiosConfig>()
 
     useEffect(() => {
         if (!window.google) {
@@ -157,7 +173,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
     useEffect(() => {
         setProviderId(selectedProvider.providerId)
         setBtnDisable(false)
-
     }, [selectedProvider])
 
     useEffect(() => {
@@ -284,7 +299,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         }
         newValue === 0 ? restImportConfig.hideMonacoEditor(false) : restImportConfig.hideMonacoEditor(true)
         setresponseTabValue(newValue)
-        restImportConfig.handleResponse(response)
+        restImportConfig.handleResponse(requestConfig as AxiosRequestConfig, response)
     };
     const handleChangehttpMethod = (event: SelectChangeEvent) => {
         sethttpMethod(event.target.value as any)
@@ -585,14 +600,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             return
                         }
                     }
-                    const configWOProxy: AxiosRequestConfig = {
+                    const configWOProxy: ICustomAxiosConfig = {
                         url: requestAPI,
                         headers: header,
                         method: httpMethod,
-                        data: body
+                        data: body,
+                        authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAuth2", providerId: providerId },
+                        useproxy: useProxy
                     }
                     const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
-                    const configWProxy: AxiosRequestConfig = {
+                    const configWProxy: ICustomAxiosConfig = {
                         url: url,
                         data: {
                             "endpointAddress": requestAPI,
@@ -600,7 +617,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             "contentType": contentType,
                             "requestBody": body,
                             "headers": header,
-                            "authDetails": null
+                            "authDetails": httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAuth2", providerId: providerId },
                         },
                         method: "POST",
                         headers: {
@@ -610,7 +627,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     }
                     setloading(true)
                     const config = useProxy ? configWProxy : configWOProxy
-                    const response: any = await Apicall(config)
+                    setrequestConfig(config)
+                    const response: any = await Apicall(config as AxiosRequestConfig)
                     handleResponse(response)
                     setloading(false)
                 } else
@@ -654,11 +672,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
     }
 
     const handleRestAPI = async (header: object) => {
-        const configWOProxy: AxiosRequestConfig = {
+        const configWOProxy: ICustomAxiosConfig = {
             url: apiURL,
             headers: header,
             method: httpMethod,
-            data: bodyParams
+            data: bodyParams,
+            authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAuth2", providerId: providerId }
         }
         const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
         const configWProxy: AxiosRequestConfig = {
@@ -669,7 +688,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 "contentType": contentType,
                 "requestBody": bodyParams,
                 "headers": header,
-                "authDetails": null
+                "authDetails": httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAuth2", providerId: providerId },
             },
             method: "POST",
             headers: {
@@ -678,7 +697,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
             withCredentials: true
         }
         const config = useProxy ? configWProxy : configWOProxy
-        const response: any = await Apicall(config)
+        setrequestConfig(config)
+        const response: any = await Apicall(config as AxiosRequestConfig)
         handleResponse(response)
         setloading(false)
     }
@@ -730,11 +750,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
     }
 
     return (
-        <>
+        <ThemeProvider theme={theme}>
             <Stack className='rest-import-ui'>
                 {loading && <FallbackSpinner />}
                 <Toaster position='top-right' />
-                <Grid gap={2.5} className='cmnflx' container>
+                <Grid gap={4} className='cmnflx' container>
                     <Grid item md={12}>
                         {alertMsg && (
                             <Alert sx={{ py: 0 }} severity="error" data-testid="default-error">{alertMsg}</Alert>
@@ -991,6 +1011,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     <TextField data-testid="mock-response" value={responseEditorValue} disabled={true} sx={{ position: 'absolute', left: -10000, top: -10000 }}></TextField>
                 </div>
             </Stack>
-        </>
+        </ThemeProvider>
     );
 }

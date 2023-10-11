@@ -7,7 +7,7 @@ import { restImportConfigI } from '../core/components/RestImport';
 import { ERROR_MESSAGES, emptyConfig } from './testdata';
 import { Provider } from 'react-redux'
 import appStore from '../core/components/appStore/Store';
-import { AxiosResponse } from 'axios';
+import { AxiosRequestConfig, AxiosResponse } from 'axios';
 interface mockPropsI {
     handleOpen: boolean,
     handleClose: () => void,
@@ -43,7 +43,7 @@ export const ProxyOFFConfig: restImportConfigI = {
         errorMessageTimeout: 5000,
         errorMethod: "default",
     },
-    handleResponse: (response?: AxiosResponse) => {
+    handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {
     },
     hideMonacoEditor: (value: boolean) => {
     }
