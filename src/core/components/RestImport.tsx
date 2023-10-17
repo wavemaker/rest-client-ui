@@ -54,7 +54,9 @@ export interface restImportConfigI {
         errorMessageTimeout: number
     },
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse) => void,
-    hideMonacoEditor: (value: boolean) => void
+    hideMonacoEditor: (value: boolean) => void,
+    getServiceName: (value: string) => void,
+    setServiceName: (value: string) => void
 }
 
 export interface ICustomAxiosConfig extends AxiosRequestConfig {
@@ -160,6 +162,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
     const [requestConfig, setrequestConfig] = useState<ICustomAxiosConfig>()
+    const [serviceName, setserviceName] = useState("")
+    const [serviceNameEnabled, setserviceNameEnabled] = useState(true)
+    const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
 
     useEffect(() => {
         if (!window.google) {
@@ -212,7 +217,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     }
                     return newPath
                 }
-
                 paths.forEach((path) => {
                     if (path) {
                         if (isThisANewPath(path)) {
@@ -240,7 +244,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     })
                     setapiURL(updatedURL)
                     handleToastError(`Parameters cannot have duplicates, removed the duplicates[${duplicatePathNames}]`)
-
                 } else {
                     setpathParams(updatedPathParams)
                 }
@@ -260,11 +263,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
         })
         setpathParams(pathParamsClone)
     }
-
     const handleCloseProvider = () => {
         setproviderOpen(false)
     }
-
     const handleChangeapiURL = (value: string) => {
         setapiURL(value)
     }
@@ -317,7 +318,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 const queries = query?.split('&')
                 if (query?.length > 0) {
                     const queryNames = queries.map(query => ({ name: query.split('=')[0], value: query.split('=')[1] }))
-
                     let updatedQueryParams: HeaderAndQueryI[] = []
                     const isThisNewQuery = (name: string, value: string): boolean => {
                         let newQuery = true
@@ -341,7 +341,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         }
                         return newQuery
                     }
-
                     queryNames.forEach(query => {
                         const key = query.name
                         const value = query.value
@@ -365,9 +364,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     const pathParamsClone = paths.map(path => {
                         return { "name": path }
                     })
-
                     const duplicates = findDuplicatesByComparison(updatedQueryParams, [...headerParams, ...pathParamsClone], "name")
-
                     if (duplicates.length > 0) {
                         let duplicateQueryNames = ''
                         const queryArrayWithoutDuplicates = removeDuplicatesByComparison(updatedQueryParams, duplicates, "name")
@@ -420,7 +417,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
             setnewContentType("")
         }
     }
-
     const handleTestClick = async () => {
         try {
             if (apiURL.length > 0) {
@@ -432,7 +428,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     else
                         throw new Error(translate("PATHPARAMSALERT"))
                 })
-
                 const validateAndAddQueryAtLastRow = () => {
                     if (queryParams && queryParams[queryParams.length - 1].name && queryParams[queryParams.length - 1].value) {
                         const queryName = queryParams[queryParams.length - 1].name
@@ -464,7 +459,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         }
                     }
                 }
-
                 validateAndAddQueryAtLastRow()
                 if (isValidUrl(requestAPI)) {
                     if (httpAuth === "BASIC") {
@@ -474,7 +468,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             throw new Error("Please enter a password for basic authentication")
                         header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
                     }
-
                     headerParams.forEach((data, index) => {
                         if (data.name && data.value) {
                             if (data.name === 'Authorization' && header['Authorization'])
@@ -483,7 +476,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             index === headerParams.length - 1 && setheaderParams([...headerParams, { name: '', value: '', type: 'string' }])
                         }
                     })
-
                     header['content-type'] = contentType
                     if (contentType === 'multipart/form-data') {
                         const formData = new FormData()
@@ -494,7 +486,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         body = formData
                     } else
                         body = bodyParams
-
                     if (httpAuth === "OAUTH2.0") {
                         let codeVerifier: string;
                         const clientId = selectedProvider.clientId;
@@ -541,15 +532,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         client.requestAccessToken();
                                     }
                                 } else {
-                                    redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html' : restImportConfig?.oAuthConfig?.base_path + '/oAuthCallback.html'
-
+                                    redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + 'oAuthCallback.html' : restImportConfig?.oAuthConfig?.base_path + 'oAuthCallback.html'
                                     const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
                                     codeVerifier = generateRandomCodeVerifier();
                                     const data = Uint8Array.from(codeVerifier.split("").map(x => x.charCodeAt(0)))
                                     window.crypto.subtle.digest("SHA-256", data)
                                         .then(hashBuffer => {
                                             const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                            authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
+                                            authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
                                             childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                                         })
                                         .catch(error => {
@@ -558,7 +548,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 }
                             } else {
                                 authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
-                                childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                childWindow = window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             }
                             // providerAuthURL
                             setloading(true)
@@ -570,7 +560,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         handleRestAPI(header)
                                     }
                                 }, 1000);
-
                                 const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
                                     const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
                                     if (event.origin === basePath && event.data.tokenData) {
@@ -584,13 +573,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         header['Authorization'] = `Bearer ` + tokenData.access_token
                                         handleRestAPI(header);
                                         window.removeEventListener('message', messageHandler);
-
                                     } else if (event.origin === basePath && event.data.code) {
                                         clearInterval(interval);
                                         getAccessToken(event.data.code, codeVerifier)
                                         setloading(false)
                                         window.removeEventListener('message', messageHandler);
-
                                     } else {
                                         setloading(false)
                                     }
@@ -642,25 +629,26 @@ export default function RestImport({ language, restImportConfig }: { language: s
     }
     function handleResponse(response: any): void {
         let responseValue;
+        setserviceNameEnabled(false)
         if (useProxy) {
             if (response.status >= 200 && response.status < 300)
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
-                    responseValue = { data: response.data.responseBody !== "" ? JSON.parse(response.data.responseBody) : response.data.responseBody, status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
+                    responseValue = { data: response.data.responseBody !== "" ? JSON.parse(response.data.responseBody) : response.data.responseBody, status: response?.data.statusCode, headers: response?.data.headers }
                 else {
-                    responseValue = { data: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), status: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), headers: response?.data.headers }
+                    responseValue = { data: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), status: response?.data.statusCode, headers: response?.data.headers }
                     handleToastError(httpStatusCodes.get(response.response?.status) as string, response)
                 }
             else
-                responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
+                responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
         } else {
             if (response.status >= 200 && response.status < 300)
-                responseValue = { data: response?.data, status: response?.status + " " + httpStatusCodes.get(response?.status), headers: response?.headers }
+                responseValue = { data: response?.data, status: response?.status, headers: response?.headers }
             else if (response.response !== undefined) {
-                responseValue = { data: response?.response.status + " " + httpStatusCodes.get(response.response?.status), status: response?.response.status + " " + httpStatusCodes.get(response.response?.status), headers: response.response?.headers }
+                responseValue = { data: response?.response.status + " " + httpStatusCodes.get(response.response?.status), status: response?.response.status, headers: response.response?.headers }
                 handleToastError(httpStatusCodes.get(response.response?.status) as string, response)
             }
             else
-                responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), headers: response?.response?.headers }
+                responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
         }
         if (responseValue.data === undefined || responseValue.headers === undefined) {
             responseValue = { data: response.message, status: response.code, headers: {} }
@@ -720,7 +708,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
             code_verifier: codeVerifier,
             redirect_uri: restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html',
         }
-
         const configToken: AxiosRequestConfig = {
             url: selectedProvider.accessTokenUrl,
             "headers": {
@@ -786,9 +773,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     <Grid item md={12}>
                         <Grid container>
                             <Grid item md={6}>
-                                <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                                <Stack sx={{ cursor: "pointer" }} spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('SERVICE_NAME')}</Typography>
-                                    <TextField disabled size='small' />
+                                    <TextField value={serviceName} onChange={(e) => {
+                                        setserviceName(e.target.value)
+                                        restImportConfig.getServiceName(e.target.value)
+                                    }} disabled={serviceNameEnabled} size='small' />
                                 </Stack>
                             </Grid>
                             <Grid item md={6}>

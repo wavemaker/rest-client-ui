@@ -236,9 +236,9 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     }
 
     const handleAuthorizationUrl = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.authorizationUrl;
+        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", providerId) : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.authorizationUrl.replace(":providerID", providerId);
         const configProvider = {
-            url: url + '/' + providerId,
+            url: url,
             method: "GET",
             headers: {
                 'Content-Type': 'application/json',
@@ -254,12 +254,12 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     useEffect(() => {
         let callbackurl = providerConf
-            ? basePath + `/oauth2/${providerConf.providerId}/callback`
+            ? basePath + `oauth2/${providerConf.providerId}/callback`
             : providerId
-                ? basePath + `/oauth2/${providerId}/callback`
-                : basePath + `/oauth2/{providerId}/callback`
+                ? basePath + `oauth2/${providerId}/callback`
+                : basePath + `oauth2/{providerId}/callback`
         if (PKCE) {
-            callbackurl = basePath + '/oAuthCallback.html'
+            callbackurl = basePath + 'oAuthCallback.html'
         }
         setCallbackUrl(callbackurl)
         // eslint-disable-next-line react-hooks/exhaustive-deps

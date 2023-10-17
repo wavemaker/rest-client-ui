@@ -45,8 +45,9 @@ export const ProxyOFFConfig: restImportConfigI = {
     },
     handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {
     },
-    hideMonacoEditor: (value: boolean) => {
-    }
+    hideMonacoEditor: (value: boolean) => { },
+    getServiceName(value: string) { },
+    setServiceName(value: string) { },
 }
 
 const mockProxyOFFProps: mockPropsI = {
@@ -65,10 +66,10 @@ let mockProps: mockPropsI = {
 
 function renderComponent(type?: string) {
     const copymockProps = { ...mockProps }
-    if (type == 'withErrorAPI') {
+    if (type === 'withErrorAPI') {
         copymockProps.proxyObj.proxy_conf['getprovider'] = '/getproviderError'
         copymockProps.proxyObj.proxy_conf['list_provider'] = '/getproviderError'
-    } else if (type == 'withErrorAPIAfterSelectProvider') {
+    } else if (type === 'withErrorAPIAfterSelectProvider') {
         copymockProps.proxyObj.proxy_conf['authorizationUrl'] = '/authorizationUrlError'
     }
     render(<Provider store={appStore}><ProviderModal {...copymockProps} /></Provider >)
@@ -105,7 +106,7 @@ describe("Provider Modal", () => {
         expect(addprovider_text).toBeInTheDocument();
     }, 80000);
 
-    it("Click Add Provider - OAuth Provider Configuration Modal Render ", async () => {
+    it("Click Add Provider - OAuth Provider Configuration Modal Render", async () => {
         user.setup()
         renderComponent()
         const addprovider_card = await screen.findByTestId('add-provider')

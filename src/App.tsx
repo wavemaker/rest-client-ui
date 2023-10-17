@@ -36,8 +36,9 @@ export default function App() {
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse) => {
       console.log(request, response)
     },
-    hideMonacoEditor: (value: boolean) => {
-    }
+    hideMonacoEditor: (value: boolean) => { },
+    getServiceName(value: string) { },
+    setServiceName(value: string) { },
   }
 
   return (
