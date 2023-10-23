@@ -15,6 +15,12 @@ export default function App() {
       addprovider: "/addprovider",
       authorizationUrl: "/authorizationUrl",
     },
+    useProxy: true,
+    headerParams: [{
+      name: "new",
+      type: "string",
+      value: "vew"
+    }],
     state_val: "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
     default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
     oAuthConfig: {
@@ -38,7 +44,9 @@ export default function App() {
     },
     hideMonacoEditor: (value: boolean) => { },
     getServiceName(value: string) { },
-    setServiceName(value: string) { },
+    setServiceName: 'New2',
+    viewMode: false,
+    setResponseHeaders: { kingkong: "test" },
   }
 
   return (

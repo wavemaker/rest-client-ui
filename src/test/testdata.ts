@@ -301,7 +301,9 @@ export const emptyConfig: restImportConfigI = {
   handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {},
   hideMonacoEditor: (value: boolean) => {},
   getServiceName(value: string) {},
-  setServiceName(value: string) {},
+  setServiceName: "",
+  setResponseHeaders: { namespace: "test" },
+  viewMode: false,
 };
 export const mockEmptyProps: mockPropsI = {
   language: "en",
@@ -361,7 +363,9 @@ const configWithData: restImportConfigI = {
   handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {},
   hideMonacoEditor: (value: boolean) => {},
   getServiceName(value: string) {},
-  setServiceName(value: string) {},
+  setServiceName: "",
+  viewMode: false,
+  setResponseHeaders: { namespace: "test" },
 };
 
 export const preLoadedProps: mockPropsI = {

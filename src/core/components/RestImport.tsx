@@ -53,14 +53,16 @@ export interface restImportConfigI {
         errorFunction: (msg: string, response?: AxiosResponse) => void,
         errorMessageTimeout: number
     },
+    viewMode: boolean,
+    setServiceName: string,
+    setResponseHeaders?: any,
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse) => void,
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
-    setServiceName: (value: string) => void
 }
 
 export interface ICustomAxiosConfig extends AxiosRequestConfig {
-    useproxy?: boolean,
+    useProxy?: boolean,
     authDetails?: null | {
         type: string,
         providerId?: string,
@@ -130,7 +132,7 @@ declare global {
 export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const theme = createTheme({
         typography: {
-            fontSize: 20, // Adjust the font size as needed
+            fontSize: 18, // Adjust the font size as needed
         },
     });
     const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
@@ -152,7 +154,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [contentTypes, setcontentTypes] = useState(defaultContentTypes)
     const [newContentType, setnewContentType] = useState('')
     const [responseEditorValue, setresponseEditorValue] = useState('')
-    const [response, setresponse] = useState<AxiosResponse>()
+    const [response, setresponse] = useState<AxiosResponse>({ headers: restImportConfig.setResponseHeaders } as any)
     const [userName, setuserName] = useState(restImportConfig?.userName || '')
     const [userPassword, setuserPassword] = useState(restImportConfig?.userPassword || '')
     const [loading, setloading] = useState(false)
@@ -162,7 +164,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
     const [requestConfig, setrequestConfig] = useState<ICustomAxiosConfig>()
-    const [serviceName, setserviceName] = useState("")
+    const [serviceName, setserviceName] = useState(restImportConfig.setServiceName || "")
     const [serviceNameEnabled, setserviceNameEnabled] = useState(true)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
 
@@ -593,7 +595,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         method: httpMethod,
                         data: body,
                         authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAuth2", providerId: providerId },
-                        useproxy: useProxy
+                        useProxy: useProxy
                     }
                     const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
                     const configWProxy: ICustomAxiosConfig = {
@@ -610,7 +612,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        withCredentials: true
+                        withCredentials: true,
+                        useProxy: useProxy,
                     }
                     setloading(true)
                     const config = useProxy ? configWProxy : configWOProxy
@@ -741,7 +744,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             <Stack className='rest-import-ui'>
                 {loading && <FallbackSpinner />}
                 <Toaster position='top-right' />
-                <Grid gap={4} className='cmnflx' container>
+                <Grid gap={2} className='cmnflx' container>
                     <Grid item md={12}>
                         {alertMsg && (
                             <Alert sx={{ py: 0 }} severity="error" data-testid="default-error">{alertMsg}</Alert>
@@ -754,6 +757,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     data-testid="http-method"
                                     value={httpMethod}
                                     onChange={handleChangehttpMethod}
+                                    disabled={restImportConfig.viewMode}
                                 >
                                     <MenuItem value={'GET'}>{'GET'}</MenuItem>
                                     <MenuItem value={'POST'}>{'POST'}</MenuItem>
@@ -778,7 +782,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     <TextField value={serviceName} onChange={(e) => {
                                         setserviceName(e.target.value)
                                         restImportConfig.getServiceName(e.target.value)
-                                    }} disabled={serviceNameEnabled} size='small' />
+                                    }} disabled={serviceNameEnabled || restImportConfig.viewMode} size='small' />
                                 </Stack>
                             </Grid>
                             <Grid item md={6}>

@@ -47,7 +47,9 @@ export const ProxyOFFConfig: restImportConfigI = {
     },
     hideMonacoEditor: (value: boolean) => { },
     getServiceName(value: string) { },
-    setServiceName(value: string) { },
+    setServiceName: '',
+    viewMode: false,
+    setResponseHeaders: { namespace: "test" },
 }
 
 const mockProxyOFFProps: mockPropsI = {
