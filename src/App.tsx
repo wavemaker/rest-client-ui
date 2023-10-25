@@ -8,8 +8,8 @@ import { AxiosRequestConfig, AxiosResponse } from 'axios';
 export default function App() {
   const config: restImportConfigI = {
     proxy_conf: {
-      base_path: "http://localhost:4000",
-      proxy_path: "/restimport",
+      base_path: "http://localhost:4200/studio/",
+      proxy_path: `services/projects/WMPRJ2c91808889a96400018a26070b7b2e68/restservices/invoke?optimizeResponse=true`,
       list_provider: "/get-default-provider",
       getprovider: "/getprovider",
       addprovider: "/addprovider",
@@ -31,6 +31,9 @@ export default function App() {
       getprovider: "", // /projects/{projectID}/oauth2/providers
       addprovider: "", // /projects/{projectID}/oauth2/providers
       authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl,
+    },
+    setResponse: {
+      testing: false,
     },
     error: {
       errorFunction: (msg: string, response?: AxiosResponse) => {

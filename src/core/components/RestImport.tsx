@@ -56,6 +56,7 @@ export interface restImportConfigI {
     viewMode: boolean,
     setServiceName: string,
     setResponseHeaders?: any,
+    setResponse?: any,
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse) => void,
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
@@ -154,7 +155,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [contentTypes, setcontentTypes] = useState(defaultContentTypes)
     const [newContentType, setnewContentType] = useState('')
     const [responseEditorValue, setresponseEditorValue] = useState('')
-    const [response, setresponse] = useState<AxiosResponse>({ headers: restImportConfig.setResponseHeaders } as any)
+    const [response, setresponse] = useState<AxiosResponse>({ headers: restImportConfig.setResponseHeaders, data: restImportConfig.setResponse } as any)
     const [userName, setuserName] = useState(restImportConfig?.userName || '')
     const [userPassword, setuserPassword] = useState(restImportConfig?.userPassword || '')
     const [loading, setloading] = useState(false)
@@ -163,7 +164,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [btnDisable, setBtnDisable] = useState(false)
     const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
-    const [requestConfig, setrequestConfig] = useState<ICustomAxiosConfig>()
     const [serviceName, setserviceName] = useState(restImportConfig.setServiceName || "")
     const [serviceNameEnabled, setserviceNameEnabled] = useState(true)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
@@ -302,7 +302,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
         }
         newValue === 0 ? restImportConfig.hideMonacoEditor(false) : restImportConfig.hideMonacoEditor(true)
         setresponseTabValue(newValue)
-        restImportConfig.handleResponse(requestConfig as AxiosRequestConfig, response)
     };
     const handleChangehttpMethod = (event: SelectChangeEvent) => {
         sethttpMethod(event.target.value as any)
@@ -617,9 +616,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     }
                     setloading(true)
                     const config = useProxy ? configWProxy : configWOProxy
-                    setrequestConfig(config)
                     const response: any = await Apicall(config as AxiosRequestConfig)
-                    handleResponse(response)
+                    handleResponse(response, config)
                     setloading(false)
                 } else
                     throw new Error(translate("VALID_URL_ALERT"))
@@ -630,7 +628,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             handleToastError(error.message)
         }
     }
-    function handleResponse(response: any): void {
+    function handleResponse(response: any, request?: any): void {
         let responseValue;
         setserviceNameEnabled(false)
         if (useProxy) {
@@ -657,6 +655,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             responseValue = { data: response.message, status: response.code, headers: {} }
         }
         setresponse(responseValue as AxiosResponse)
+        restImportConfig.handleResponse(request, responseValue as AxiosResponse)
     }
     const handleCloseConfig = () => {
         setConfigOpen(false)
@@ -688,9 +687,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
             withCredentials: true
         }
         const config = useProxy ? configWProxy : configWOProxy
-        setrequestConfig(config)
         const response: any = await Apicall(config as AxiosRequestConfig)
-        handleResponse(response)
+        handleResponse(response, config)
         setloading(false)
     }
 
