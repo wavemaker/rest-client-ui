@@ -39,7 +39,7 @@ export default function App() {
       errorFunction: (msg: string, response?: AxiosResponse) => {
         alert(msg)
       },
-      errorMethod: "default",
+      errorMethod: "toast",
       errorMessageTimeout: 5000
     },
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse) => {
@@ -47,7 +47,7 @@ export default function App() {
     },
     hideMonacoEditor: (value: boolean) => { },
     getServiceName(value: string) { },
-    setServiceName: 'New2',
+    setServiceName: '',
     viewMode: false,
     setResponseHeaders: { kingkong: "test" },
   }

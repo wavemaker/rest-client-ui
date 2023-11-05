@@ -57,7 +57,7 @@ export interface restImportConfigI {
     setServiceName: string,
     setResponseHeaders?: any,
     setResponse?: any,
-    handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse) => void,
+    handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse, settingsUploadResponse?: any) => void,
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
 }
@@ -122,7 +122,6 @@ const defaultContentTypes = [
         label: 'text/plain', value: 'text/plain'
     },
 ]
-
 declare global {
     interface Window {
         google: any;
@@ -617,7 +616,20 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     setloading(true)
                     const config = useProxy ? configWProxy : configWOProxy
                     const response: any = await Apicall(config as AxiosRequestConfig)
-                    handleResponse(response, config)
+                    if (response.status >= 200 && response.status < 300) {
+                        const settingsUploadData = await settingsUpload(config, response)
+                        if (settingsUploadData) {
+                            setserviceNameEnabled(false)
+                            if (!restImportConfig.viewMode) {
+                                restImportConfig.getServiceName(settingsUploadData?.serviceId)
+                                setserviceName(settingsUploadData?.serviceId)
+                            }
+                            handleResponse(response, config, settingsUploadData)
+                        }
+                    } else {
+                        setserviceNameEnabled(true)
+                        handleResponse(response, config)
+                    }
                     setloading(false)
                 } else
                     throw new Error(translate("VALID_URL_ALERT"))
@@ -625,10 +637,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
             else
                 throw new Error(translate("VALID_URL_ALERT"))
         } catch (error: any) {
+            console.log(error)
             handleToastError(error.message)
         }
     }
-    function handleResponse(response: any, request?: any): void {
+    function handleResponse(response: any, request?: any, settingsUploadData?: any): void {
         let responseValue;
         setserviceNameEnabled(false)
         if (useProxy) {
@@ -637,7 +650,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     responseValue = { data: response.data.responseBody !== "" ? JSON.parse(response.data.responseBody) : response.data.responseBody, status: response?.data.statusCode, headers: response?.data.headers }
                 else {
                     responseValue = { data: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), status: response?.data.statusCode, headers: response?.data.headers }
-                    handleToastError(httpStatusCodes.get(response.response?.status) as string, response)
+                    handleToastError(httpStatusCodes.get(response?.data.statusCode) as string, response)
                 }
             else
                 responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
@@ -655,8 +668,59 @@ export default function RestImport({ language, restImportConfig }: { language: s
             responseValue = { data: response.message, status: response.code, headers: {} }
         }
         setresponse(responseValue as AxiosResponse)
-        restImportConfig.handleResponse(request, responseValue as AxiosResponse)
+        request.url = apiURL
+        restImportConfig.handleResponse(request, responseValue as AxiosResponse, settingsUploadData)
     }
+    async function settingsUpload(request: any, response: any) {
+        debugger
+        const headers = response.headers;
+        for (const key in headers) {
+            if (headers.hasOwnProperty(key)) {
+                // eslint-disable-next-line no-self-assign
+                headers[key] = headers[key];
+            }
+        }
+        const data = {
+            authDetails:
+                useProxy
+                    ? request?.data.authDetails
+                    : request?.authDetails,
+            contentType: 'application/json',
+            method: request?.method,
+            endpointAddress:
+                useProxy === true
+                    ? request?.data.endpointAddress
+                    : request?.url,
+            headers: request?.headers,
+            sampleHttpResponseDetails: {
+                headers: useProxy ? headers : request?.headers,
+                responseBody: useProxy ? response.data.responseBody : JSON.stringify(response?.data), // when useproxy is true return response.responseBody 
+                convertedResponse: null,
+                statusCode: response?.status,
+            },
+            requestBody: useProxy ? '' : request?.data,
+        };
+        const dataConfig: AxiosRequestConfig = {
+            url: restImportConfig.proxy_conf.base_path + 'services/projects/WMPRJ2c91808889a96400018a26070b7b2e68/restservice/settings',
+            data,
+            method: 'POST'
+        }
+        const settingsUploadResponse: any = await Apicall(dataConfig)
+        if (response.status >= 200 && response.status < 300) {
+            let settingsUploadResponseData = settingsUploadResponse.data
+            settingsUploadResponseData['proxySettings'] = {
+                mobile: useProxy ? 'PROXY' : 'DIRECT',
+                web: useProxy ? 'PROXY' : 'DIRECT',
+                withCredentials: false,
+            };
+            settingsUploadResponseData['serviceId'] = serviceName.trim() !== '' ? serviceName : settingsUploadResponseData['serviceId']
+            return settingsUploadResponseData
+        }
+        else {
+            handleToastError("Failed to get settings upload response", settingsUploadResponse)
+        }
+    }
+
     const handleCloseConfig = () => {
         setConfigOpen(false)
     }
