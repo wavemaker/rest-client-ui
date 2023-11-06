@@ -27,6 +27,7 @@ export const ProxyOFFConfig: restImportConfigI = {
     },
     state_val: "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
     default_proxy_state: "OFF", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
+    projectId: "",
     oAuthConfig: {
         base_path: "https://www.wavemakeronline.com/studio/services",
         proxy_path: "/proxy_path",

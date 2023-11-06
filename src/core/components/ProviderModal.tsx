@@ -44,6 +44,16 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
     const [defaultProviderIds, setDefaultProviderId] = useState([])
     const providers = useSelector((store: any) => store.slice.providerList)
 
+    useEffect(() => {
+        if (proxyObj.httpAuth?.type === 'OAUTH2') {
+            allProvider.forEach((provider: ProviderI) => {
+                if (provider.providerId === proxyObj.httpAuth?.providerId)
+                    setcurrentProvider(provider)
+            })
+        }
+    }, [allProvider, proxyObj])
+
+
     const handleOpenConfig = (provider: ProviderI | null) => {
         setcurrentProvider(provider)
         setopenConfig(true)

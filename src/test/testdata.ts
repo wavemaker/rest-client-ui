@@ -279,6 +279,7 @@ export const emptyConfig: restImportConfigI = {
     addprovider: "/addprovider",
     authorizationUrl: "/authorizationUrl",
   },
+  projectId: "",
   state_val:
     "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
   default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
@@ -314,8 +315,9 @@ const configWithData: restImportConfigI = {
   url: "https://wavemaker.com/users/{location}?sort=alpha",
   httpMethod: "POST",
   useProxy: true,
-  httpAuth: "BASIC",
+  httpAuth: { type: "OAUTH2", providerId: "google" },
   bodyParams: "{name:Ardella}",
+  projectId: "",
   userName: "Ardella",
   userPassword: "HBubkbai89",
   headerParams: [

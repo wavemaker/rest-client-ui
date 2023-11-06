@@ -450,7 +450,7 @@ describe("Web Service Modal", () => {
     const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
     expect(httpMethodDropdown).toHaveTextContent(new RegExp(config.httpMethod!, 'i'))
     const httpAuthDropdown = within(screen.getByTestId("http-auth")).getByRole("button")
-    expect(httpAuthDropdown).toHaveTextContent(new RegExp(config.httpAuth!, 'i'))
+    expect(httpAuthDropdown).toHaveTextContent(new RegExp(config.httpAuth?.type!, 'i'))
     await switchTab('HEADER PARAMS')
     const headerNameFields = await screen.findAllByRole('combobox')
     const paramTypeDropdowns = await screen.findAllByTestId('param-type')

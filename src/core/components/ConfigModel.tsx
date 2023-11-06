@@ -152,9 +152,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     }
 
     const handleValidation = async () => {
-
         const providerExists = customProviderList.some((provider: { providerId: string; }) => provider.providerId === providerId);
-
         setShowErrorAlert(true);
         if (!providerId) {
             setAlertMsg(translate("PROVIDERID_ALERT"))

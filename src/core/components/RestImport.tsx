@@ -35,9 +35,13 @@ export interface PathParamsI {
 }
 export interface restImportConfigI {
     url?: string
+    projectId: string
     httpMethod?: "GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT"
     useProxy?: boolean
-    httpAuth?: "NONE" | "BASIC" | "OAUTH2.0"
+    httpAuth?: {
+        type: "NONE" | "BASIC" | "OAUTH2",
+        providerId?: string,
+    },
     headerParams?: HeaderAndQueryI[]
     bodyParams?: string
     userName?: string
@@ -142,7 +146,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [useProxy, setuseProxy] = useState<boolean>(restImportConfig?.useProxy === true ? true : false)
     const [requestTabValue, setrequestTabValue] = useState(0)
     const [responseTabValue, setresponseTabValue] = useState(0)
-    const [httpAuth, sethttpAuth] = useState<"NONE" | "BASIC" | "OAUTH2.0">(restImportConfig?.httpAuth || 'NONE')
+    const [httpAuth, sethttpAuth] = useState<"NONE" | "BASIC" | "OAUTH2">(restImportConfig?.httpAuth?.type || 'NONE')
     const [providerOpen, setproviderOpen] = useState(false)
     const [headerParams, setheaderParams] = useState<HeaderAndQueryI[]>(restImportConfig?.headerParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
     const [queryParams, setqueryParams] = useState<HeaderAndQueryI[]>([defaultValueforHandQParams])
@@ -158,7 +162,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [userName, setuserName] = useState(restImportConfig?.userName || '')
     const [userPassword, setuserPassword] = useState(restImportConfig?.userPassword || '')
     const [loading, setloading] = useState(false)
-    const [providerId, setProviderId] = useState('')
+    const [providerId, setProviderId] = useState(restImportConfig.httpAuth?.providerId)
     const [configOpen, setConfigOpen] = useState(false)
     const [btnDisable, setBtnDisable] = useState(false)
     const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
@@ -280,7 +284,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         setmultipartParams(data)
     }
     const handleChangehttpAuth = (event: SelectChangeEvent) => {
-        if (event.target.value === 'OAUTH2.0' && !selectedProvider.providerId) {
+        if (event.target.value === 'OAUTH2' && !selectedProvider.providerId) {
             setBtnDisable(true)
         } else {
             setBtnDisable(false)
@@ -486,7 +490,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         body = formData
                     } else
                         body = bodyParams
-                    if (httpAuth === "OAUTH2.0") {
+                    if (httpAuth === "OAUTH2") {
                         let codeVerifier: string;
                         const clientId = selectedProvider.clientId;
                         let redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback` : restImportConfig?.oAuthConfig?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
@@ -672,7 +676,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
         restImportConfig.handleResponse(request, responseValue as AxiosResponse, settingsUploadData)
     }
     async function settingsUpload(request: any, response: any) {
-        debugger
         const headers = response.headers;
         for (const key in headers) {
             if (headers.hasOwnProperty(key)) {
@@ -680,6 +683,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 headers[key] = headers[key];
             }
         }
+        const constructHeaders: any = {};
+        headerParams.forEach((obj: any) => {
+            constructHeaders[obj.name] = obj.value;
+        });
         const data = {
             authDetails:
                 useProxy
@@ -691,17 +698,17 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 useProxy === true
                     ? request?.data.endpointAddress
                     : request?.url,
-            headers: request?.headers,
+            headers: constructHeaders,
             sampleHttpResponseDetails: {
                 headers: useProxy ? headers : request?.headers,
                 responseBody: useProxy ? response.data.responseBody : JSON.stringify(response?.data), // when useproxy is true return response.responseBody 
                 convertedResponse: null,
                 statusCode: response?.status,
             },
-            requestBody: useProxy ? '' : request?.data,
+            requestBody: request.body
         };
         const dataConfig: AxiosRequestConfig = {
-            url: restImportConfig.proxy_conf.base_path + 'services/projects/WMPRJ2c91808889a96400018a26070b7b2e68/restservice/settings',
+            url: restImportConfig.proxy_conf.base_path + `services/projects/${restImportConfig.projectId}/restservice/settings`,
             data,
             method: 'POST'
         }
@@ -885,7 +892,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             >
                                                 <MenuItem value={'NONE'}>{translate("NONE")}</MenuItem>
                                                 <MenuItem value={'BASIC'}>{translate("BASIC")}</MenuItem>
-                                                <MenuItem value={'OAUTH2.0'}>{translate("OAUTH")} 2.0</MenuItem>
+                                                <MenuItem value={'OAUTH2'}>{translate("OAUTH")} 2.0</MenuItem>
                                             </Select>
                                         </FormControl>
                                     </Grid>
@@ -917,7 +924,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </Stack>
                                         </Grid>
                                     </>}
-                                    {httpAuth === "OAUTH2.0" && <>
+                                    {httpAuth === "OAUTH2" && <>
                                         <Grid item md={3}>
                                             <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
                                         </Grid>
