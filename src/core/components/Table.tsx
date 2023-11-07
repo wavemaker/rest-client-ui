@@ -45,26 +45,25 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         pathParams: PathParamsI[], handleToastError: (msg: string) => void
     }) {
     const { t: translate } = useTranslation();
-
     const selectTypes =
     {
         UITypes: [
             { value: 'boolean', label: translate('BOOLEAN') },
             { value: 'date', label: translate('DATE') },
-            { value: 'datetime', label: translate('DATE') + " " + translate('TIME') },
+            { value: 'date-time', label: translate('DATE') + " " + translate('TIME') },
             { value: 'double', label: translate('DOUBLE') },
             { value: 'float', label: translate('FLOAT') },
-            { value: 'interger', label: translate('INTEGER') },
-            { value: 'long', label: translate('LONG') },
+            { value: 'int32', label: translate('INTEGER') },
+            { value: 'int64', label: translate('LONG') },
             { value: 'string', label: translate('STRING') },
         ],
         ServerSideProperties: [
-            { value: 'currentdate', label: translate('CURRENT') + " " + translate('DATE') },
-            { value: 'currentdatetime', label: translate('CURRENT') + " " + translate('DATE') + " " + translate('TIME') },
-            { value: 'currenttime', label: translate('CURRENT') + " " + translate('TIME') },
-            { value: 'currenttimestamp', label: translate('CURRENT') + " " + translate('TIMESTAMP') },
-            { value: 'loggedinuserid', label: translate('LOGGEDIN') + " " + translate('USERID') },
-            { value: 'loggedinusername', label: translate('LOGGEDIN') + " " + translate('USERNAME') },
+            { value: 'DATE', label: translate('CURRENT') + " " + translate('DATE') },
+            { value: 'DATETIME', label: translate('CURRENT') + " " + translate('DATE') + " " + translate('TIME') },
+            { value: 'TIME', label: translate('CURRENT') + " " + translate('TIME') },
+            { value: 'TIMESTAMP', label: translate('CURRENT') + " " + translate('TIMESTAMP') },
+            { value: 'USER_ID', label: translate('LOGGEDIN') + " " + translate('USERID') },
+            { value: 'USER_NAME', label: translate('LOGGEDIN') + " " + translate('USERNAME') },
         ],
         AppEnvironmentProperties: [
             { value: 'option1', label: translate('OPTION') + " " + 1 },

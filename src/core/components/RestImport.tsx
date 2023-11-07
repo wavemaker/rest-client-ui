@@ -43,6 +43,7 @@ export interface restImportConfigI {
         providerId?: string,
     },
     headerParams?: HeaderAndQueryI[]
+    queryParams?: HeaderAndQueryI[]
     bodyParams?: string
     userName?: string
     userPassword?: string
@@ -149,7 +150,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [httpAuth, sethttpAuth] = useState<"NONE" | "BASIC" | "OAUTH2">(restImportConfig?.httpAuth?.type || 'NONE')
     const [providerOpen, setproviderOpen] = useState(false)
     const [headerParams, setheaderParams] = useState<HeaderAndQueryI[]>(restImportConfig?.headerParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
-    const [queryParams, setqueryParams] = useState<HeaderAndQueryI[]>([defaultValueforHandQParams])
+    const [queryParams, setqueryParams] = useState<HeaderAndQueryI[]>(restImportConfig?.queryParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
     const [bodyParams, setbodyParams] = useState<string>(restImportConfig?.bodyParams || '')
     const [multipartParams, setmultipartParams] = useState<BodyParamsI[]>(restImportConfig?.multipartParams?.concat({ name: '', value: '', type: 'file', filename: '' }) || [{ name: '', value: '', type: 'file', filename: '' }])
     const [pathParams, setpathParams] = useState<PathParamsI[]>([])
@@ -389,12 +390,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         const originalURL = apiURL.split('?')[0]
                         setapiURL(originalURL + newQueryPart)
                     }
-                } else {
-                    setqueryParams([{ name: '', value: '', type: 'string' }])
                 }
-            }
-            else {
-                setqueryParams([{ name: '', value: '', type: 'string' }])
             }
         } catch (error: any) {
             handleToastError(error.message)

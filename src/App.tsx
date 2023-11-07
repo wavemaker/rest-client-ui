@@ -16,11 +16,17 @@ export default function App() {
       authorizationUrl: "authorizationUrl",
     },
     useProxy: true,
+    url: "http://localhost:4000/posts",
     projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     httpAuth: { type: 'OAUTH2', providerId: 'google' },
     headerParams: [{
       name: "new",
       type: "string",
+      value: "vew"
+    }],
+    queryParams: [{
+      name: "jh",
+      type: "TIME",
       value: "vew"
     }],
     state_val: "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
