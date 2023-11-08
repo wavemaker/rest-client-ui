@@ -13,7 +13,7 @@ import { ChangeEvent } from 'react';
 import { constructCommaSeparatedUniqueQueryValuesString, constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison, getCurrentDateTime, retrieveQueryDetailsFromURL } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
-import { PathParamsI } from './RestImport';
+import { PathParamsI, restImportConfigI } from './RestImport';
 import { useTranslation } from 'react-i18next';
 
 export interface HeaderAndQueryI {
@@ -38,14 +38,14 @@ export const TableRowStyled = styled(TableRow)`
   } 
 `;
 
-export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams, handleToastError }:
+export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams, handleToastError, restImportConfig }:
     {
         value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string,
         apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
-        pathParams: PathParamsI[], handleToastError: (msg: string) => void
+        pathParams: PathParamsI[], handleToastError: (msg: string) => void, restImportConfig: restImportConfigI
     }) {
     const { t: translate } = useTranslation();
-    const selectTypes =
+    var selectTypes =
     {
         UITypes: [
             { value: 'boolean', label: translate('BOOLEAN') },
@@ -65,10 +65,15 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             { value: 'USER_ID', label: translate('LOGGEDIN') + " " + translate('USERID') },
             { value: 'USER_NAME', label: translate('LOGGEDIN') + " " + translate('USERNAME') },
         ],
-        AppEnvironmentProperties: [
-            { value: 'option1', label: translate('OPTION') + " " + 1 },
-        ],
     }
+    const ServerSidePropertiesMap = new Map([
+        ["DATE", getCurrentDateTime(false, false)],
+        ["DATETIME", getCurrentDateTime(true, false)],
+        ["TIME", getCurrentDateTime(false, true)],
+        ["TIMESTAMP", Math.floor(Date.now() / 1000).toString()],
+        ["USER_ID", restImportConfig.loggenInUserId || ""],
+        ["USER_NAME", restImportConfig.loggenInUserName || ""]
+    ])
 
     const selectNames = [
         { value: 'accept', label: 'Accept' },
@@ -83,15 +88,6 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         { value: 'referer', label: 'Referer' },
         { value: 'user-agent', label: 'User-Agent' },
     ];
-
-    const ServerSidePropertiesMap = new Map([
-        ["currentdate", getCurrentDateTime(false, false)],
-        ["currentdatetime", getCurrentDateTime(true, false)],
-        ["currenttime", getCurrentDateTime(false, true)],
-        ["currenttimestamp", Math.floor(Date.now() / 1000).toString()],
-        ["loggedinuserid", ""],
-        ["loggedinusername", ""]
-    ])
 
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
@@ -159,7 +155,6 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         const lastRow = value[value.length - 1]
         const valueClone = [...value]
         const duplicates = findDuplicateObjectsWithinArray(valueClone, "name")
-
         const allDuplicates = (): any[] => {
             let returnDuplicates: any[] = []
             if (from === 'header') {
@@ -215,7 +210,6 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         else {
             handleToastError(translate("MANDATORY_ALERT"))
         }
-
     }
 
     function handleDeleteRow(currentIndex: number) {
@@ -257,6 +251,19 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             }
         }
     }
+
+    function getAppEnvProperties(): React.ReactNode {
+        const nodes: JSX.Element[] = [];
+        if (restImportConfig.appEnvVariables) {
+            restImportConfig.appEnvVariables?.forEach((data) => {
+                nodes.push(<MenuItem key={data.value} value={data.value}>{data.value}</MenuItem>);
+            });
+        } else {
+            nodes.push(<MenuItem disabled={true}>{translate('NO_PROPERTIES_FOUND')}</MenuItem>);
+        }
+        return nodes;
+    }
+
     return (
         <TableContainer component={Paper}>
             <Table>
@@ -310,7 +317,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                                             <ListSubheader>{translate("SERVER_SIDE") + " " + translate("PROPERTIES")}</ListSubheader>
                                             {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                             <ListSubheader>{translate("APPENVIRONMENT") + " " + translate("PROPERTIES")}</ListSubheader>
-                                            {selectTypes.AppEnvironmentProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                            {getAppEnvProperties()}
                                         </Select>
                                     </FormControl>
                                 </Stack>

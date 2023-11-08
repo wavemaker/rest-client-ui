@@ -62,11 +62,17 @@ export interface restImportConfigI {
     setServiceName: string,
     setResponseHeaders?: any,
     setResponse?: any,
+    loggenInUserId?: string,
+    loggenInUserName?: string,
+    appEnvVariables?: ITypes[],
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse, settingsUploadResponse?: any) => void,
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
 }
-
+interface ITypes {
+    key: string
+    value: string
+}
 export interface ICustomAxiosConfig extends AxiosRequestConfig {
     useProxy?: boolean,
     authDetails?: null | {
@@ -478,7 +484,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             index === headerParams.length - 1 && setheaderParams([...headerParams, { name: '', value: '', type: 'string' }])
                         }
                     })
-                    header['content-type'] = contentType
+                    header['Content-Type'] = contentType
                     if (contentType === 'multipart/form-data') {
                         const formData = new FormData()
                         multipartParams.forEach(data => {
@@ -692,10 +698,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     : request?.authDetails,
             contentType: 'application/json',
             method: request?.method,
-            endpointAddress:
-                useProxy === true
-                    ? request?.data.endpointAddress
-                    : request?.url,
+            endpointAddress: apiURL,
             headers: constructHeaders,
             sampleHttpResponseDetails: {
                 headers: useProxy ? headers : request?.headers,
@@ -945,7 +948,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 </Grid>
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={1}>
-                                <HeaderAndQueryTable handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                <HeaderAndQueryTable restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={2}>
                                 <Stack spacing={1} mt={2} ml={1}>
@@ -987,7 +990,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 </Stack>
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={3}>
-                                <HeaderAndQueryTable handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                <HeaderAndQueryTable restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                             </CustomTabPanel>
                             <CustomTabPanel value={requestTabValue} index={4}>
                                 {pathParams.length > 0 ? <TableContainer component={Paper}>

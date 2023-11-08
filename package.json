@@ -1,6 +1,6 @@
 {
   "name": "rest-import-wavemaker",
-  "version": "0.1.49",
+  "version": "0.1.54",
   "private": false,
   "main": "./dist/core/components/RestImport.js",
   "release": {
