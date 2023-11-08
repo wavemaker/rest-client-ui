@@ -321,7 +321,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             if (apiURL !== '') {
                 const query = apiURL?.split('?')[1]
                 const queries = query?.split('&')
-                if (query?.length > 0) {
+                if (queries?.length > 0) {
                     const queryNames = queries.map(query => ({ name: query.split('=')[0], value: query.split('=')[1] }))
                     let updatedQueryParams: HeaderAndQueryI[] = []
                     const isThisNewQuery = (name: string, value: string): boolean => {
@@ -390,6 +390,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         const originalURL = apiURL.split('?')[0]
                         setapiURL(originalURL + newQueryPart)
                     }
+                } else {
+                    setqueryParams([{ name: '', value: '', type: 'string' }])
                 }
             }
         } catch (error: any) {
