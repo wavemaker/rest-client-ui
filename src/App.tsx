@@ -8,8 +8,8 @@ import { AxiosRequestConfig, AxiosResponse } from 'axios';
 export default function App() {
   const config: restImportConfigI = {
     proxy_conf: {
-      base_path: "http://localhost:4000/",
-      proxy_path: "restimport",
+      base_path: "http://localhost:4200/",
+      proxy_path: "studio/services/projects/WMPRJ2c91808889a96400018a26070b7b2e68/restservices/invoke?optimizeResponse=true",
       list_provider: "get-default-provider",
       getprovider: "getprovider",
       addprovider: "addprovider",
@@ -17,13 +17,13 @@ export default function App() {
     },
     useProxy: true,
     url: "https://jsonplaceholder.typicode.com/posts",
-    projectId: "WMPRJ2c91808889a96400018a26070b7b2e68", 
+    projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     loggenInUserId: "fe",
     appEnvVariables: [{ key: 'we', value: 'ew' }],
     loggenInUserName: 'vew',
     headerParams: [{
       name: "new",
-      type: "string",
+      type: "DATE",
       value: "vew"
     }],
     queryParams: [{

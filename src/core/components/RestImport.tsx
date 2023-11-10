@@ -681,15 +681,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
     }
     async function settingsUpload(request: any, response: any) {
         const headers = response.headers;
-        for (const key in headers) {
-            if (headers.hasOwnProperty(key)) {
-                // eslint-disable-next-line no-self-assign
-                headers[key] = headers[key];
-            }
-        }
         const constructHeaders: any = {};
-        headerParams.forEach((obj: any) => {
-            constructHeaders[obj.name] = obj.value;
+        headerParams.forEach((obj) => {
+            if (obj.name !== '' && obj.value !== '')
+                constructHeaders[obj.name] = obj.value;
         });
         const data = {
             authDetails:
@@ -706,7 +701,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 convertedResponse: null,
                 statusCode: response?.status,
             },
-            requestBody: request.body
+            requestBody: request.body || ""
         };
         const dataConfig: AxiosRequestConfig = {
             url: restImportConfig.proxy_conf.base_path + `services/projects/${restImportConfig.projectId}/restservice/settings`,
@@ -716,6 +711,36 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const settingsUploadResponse: any = await Apicall(dataConfig)
         if (response.status >= 200 && response.status < 300) {
             let settingsUploadResponseData = settingsUploadResponse.data
+            const params: any[] = getParamsWithTypes(settingsUploadResponseData).paramaters
+            const firstKey = getParamsWithTypes(settingsUploadResponseData).firstKey
+            const secondKey = getParamsWithTypes(settingsUploadResponseData).secondKey
+            const headers = constructHeaders
+            const query = queryParams
+            params.forEach((param) => {
+                if (param.in === 'header') {
+                    for (const key in headers) {
+                        if (headers.hasOwnProperty(key)) {
+                            if (param.name === key) {
+                                const type = headerParams.find(param => param.name === key)?.type
+                                param['format'] = type
+                                param.items.type = type
+                            }
+                        }
+                    }
+                }
+                else if (param.in === 'query') {
+                    for (const key in query) {
+                        if (query.hasOwnProperty(key)) {
+                            if (param.name === key) {
+                                const type = queryParams.find(param => param.name === key)?.type
+                                param['format'] = type
+                                param.items.type = type
+                            }
+                        }
+                    }
+                }
+            })
+            settingsUploadResponseData.swagger.paths[firstKey][secondKey].parameters = params
             settingsUploadResponseData['proxySettings'] = {
                 mobile: useProxy ? 'PROXY' : 'DIRECT',
                 web: useProxy ? 'PROXY' : 'DIRECT',
@@ -724,11 +749,18 @@ export default function RestImport({ language, restImportConfig }: { language: s
             settingsUploadResponseData['serviceId'] = serviceName.trim() !== '' ? serviceName : settingsUploadResponseData['serviceId']
             return settingsUploadResponseData
         }
-        else {
+        else
             handleToastError("Failed to get settings upload response", settingsUploadResponse)
-        }
     }
-
+    function getParamsWithTypes(response: any): { paramaters: any[], firstKey: string, secondKey: string } {
+        const swaggerPaths = response.swagger.paths;
+        const [firstKey] = Object.keys(swaggerPaths);
+        const firstObject = swaggerPaths[firstKey];
+        const [secondKey] = Object.keys(firstObject);
+        const secondObject = firstObject[secondKey];
+        const paramaters = secondObject.parameters;
+        return { paramaters, firstKey, secondKey };
+    }
     const handleCloseConfig = () => {
         setConfigOpen(false)
     }

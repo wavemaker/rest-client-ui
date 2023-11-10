@@ -160,7 +160,7 @@ export const RESPONSE_TABS = [
   "RESPONSE HEADER",
   "RESPONSE STATUS",
 ];
-export const AUTH_OPTIONS = ["None", "Basic", "OAuth 2.0"];
+export const AUTH_OPTIONS = ["None", "Basic", "OAuth2"];
 export const ERROR_MESSAGES = {
   EMPTY_URL: "Please provide a valid URL",
   EMPTY_BASIC_AUTH_USERNAME: "Please enter a username for basic authentication",
@@ -204,7 +204,6 @@ export const HEADER_TYPE_OPTIONS = [
   "Current Timestamp",
   "LoggedIn UserId",
   "LoggedIn Username",
-  "Option 1",
 ];
 
 export const CONTENT_TYPE = [

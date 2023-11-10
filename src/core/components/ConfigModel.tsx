@@ -167,7 +167,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         } else if (!clientSecret && !PKCE) {
             setAlertMsg(translate('CLIENTSECRET_ALERT'))
         } else {
-
             setloading(true)
             setShowErrorAlert(false);
             const scopes_val: { name: string; value: string }[] = scopes.filter(item => item.checked).map(({ checked, ...rest }) => rest);
@@ -175,7 +174,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 result[item.name] = item.checked || false;
                 return result;
             }, {} as { [key: string]: boolean });
-
             const newProvider = {
                 accessTokenParamName: "Bearer",
                 accessTokenUrl: accessTokenUrl,
@@ -351,7 +349,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                 </IconButton>
                             </Tooltip>
                         </Grid>
-
                         {PKCE && (
                             <Grid item md={7} className='cmnflx' container>
                                 <Grid item md={5}>
@@ -369,10 +366,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                         </Select>
                                     </FormControl>
                                 </Grid>
-
                             </Grid>
                         )}
-
                         <Grid item md={3}>
                             <Typography>{translate("AUTHORIZATION") + " " + translate("URL")}  <span className='text-danger'>*</span></Typography>
                         </Grid>
@@ -396,7 +391,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                 <Grid item md={3} >
                                     <Typography>{translate("CLIENT") + " " + translate("SECRET")} <span className='text-danger'>*</span></Typography>
                                 </Grid>
-
                                 <Grid item md={9}>
                                     <TextField sx={{ width: "30em" }} defaultValue={providerConf?.clientSecret} size='small' onChange={handleClientSecret} placeholder={translate("CLIENT") + " " + translate("SECRET")} label={translate("CLIENT") + " " + translate("SECRET")} />
                                 </Grid>
@@ -421,7 +415,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             <Typography>{translate("SCOPE")}</Typography>
                         </Grid>
                         <Grid item md={9}>
-
                             <Grid className='cmnflx' spacing={1} container>
                                 <Grid item md={12}>
                                     <Stack>

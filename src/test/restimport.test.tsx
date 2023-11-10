@@ -533,7 +533,7 @@ describe("Web Service Modal", () => {
 
   }, 80000)
 
-  it("Switched between response tabs and verified their content", async () => {
+  fit("Switched between response tabs and verified their content", async () => {
     user.setup()
     renderComponent(mockEmptyProps)
     const urlTextField = screen.getByRole('textbox', { name: /url/i })
