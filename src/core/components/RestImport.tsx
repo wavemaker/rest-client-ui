@@ -708,7 +708,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             const secondKey = getParamsWithTypes(settingsUploadResponseData).secondKey
             const headers = constructHeaders
             const query = queryParams
-            if (params.length > 0) {
+            if (params && params.length > 0) {
                 params?.forEach((param) => {
                     if (param.in === 'header') {
                         for (const key in headers) {
