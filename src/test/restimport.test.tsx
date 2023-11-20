@@ -907,12 +907,12 @@ describe("Web Service Modal", () => {
 
   it("Test OAuth 2.0 [Google Implicit Flow - Error]", async () => {
     sessionData.clear()
-    const props = getCustomizedProps(undefined, undefined, "/getprovider_error")
+    const props = getCustomizedProps(undefined, undefined, "getprovider_error") 
     user.setup();
     renderComponent(props);
     await selectOptionFromDropdown("http-auth", "OAuth 2.0");
     await user.click(await screen.findByTestId("select-provider"));
-    await user.click(await screen.findByText(/google/i, {}, { timeout: 5000 }));
+    await user.click(await screen.findByText(/google/i, {}, { timeout: 5000 })); 
     expect(within(await screen.findByTestId("provider-name", {}, { timeout: 2000 })).getByRole("textbox", { hidden: true, })).toHaveValue("google");
     const urlTextField = await screen.findByRole("textbox", { name: /url/i }, { timeout: 5000 });
     await user.type(urlTextField, endPoints.googleUserInfo);

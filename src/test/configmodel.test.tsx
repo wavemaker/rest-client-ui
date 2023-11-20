@@ -54,10 +54,10 @@ function renderComponent(type: string) {
     } else if (type === 'withOAuthConfig') {
         copymockProps.proxyObj['default_proxy_state'] = 'OFF'
     } else if (type === 'withAddProviderAPIError') {
-        copymockProps.proxyObj.proxy_conf['addprovider'] = '/addErrorproviders'
+        copymockProps.proxyObj.proxy_conf['addprovider'] = 'addErrorproviders'
     } else if (type === 'withListAPIError') {
-        copymockProps.proxyObj.proxy_conf['addprovider'] = '/addprovider'
-        copymockProps.proxyObj.proxy_conf['getprovider'] = '/getproviderError'
+        copymockProps.proxyObj.proxy_conf['addprovider'] = 'addprovider'
+        copymockProps.proxyObj.proxy_conf['getprovider'] = 'getproviderError'
     }
 
 
@@ -597,7 +597,9 @@ describe("Config Modal", () => {
         renderComponent('ProviderConfigWithPKCEBasic')
         const modalTitle = screen.getByRole('heading', { name: /oauth provider configuration help/i })
         expect(modalTitle).toBeInTheDocument();
+
         await checkAllFieldPrefilled()
+
         const pkce = within(screen.getByTestId("pkce-checkbox")).getByRole("checkbox")
         expect(pkce).toBeChecked()
         const challengeMethod = within(screen.getByTestId("challenge-method")).getByRole("button")
