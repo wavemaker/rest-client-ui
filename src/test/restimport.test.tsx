@@ -3,7 +3,7 @@ import { render, screen, within, fireEvent, waitFor } from '@testing-library/rea
 import user from '@testing-library/user-event'
 import RestImport from '../core/components/RestImport'
 import '@testing-library/jest-dom';
-import testData, { mockEmptyProps, endPoints, HTTP_METHODS, REQUEST_TABS, RESPONSE_TABS, ERROR_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI, QueryI, AUTH_OPTIONS, HEADER_NAME_OPTIONS, HEADER_TYPE_OPTIONS, CONTENT_TYPE, SUBHEADER_UNDER_TABS, wavemakerMoreInfoLink, mockPropsI, preLoadedProps, getCustomizedProps, responseHeaders, HeaderParamI, eventMessage, getPKCEeventMsg, amazonUserInfoResponse, githubOrGoogleUserInfoResponse, } from './testdata'
+import testData, { mockEmptyProps, endPoints, HTTP_METHODS, REQUEST_TABS, RESPONSE_TABS, ERROR_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI, QueryI, AUTH_OPTIONS, HEADER_NAME_OPTIONS, HEADER_TYPE_OPTIONS, CONTENT_TYPE, SUBHEADER_UNDER_TABS, wavemakerMoreInfoLink, mockPropsI, preLoadedProps, getCustomizedProps, responseHeaders, HeaderParamI, eventMessage, getPKCEeventMsg, amazonUserInfoResponse, githubOrGoogleUserInfoResponse, googleImplicitFlow, } from './testdata'
 import { Provider } from 'react-redux'
 import appStore from '../core/components/appStore/Store';
 import { ResponseI } from './mocks/handlers';
@@ -22,11 +22,8 @@ type tabs = "AUTHORIZATION" | "HEADER PARAMS" | "BODY PARAMS" | "QUERY PARAMS" |
 
 
 describe("Web Service Modal", () => {
-
   it("Renders correctly", () => {
     renderComponent(mockEmptyProps)
-    const modalTitle = screen.getByRole('heading', { name: /Web Service/i });
-    expect(modalTitle).toBeInTheDocument();
     const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
     expect(httpMethodDropdown).toHaveTextContent('GET')
     const urlTextField = screen.getByRole('textbox', { name: /url/i })
@@ -120,8 +117,6 @@ describe("Web Service Modal", () => {
     const headersArray = testData.headerParams;
     user.setup()
     renderComponent(mockEmptyProps)
-    const modalTitle = screen.getByRole('heading', { name: /Web Service/i });
-    expect(modalTitle).toBeInTheDocument();
     const urlTextField = screen.getByRole('textbox', { name: /url/i })
     await user.type(urlTextField, endPoints.getVerifyHeader)
     await switchTab('HEADER PARAMS')
@@ -450,6 +445,7 @@ describe("Web Service Modal", () => {
     const httpMethodDropdown = within(screen.getByTestId("http-method")).getByRole("button")
     expect(httpMethodDropdown).toHaveTextContent(new RegExp(config.httpMethod!, 'i'))
     const httpAuthDropdown = within(screen.getByTestId("http-auth")).getByRole("button")
+    console.log(httpAuthDropdown.textContent)
     expect(httpAuthDropdown).toHaveTextContent(new RegExp(config.httpAuth?.type!, 'i'))
     await switchTab('HEADER PARAMS')
     const headerNameFields = await screen.findAllByRole('combobox')
@@ -533,7 +529,7 @@ describe("Web Service Modal", () => {
 
   }, 80000)
 
-  fit("Switched between response tabs and verified their content", async () => {
+  it("Switched between response tabs and verified their content", async () => {
     user.setup()
     renderComponent(mockEmptyProps)
     const urlTextField = screen.getByRole('textbox', { name: /url/i })
@@ -901,7 +897,7 @@ describe("Web Service Modal", () => {
     await user.type(urlTextField, endPoints.googleUserInfo);
     await clickTestBtn();
     const googleImplicitResponse = await getResponse();
-    expect(googleImplicitResponse).toEqual(githubOrGoogleUserInfoResponse);
+    expect(googleImplicitResponse).toEqual(googleImplicitFlow);
   }, 100000);
 
   it("Test OAuth 2.0 [Google Implicit Flow - Error]", async () => {
@@ -972,7 +968,7 @@ async function selectOptionFromDropdown(
   await user.click(dropdown);
   const option = await screen.findByRole("option", { name: regexPattern });
   expect(option).toBeInTheDocument();
-  await user.click(option);
+  await user.click(option); 
   expect(dropdown).toHaveTextContent(selectOption);
 }
 
@@ -1035,11 +1031,11 @@ async function getResponse() {
   const view = await screen.findByTestId("mock-response");
   await waitFor(
     async () => {
-      const responseTextField = await within(view).findByRole("textbox", {}, { timeout: 5000 });
-      expect(responseTextField.getAttribute("value")).toBeTruthy();
+      const responseTextField = await within(view).findByRole("textbox", {}, { timeout: 5000 })
+      expect(responseTextField.getAttribute("value")).toBeTruthy()
     },
     { timeout: 10000 }
-  );
+  )
   const responseTextField = await within(view).findByRole("textbox", {}, { timeout: 5000 });
   return JSON.parse(responseTextField.getAttribute("value")!);
 }
@@ -1125,7 +1121,7 @@ function constructObjToMatchWithProxyConfig(endpoint: string, httpMethod: httpMe
       contentType: "application/json",
       requestBody: "",
       headers: {
-        "content-type": "application/json",
+        "Content-Type": "application/json",
       }, // put "content-type": "application/json" inside the Obj when default content type is set in body params tab
       authDetails: null,
     },

@@ -164,7 +164,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [addCustomType, setaddCustomType] = useState(false)
     const [contentTypes, setcontentTypes] = useState(defaultContentTypes)
     const [newContentType, setnewContentType] = useState('')
-    const [responseEditorValue, setresponseEditorValue] = useState('')
     const [response, setresponse] = useState<AxiosResponse>({ headers: restImportConfig.setResponseHeaders, data: restImportConfig.setResponse } as any)
     const [userName, setuserName] = useState(restImportConfig?.userName || '')
     const [userPassword, setuserPassword] = useState(restImportConfig?.userPassword || '')
@@ -302,14 +301,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
         setrequestTabValue(newValue);
     };
     const handleChangeResponseTabs = (event: any, newValue: number) => {
-        switch (newValue) {
-            case 0:
-                setresponseEditorValue(JSON.stringify(response?.data, undefined, 2))
-                break
-            case 1:
-                setresponseEditorValue(JSON.stringify(response?.headers, undefined, 2))
-                break
-        }
         newValue === 0 ? restImportConfig.hideMonacoEditor(false) : restImportConfig.hideMonacoEditor(true)
         setresponseTabValue(newValue)
     };
@@ -497,7 +488,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     if (httpAuth === "OAUTH2") {
                         let codeVerifier: string;
                         const clientId = selectedProvider.clientId;
-                        let redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + `/oauth2/${selectedProvider.providerId}/callback` : restImportConfig?.oAuthConfig?.base_path + `/oauth2/${selectedProvider.providerId}/callback`;
+                        let redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + `oauth2/${selectedProvider.providerId}/callback` : restImportConfig?.oAuthConfig?.base_path + `oauth2/${selectedProvider.providerId}/callback`;
                         const responseType = "code";
                         const state = restImportConfig.state_val
                         const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
@@ -547,7 +538,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     window.crypto.subtle.digest("SHA-256", data)
                                         .then(hashBuffer => {
                                             const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                            authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
+                                            authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
                                             childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                                         })
                                         .catch(error => {
@@ -556,7 +547,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 }
                             } else {
                                 authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
-                                childWindow = window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             }
                             // providerAuthURL
                             setloading(true)
@@ -569,8 +560,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     }
                                 }, 1000);
                                 const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
-                                    const basePath = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path : restImportConfig?.oAuthConfig?.base_path
-                                    if (event.origin === basePath && event.data.tokenData) {
+                                    if (event.data.tokenData) {
                                         clearInterval(interval);
                                         const tokenData = JSON.parse(event.data.tokenData)
                                         window.sessionStorage.setItem(selectedProvider.providerId + "access_token", tokenData.access_token);
@@ -581,7 +571,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         header['Authorization'] = `Bearer ` + tokenData.access_token
                                         handleRestAPI(header);
                                         window.removeEventListener('message', messageHandler);
-                                    } else if (event.origin === basePath && event.data.code) {
+                                    } else if (event.data.code) {
                                         clearInterval(interval);
                                         getAccessToken(event.data.code, codeVerifier)
                                         setloading(false)
@@ -600,7 +590,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         headers: header,
                         method: httpMethod,
                         data: body,
-                        authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAuth2", providerId: providerId },
+                        authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
                         useProxy: useProxy
                     }
                     const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
@@ -612,7 +602,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             "contentType": contentType,
                             "requestBody": body,
                             "headers": header,
-                            "authDetails": httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAuth2", providerId: providerId },
+                            "authDetails": httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
                         },
                         method: "POST",
                         headers: {
@@ -682,7 +672,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     async function settingsUpload(request: any, response: any) {
         const headers = response.headers;
         const constructHeaders: any = {};
-        headerParams.forEach((obj) => {
+        headerParams?.forEach((obj) => {
             if (obj.name !== '' && obj.value !== '')
                 constructHeaders[obj.name] = obj.value;
         });
@@ -716,31 +706,33 @@ export default function RestImport({ language, restImportConfig }: { language: s
             const secondKey = getParamsWithTypes(settingsUploadResponseData).secondKey
             const headers = constructHeaders
             const query = queryParams
-            params.forEach((param) => {
-                if (param.in === 'header') {
-                    for (const key in headers) {
-                        if (headers.hasOwnProperty(key)) {
-                            if (param.name === key) {
-                                const type = headerParams.find(param => param.name === key)?.type
-                                param['format'] = type
-                                param.items.type = type
+            if (params.length > 0) {
+                params?.forEach((param) => {
+                    if (param.in === 'header') {
+                        for (const key in headers) {
+                            if (headers.hasOwnProperty(key)) {
+                                if (param.name === key) {
+                                    const type = headerParams.find(param => param.name === key)?.type
+                                    param['format'] = type
+                                    param.items.type = type
+                                }
                             }
                         }
                     }
-                }
-                else if (param.in === 'query') {
-                    for (const key in query) {
-                        if (query.hasOwnProperty(key)) {
-                            if (param.name === key) {
-                                const type = queryParams.find(param => param.name === key)?.type
-                                param['format'] = type
-                                param.items.type = type
+                    else if (param.in === 'query') {
+                        for (const key in query) {
+                            if (query.hasOwnProperty(key)) {
+                                if (param.name === key) {
+                                    const type = queryParams.find(param => param.name === key)?.type
+                                    param['format'] = type
+                                    param.items.type = type
+                                }
                             }
                         }
                     }
-                }
-            })
-            settingsUploadResponseData.swagger.paths[firstKey][secondKey].parameters = params
+                })
+                settingsUploadResponseData.swagger.paths[firstKey][secondKey].parameters = params
+            }
             settingsUploadResponseData['proxySettings'] = {
                 mobile: useProxy ? 'PROXY' : 'DIRECT',
                 web: useProxy ? 'PROXY' : 'DIRECT',
@@ -771,7 +763,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             headers: header,
             method: httpMethod,
             data: bodyParams,
-            authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAuth2", providerId: providerId }
+            authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId }
         }
         const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
         const configWProxy: AxiosRequestConfig = {
@@ -782,7 +774,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 "contentType": contentType,
                 "requestBody": bodyParams,
                 "headers": header,
-                "authDetails": httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAuth2", providerId: providerId },
+                "authDetails": httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
             },
             method: "POST",
             headers: {
@@ -811,7 +803,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             code: code,
             client_id: selectedProvider.clientId,
             code_verifier: codeVerifier,
-            redirect_uri: restImportConfig?.proxy_conf?.base_path + '/oAuthCallback.html',
+            redirect_uri: restImportConfig?.proxy_conf?.base_path + 'oAuthCallback.html',
         }
         const configToken: AxiosRequestConfig = {
             url: selectedProvider.accessTokenUrl,
@@ -822,7 +814,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             data: reqParams
         }
         let header: any = {};
-        headerParams.forEach((data) => {
+        headerParams?.forEach((data) => {
             if (data.name && data.value)
                 header[data.name] = data.value
         })
@@ -1104,7 +1096,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     proxyObj={restImportConfig}
                 />
                 <div style={{ position: 'relative', height: '0px' }}>
-                    <TextField data-testid="mock-response" value={responseEditorValue} disabled={true} sx={{ position: 'absolute', left: -10000, top: -10000 }}></TextField>
+                    <TextField sx={{ position: 'absolute', left: -10000, top: -10000 }} data-testid="mock-response" value={responseTabValue === 0 ? JSON.stringify(response.data) : JSON.stringify(response.headers)} disabled={true}></TextField>
                 </div>
             </Stack>
         </ThemeProvider>

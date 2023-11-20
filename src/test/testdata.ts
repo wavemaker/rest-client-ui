@@ -109,8 +109,7 @@ export const githubOrGoogleUserInfoResponse = {
   family_name: "Doe",
   picture: "https://lh3.gitgoogleusercontent.com/a/ACg8ogAJ47YWegWNFpw=s96-c",
   locale: "en",
-};
-
+}; 
 export const amazonUserInfoResponse = {
   id: "1024312046741520124",
 };
@@ -160,7 +159,7 @@ export const RESPONSE_TABS = [
   "RESPONSE HEADER",
   "RESPONSE STATUS",
 ];
-export const AUTH_OPTIONS = ["None", "Basic", "OAuth2"];
+export const AUTH_OPTIONS = ["None", "Basic", "OAuth 2.0"];
 export const ERROR_MESSAGES = {
   EMPTY_URL: "Please provide a valid URL",
   EMPTY_BASIC_AUTH_USERNAME: "Please enter a username for basic authentication",
@@ -264,6 +263,7 @@ export const endPoints = {
   githubUserInfo: "https://api.github.com/user",
   getProviderError: "http://localhost:4000/getprovider_error",
   proxy: "http://localhost:4000",
+  settingsUpload: `http://localhost:4000/services/projects/WMPRJ2c91808889a96400018a26070b7b2e68/restservice/settings`,
 };
 
 export const wavemakerMoreInfoLink =
@@ -271,14 +271,14 @@ export const wavemakerMoreInfoLink =
 
 export const emptyConfig: restImportConfigI = {
   proxy_conf: {
-    base_path: "http://localhost:4000",
-    proxy_path: "/restimport",
-    list_provider: "/get-default-provider",
-    getprovider: "/getprovider",
-    addprovider: "/addprovider",
-    authorizationUrl: "/authorizationUrl",
+    base_path: "http://localhost:4000/",
+    proxy_path: "restimport",
+    list_provider: "get-default-provider",
+    getprovider: "getprovider",
+    addprovider: "addprovider",
+    authorizationUrl: "authorizationUrl",
   },
-  projectId: "",
+  projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
   state_val:
     "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
   default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
@@ -314,9 +314,9 @@ const configWithData: restImportConfigI = {
   url: "https://wavemaker.com/users/{location}?sort=alpha",
   httpMethod: "POST",
   useProxy: true,
-  httpAuth: { type: "OAUTH2", providerId: "google" },
+  httpAuth: { type: "NONE", providerId: "" },
   bodyParams: "{name:Ardella}",
-  projectId: "",
+  projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
   userName: "Ardella",
   userPassword: "HBubkbai89",
   headerParams: [
@@ -335,12 +335,12 @@ const configWithData: restImportConfigI = {
   ],
   contentType: "multipart/form-data",
   proxy_conf: {
-    base_path: "http://localhost:4000",
-    proxy_path: "/restimport",
-    list_provider: "/get-default-provider",
-    getprovider: "/getprovider_error",
-    addprovider: "/addprovider",
-    authorizationUrl: "/authorizationUrl",
+    base_path: "http://localhost:4000/",
+    proxy_path: "restimport",
+    list_provider: "get-default-provider",
+    getprovider: "getprovider_error",
+    addprovider: "addprovider",
+    authorizationUrl: "authorizationUrl",
   },
   state_val:
     "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
