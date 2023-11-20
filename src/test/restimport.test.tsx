@@ -3,7 +3,12 @@ import { render, screen, within, fireEvent, waitFor } from '@testing-library/rea
 import user from '@testing-library/user-event'
 import RestImport from '../core/components/RestImport'
 import '@testing-library/jest-dom';
-import testData, { mockEmptyProps, endPoints, HTTP_METHODS, REQUEST_TABS, RESPONSE_TABS, ERROR_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI, QueryI, AUTH_OPTIONS, HEADER_NAME_OPTIONS, HEADER_TYPE_OPTIONS, CONTENT_TYPE, SUBHEADER_UNDER_TABS, wavemakerMoreInfoLink, mockPropsI, preLoadedProps, getCustomizedProps, responseHeaders, HeaderParamI, eventMessage, getPKCEeventMsg, amazonUserInfoResponse, githubOrGoogleUserInfoResponse, googleImplicitFlow, } from './testdata'
+import testData, {
+  mockEmptyProps, endPoints, HTTP_METHODS, REQUEST_TABS, RESPONSE_TABS, ERROR_MESSAGES, GENERAL_PARAM_STRUCTURE, PathParamI,
+  QueryI, AUTH_OPTIONS, HEADER_NAME_OPTIONS, HEADER_TYPE_OPTIONS, CONTENT_TYPE, SUBHEADER_UNDER_TABS, wavemakerMoreInfoLink, mockPropsI,
+  preLoadedProps, getCustomizedProps, responseHeaders, HeaderParamI, eventMessage, getPKCEeventMsg, amazonUserInfoResponse,
+  githubOrGoogleUserInfoResponse,
+} from './testdata'
 import { Provider } from 'react-redux'
 import appStore from '../core/components/appStore/Store';
 import { ResponseI } from './mocks/handlers';
@@ -897,7 +902,7 @@ describe("Web Service Modal", () => {
     await user.type(urlTextField, endPoints.googleUserInfo);
     await clickTestBtn();
     const googleImplicitResponse = await getResponse();
-    expect(googleImplicitResponse).toEqual(googleImplicitFlow);
+    expect(googleImplicitResponse).toEqual(githubOrGoogleUserInfoResponse);
   }, 100000);
 
   it("Test OAuth 2.0 [Google Implicit Flow - Error]", async () => {
@@ -968,7 +973,7 @@ async function selectOptionFromDropdown(
   await user.click(dropdown);
   const option = await screen.findByRole("option", { name: regexPattern });
   expect(option).toBeInTheDocument();
-  await user.click(option); 
+  await user.click(option);
   expect(dropdown).toHaveTextContent(selectOption);
 }
 
