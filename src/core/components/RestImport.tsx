@@ -547,7 +547,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 }
                             } else {
                                 authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
-                                childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                childWindow = window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             }
                             // providerAuthURL
                             setloading(true)
@@ -672,10 +672,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
     async function settingsUpload(request: any, response: any) {
         const headers = response.headers;
         const constructHeaders: any = {};
-        headerParams?.forEach((obj) => {
-            if (obj.name !== '' && obj.value !== '')
-                constructHeaders[obj.name] = obj.value;
-        });
+        if (headerParams.length > 1) {
+            headerParams?.forEach((obj) => {
+                if (obj.name !== '' && obj.value !== '')
+                    constructHeaders[obj.name] = obj.value;
+            });
+        }
         const data = {
             authDetails:
                 useProxy
