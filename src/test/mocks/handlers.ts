@@ -1,5 +1,12 @@
 import { rest } from "msw";
-import testData, { endPoints, responseHeaders, amazonTokenDataObj, amazonUserInfoResponse, githubTokenDataObj, githubOrGoogleUserInfoResponse } from "../testdata";
+import testData, {
+  endPoints,
+  responseHeaders,
+  amazonTokenDataObj,
+  amazonUserInfoResponse,
+  githubTokenDataObj,
+  githubOrGoogleUserInfoResponse,
+} from "../testdata";
 
 export const handlers = [
   rest.get(endPoints.getUsers, (req, res, ctx) => {
@@ -128,8 +135,8 @@ export const handlers = [
         error
           ? "Cannot process the request due to a client error"
           : actualError
-            ? actualResponse
-            : proxyResponse
+          ? actualResponse
+          : proxyResponse
       )
     );
   }),
@@ -191,23 +198,22 @@ export const handlers = [
         accessTokenParamName: "Bearer",
         oAuth2Pkce: {
           enabled: true,
-          challengeMethod: "S256"
+          challengeMethod: "S256",
         },
         scopes: [
           {
             name: "profile",
-            value: "https://www.googleapis.com/auth/userinfo.profile"
-          }
+            value: "https://www.googleapis.com/auth/userinfo.profile",
+          },
         ],
         oauth2Flow: "AUTHORIZATION_CODE",
-        responseType: "token"
+        responseType: "token",
       },
       {
         providerId: "amazon",
         authorizationUrl: "https://www.amazon.com/ap/oa",
         accessTokenUrl: "https://api.amazon.com/auth/o2/token",
-        clientId:
-          "amzn1.application-oa2-client.5feff3f3teh4g3t38a7398",
+        clientId: "amzn1.application-oa2-client.5feff3f3teh4g3t38a7398",
         clientSecret: "",
         sendAccessTokenAs: "HEADER",
         accessTokenParamName: "Bearer",
@@ -229,67 +235,70 @@ export const handlers = [
   }),
 
   rest.get(endPoints.getProviderError, async (req, res, ctx) => {
-    const response = [{
-      providerId: "google",
-      authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
-      accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
-      clientId: "error_client_id",
-      clientSecret: "JHFOLSKJDID",
-      sendAccessTokenAs: "HEADER",
-      accessTokenParamName: "Bearer",
-      oAuth2Pkce: {
-        enabled: true,
-        challengeMethod: "S256"
+    const response = [
+      {
+        providerId: "google",
+        authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
+        accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
+        clientId: "error_client_id",
+        clientSecret: "JHFOLSKJDID",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: "Bearer",
+        oAuth2Pkce: {
+          enabled: true,
+          challengeMethod: "S256",
+        },
+        scopes: [
+          {
+            name: "profile",
+            value: "https://www.googleapis.com/auth/userinfo.profile",
+          },
+        ],
+        oauth2Flow: "AUTHORIZATION_CODE",
+        responseType: "token",
       },
-      scopes: [
-        {
-          name: "profile",
-          value: "https://www.googleapis.com/auth/userinfo.profile"
-        }
-      ],
-      oauth2Flow: "AUTHORIZATION_CODE",
-      responseType: "token"
-    }]
+    ];
 
     return res(ctx.status(200), ctx.json(response));
   }),
 
   rest.get(endPoints.listProvider, async (req, res, ctx) => {
-    const response = [{
-      providerId: "dropbox",
-      authorizationUrl: "https://www.dropbox.com/1/oauth2/authorize",
-      accessTokenUrl: "https://api.dropbox.com/1/oauth2/token",
-      sendAccessTokenAs: "HEADER",
-      accessTokenParamName: null,
-      scopes: [],
-    },
-    {
-      providerId: "amazon",
-      authorizationUrl: "https://www.amazon.com/ap/oa",
-      accessTokenUrl: "https://api.amazon.com/auth/o2/token",
-      sendAccessTokenAs: "HEADER",
-      accessTokenParamName: null,
-      scopes: [{ name: "Basic Profile", value: "profile" }],
-    },
-    {
-      providerId: "google",
-      authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
-      accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
-      sendAccessTokenAs: "HEADER",
-      accessTokenParamName: null,
-      scopes: [
-        {
-          name: "Calendar",
-          value:
-            "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.readonly",
-        },
-        {
-          name: "Google Drive",
-          value:
-            "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.photos.readonly",
-        },
-      ],
-    },
+    const response = [
+      {
+        providerId: "dropbox",
+        authorizationUrl: "https://www.dropbox.com/1/oauth2/authorize",
+        accessTokenUrl: "https://api.dropbox.com/1/oauth2/token",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: null,
+        scopes: [],
+      },
+      {
+        providerId: "amazon",
+        authorizationUrl: "https://www.amazon.com/ap/oa",
+        accessTokenUrl: "https://api.amazon.com/auth/o2/token",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: null,
+        scopes: [{ name: "Basic Profile", value: "profile" }],
+      },
+      {
+        providerId: "google",
+        authorizationUrl: "https://accounts.google.com/o/oauth2/auth",
+        accessTokenUrl: "https://www.googleapis.com/oauth2/v3/token",
+        sendAccessTokenAs: "HEADER",
+        accessTokenParamName: null,
+        scopes: [
+          {
+            name: "Calendar",
+            value:
+              "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.readonly",
+          },
+          {
+            name: "Google Drive",
+            value:
+              "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.photos.readonly",
+          },
+        ],
+      },
     ];
     return res(ctx.status(200), ctx.json(response));
   }),
@@ -324,8 +333,7 @@ export const handlers = [
         providerId: "Provider Sample",
         authorizationUrl: "https://petstore.swagger.io/oauth/authorize",
         accessTokenUrl: "",
-        clientId:
-          "63934jds9823.googleusercontent.com",
+        clientId: "63934jds9823.googleusercontent.com",
         clientSecret: "SDFSDWRTRG",
         sendAccessTokenAs: "HEADER",
         accessTokenParamName: "Bearer",
@@ -338,8 +346,7 @@ export const handlers = [
         providerId: "google",
         authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
         accessTokenUrl: "https://oauth2.googleapis.com/token",
-        clientId:
-          "98hj783439sjkd83.apps.googleusercontent.com",
+        clientId: "98hj783439sjkd83.apps.googleusercontent.com",
         clientSecret: "AKLSDISDKSDIS",
         sendAccessTokenAs: "HEADER",
         accessTokenParamName: "Bearer",
@@ -435,13 +442,29 @@ export const handlers = [
   ),
   rest.get(endPoints.googleUserInfo, async (req, res, ctx) => {
     const requestHeaders = req.headers.all();
-    const statusCode = requestHeaders["authorization"] === `Bearer google_implicit_flow_accessToken` ? 200 : 401;
-    return res(ctx.status(statusCode), ctx.json(statusCode === 200 ? githubOrGoogleUserInfoResponse : "Invalid authorization credentials"));
+    const statusCode =
+      requestHeaders["authorization"] ===
+      `Bearer google_implicit_flow_accessToken`
+        ? 200
+        : 401;
+    return res(
+      ctx.status(statusCode),
+      ctx.json(
+        statusCode === 200
+          ? githubOrGoogleUserInfoResponse
+          : "Invalid authorization credentials"
+      )
+    );
   }),
 
   rest.get(endPoints.amazonUserInfo, (req, res, ctx) => {
     const requestHeaders = req.headers.all();
-    const statusCode = (requestHeaders["authorization"] === `Bearer ${amazonTokenDataObj.access_token}` && !requestHeaders["accept-language"]) ? 200 : 401;
+    const statusCode =
+      requestHeaders["authorization"] ===
+        `Bearer ${amazonTokenDataObj.access_token}` &&
+      !requestHeaders["accept-language"]
+        ? 200
+        : 401;
     return res(
       ctx.status(statusCode),
       ctx.json(
@@ -463,16 +486,146 @@ export const handlers = [
 
   rest.get(endPoints.githubUserInfo, async (req, res, ctx) => {
     const requestHeaders = req.headers.all();
-    const statusCode = requestHeaders["authorization"] === `Bearer ${githubTokenDataObj.access_token}`
-      ? 200
-      : 401;
-    return res(ctx.status(statusCode), ctx.json(statusCode === 200 ? githubOrGoogleUserInfoResponse : "Invalid authorization credentials"));
+    const statusCode =
+      requestHeaders["authorization"] ===
+      `Bearer ${githubTokenDataObj.access_token}`
+        ? 200
+        : 401;
+    return res(
+      ctx.status(statusCode),
+      ctx.json(
+        statusCode === 200
+          ? githubOrGoogleUserInfoResponse
+          : "Invalid authorization credentials"
+      )
+    );
   }),
 
   rest.get(endPoints.proxy, (req, res, ctx) => {
-    return res(ctx.status(200))
-  })
+    return res(ctx.status(200));
+  }),
 
+  rest.post(endPoints.settingsUpload, (req, res, ctx) => {
+    const response = {
+      serviceId: "typicode7",
+      swagger: {
+        swagger: "2.0",
+        info: {
+          version: "2.0",
+          "x-WM-API_ID": "539bcfcd-d39e-4e23-9f6e-3c420db3840d",
+          "x-WM-SERVICE_ID": "typicode7",
+          "x-WM-SERVICE_TYPE": "RestService",
+        },
+        host: "jsonplaceholder.typicode.com",
+        basePath: "",
+        tags: [
+          {
+            name: "RestServiceVirtualController",
+            description: "Rest service swagger documentation",
+          },
+        ],
+        schemes: ["https"],
+        paths: {
+          "/posts/3": {
+            post: {
+              tags: ["RestServiceVirtualController"],
+              operationId: "RestServiceVirtualController-invoke",
+              consumes: ["application/json"],
+              produces: ["application/json"],
+              parameters: [
+                {
+                  name: "Accept",
+                  in: "header",
+                  description: "Accept",
+                  required: false,
+                  type: "string",
+                  items: {
+                    type: "string",
+                  },
+                  "x-WM-EDITABLE": true,
+                  "x-WM-FULLY_QUALIFIED_TYPE": "java.lang.String",
+                },
+              ],
+              responses: {
+                "200": {
+                  description: "Success",
+                  schema: {
+                    $ref: "#/definitions/RootResponse",
+                  },
+                },
+              },
+              "x-WM-METHOD_NAME": "invoke",
+              "x-WM-ACCESS_SPECIFIER": "APP_ONLY",
+            },
+            "x-WM-BASE_PATH": "/posts/3",
+            "x-WM-TAG": "RestServiceVirtualController",
+            "x-WM-RELATIVE_PATH": "",
+          },
+        },
+        definitions: {
+          RootResponse: {
+            "x-WM-FULLY_QUALIFIED_NAME": "RootResponse",
+            "x-WM-TAGS": ["RestServiceVirtualController"],
+          },
+        },
+      },
+      filteredOperationId: null,
+      filteredEndPointId: null,
+      prependServiceIdInModelsFullyQualifiedType: true,
+      proxySettings: null,
+      httpRequestDetails: {
+        endpointAddress: "https://jsonplaceholder.typicode.com/posts/3",
+        method: "POST",
+        headers: {
+          Accept: ["2023-11-10"],
+        },
+        redirectEnabled: true,
+        requestBody: "",
+        queryParams: null,
+        authDetails: null,
+        contentType: "application/json",
+        multiParamInfoList: null,
+        sampleHttpResponseDetails: {
+          statusCode: 404,
+          headers: {
+            Date: ["Wed, 15 Nov 2023 07:22:11 GMT"],
+            "Content-Type": ["application/json; charset=utf-8"],
+            "Content-Length": ["2"],
+            Connection: ["keep-alive"],
+            "Report-To": [
+              '{"group":"heroku-nel","max_age":3600,"endpoints":[{"url":"https://nel.heroku.com/reports?ts=1700032931&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=odMFvzBFNelPMUkrSMqY1WCVXF9UZbHifi1Qd9KTolI%3D"}]}',
+            ],
+            "Reporting-Endpoints": [
+              "heroku-nel=https://nel.heroku.com/reports?ts=1700032931&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=odMFvzBFNelPMUkrSMqY1WCVXF9UZbHifi1Qd9KTolI%3D",
+            ],
+            Nel: [
+              '{"report_to":"heroku-nel","max_age":3600,"success_fraction":0.005,"failure_fraction":0.05,"response_headers":["Via"]}',
+            ],
+            "X-Powered-By": ["Express"],
+            "X-Ratelimit-Limit": ["1000"],
+            "X-Ratelimit-Remaining": ["999"],
+            "X-Ratelimit-Reset": ["1700032949"],
+            Vary: ["Origin, X-HTTP-Method-Override, Accept-Encoding"],
+            "Access-Control-Allow-Credentials": ["true"],
+            "Cache-Control": ["no-cache"],
+            Pragma: ["no-cache"],
+            Expires: ["-1"],
+            "X-Content-Type-Options": ["nosniff"],
+            Etag: ['W/"2-vyGp6PvFo4RvsFtPoIWeCReyIC8"'],
+            Via: ["1.1 vegur"],
+            "CF-Cache-Status": ["DYNAMIC"],
+            Server: ["cloudflare"],
+            "CF-RAY": ["8265bddce8e807d0-IAD"],
+            "alt-svc": ['h3=":443"; ma=86400'],
+          },
+          responseBody: "{}",
+          convertedResponse: null,
+        },
+      },
+      originalSpecFileId: null,
+    };
+    return res(ctx.set(responseHeaders), ctx.status(200), ctx.json(response));
+  }),
 ];
 
 export interface ResponseI {

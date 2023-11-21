@@ -44,6 +44,16 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
     const [defaultProviderIds, setDefaultProviderId] = useState([])
     const providers = useSelector((store: any) => store.slice.providerList)
 
+    useEffect(() => {
+        if (proxyObj.httpAuth?.type === 'OAUTH2') {
+            allProvider.forEach((provider: ProviderI) => {
+                if (provider.providerId === proxyObj.httpAuth?.providerId)
+                    setcurrentProvider(provider)
+            })
+        }
+    }, [allProvider, proxyObj])
+
+
     const handleOpenConfig = (provider: ProviderI | null) => {
         setcurrentProvider(provider)
         setopenConfig(true)
@@ -58,9 +68,9 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
     }, [currentProvider])
 
     const handleAuthorizationUrl = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.authorizationUrl;
+        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", currentProvider?.providerId as string) : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.authorizationUrl.replace(":providerID", currentProvider?.providerId as string);
         const configProvider = {
-            url: url + '/' + currentProvider?.providerId,
+            url: url,
             method: "GET",
             headers: {
                 'Content-Type': 'application/json',
@@ -131,7 +141,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
         handleDefaultProviderList()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [providers])
-    
+
     return (
         <>
             <Dialog className='rest-import-ui' maxWidth={'md'} data-testid='provider-modal' open={handleOpen} onClose={handleClose}>

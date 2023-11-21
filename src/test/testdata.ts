@@ -1,4 +1,4 @@
-import { AxiosResponse } from "axios";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { restImportConfigI } from "../core/components/RestImport";
 
 export interface mockPropsI {
@@ -109,8 +109,7 @@ export const githubOrGoogleUserInfoResponse = {
   family_name: "Doe",
   picture: "https://lh3.gitgoogleusercontent.com/a/ACg8ogAJ47YWegWNFpw=s96-c",
   locale: "en",
-};
-
+}; 
 export const amazonUserInfoResponse = {
   id: "1024312046741520124",
 };
@@ -130,9 +129,9 @@ export const eventMessage = {
 
 export const getPKCEeventMsg = (success: boolean) => ({
   tokenData: "",
-  code: `${success ? 'success' : 'failure'}-pkce-access-code`,
+  code: `${success ? "success" : "failure"}-pkce-access-code`,
   error: "",
-})
+});
 export const amazonTokenDataObj = {
   access_token: "amazon-access-token",
   expires_in: 3599,
@@ -204,7 +203,6 @@ export const HEADER_TYPE_OPTIONS = [
   "Current Timestamp",
   "LoggedIn UserId",
   "LoggedIn Username",
-  "Option 1",
 ];
 
 export const CONTENT_TYPE = [
@@ -251,33 +249,36 @@ export const endPoints = {
   addprovider: "http://localhost:4000/addprovider",
   authorizationUrlProviderTest:
     "http://localhost:4000/authorizationUrl/ProviderTest",
-    authorizationUrlWavemakerProviderTest : "https://www.wavemakeronline.com/studio/services/projects/oauth2/authorizationUrl/ProviderTest",
-  addproviderWavemaker: "https://www.wavemakeronline.com/studio/services/projects/oauth2/addprovider",
+  authorizationUrlWavemakerProviderTest:
+    "https://www.wavemakeronline.com/studio/services/projects/oauth2/authorizationUrl/ProviderTest",
+  addproviderWavemaker:
+    "https://www.wavemakeronline.com/studio/services/projects/oauth2/addprovider",
   addProviderErrorResponse: "http://localhost:4000/addErrorproviders",
   getproviderErrorResponse: "http://localhost:4000/getproviderError",
-  authorizationUrlGoogleErrorResponse: "http://localhost:4000/authorizationUrlError/google",
+  authorizationUrlGoogleErrorResponse:
+    "http://localhost:4000/authorizationUrlError/google",
   googleUserInfo: "https://www.googleapis.com/oauth2/v1/userinfo",
   amazonUserInfo: "https://api.amazon.com/user/profile",
   amazonAccessTokenUrl: "https://api.amazon.com/auth/o2/token",
   githubUserInfo: "https://api.github.com/user",
   getProviderError: "http://localhost:4000/getprovider_error",
-  proxy: "http://localhost:4000"
+  proxy: "http://localhost:4000",
+  settingsUpload: `http://localhost:4000/services/projects/WMPRJ2c91808889a96400018a26070b7b2e68/restservice/settings`,
 };
 
 export const wavemakerMoreInfoLink =
   "https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/";
 
-
-
 export const emptyConfig: restImportConfigI = {
   proxy_conf: {
-    base_path: "http://localhost:4000",
-    proxy_path: "/restimport",
-    list_provider: "/get-default-provider",
-    getprovider: "/getprovider",
-    addprovider: "/addprovider",
-    authorizationUrl: "/authorizationUrl",
+    base_path: "http://localhost:4000/",
+    proxy_path: "restimport",
+    list_provider: "get-default-provider",
+    getprovider: "getprovider",
+    addprovider: "addprovider",
+    authorizationUrl: "authorizationUrl",
   },
+  projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
   state_val:
     "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
   default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
@@ -297,8 +298,12 @@ export const emptyConfig: restImportConfigI = {
     errorMessageTimeout: 5000,
     errorMethod: "default",
   },
-  handleResponse: (response?: AxiosResponse) => {},
+  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {},
   hideMonacoEditor: (value: boolean) => {},
+  getServiceName(value: string) {},
+  setServiceName: "",
+  setResponseHeaders: { namespace: "test" },
+  viewMode: false,
 };
 export const mockEmptyProps: mockPropsI = {
   language: "en",
@@ -309,8 +314,9 @@ const configWithData: restImportConfigI = {
   url: "https://wavemaker.com/users/{location}?sort=alpha",
   httpMethod: "POST",
   useProxy: true,
-  httpAuth: "BASIC",
+  httpAuth: { type: "NONE", providerId: "" },
   bodyParams: "{name:Ardella}",
+  projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
   userName: "Ardella",
   userPassword: "HBubkbai89",
   headerParams: [
@@ -329,12 +335,12 @@ const configWithData: restImportConfigI = {
   ],
   contentType: "multipart/form-data",
   proxy_conf: {
-    base_path: "http://localhost:4000",
-    proxy_path: "/restimport",
-    list_provider: "/get-default-provider",
-    getprovider: "/getprovider_error",
-    addprovider: "/addprovider",
-    authorizationUrl: "/authorizationUrl",
+    base_path: "http://localhost:4000/",
+    proxy_path: "restimport",
+    list_provider: "get-default-provider",
+    getprovider: "getprovider_error",
+    addprovider: "addprovider",
+    authorizationUrl: "authorizationUrl",
   },
   state_val:
     "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
@@ -355,8 +361,12 @@ const configWithData: restImportConfigI = {
     errorMethod: "toast",
     errorMessageTimeout: 5000,
   },
-  handleResponse: (response?: AxiosResponse) => {},
+  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {},
   hideMonacoEditor: (value: boolean) => {},
+  getServiceName(value: string) {},
+  setServiceName: "",
+  viewMode: false,
+  setResponseHeaders: { namespace: "test" },
 };
 
 export const preLoadedProps: mockPropsI = {
@@ -417,7 +427,7 @@ export function getCustomizedProps(
       ...emptyConfig,
       proxy_conf: {
         ...emptyConfig.proxy_conf,
-        getprovider: getProviderUrl || emptyConfig.proxy_conf.getprovider
+        getprovider: getProviderUrl || emptyConfig.proxy_conf.getprovider,
       },
       error: {
         ...emptyConfig.error,

@@ -54,10 +54,10 @@ function renderComponent(type: string) {
     } else if (type === 'withOAuthConfig') {
         copymockProps.proxyObj['default_proxy_state'] = 'OFF'
     } else if (type === 'withAddProviderAPIError') {
-        copymockProps.proxyObj.proxy_conf['addprovider'] = '/addErrorproviders'
+        copymockProps.proxyObj.proxy_conf['addprovider'] = 'addErrorproviders'
     } else if (type === 'withListAPIError') {
-        copymockProps.proxyObj.proxy_conf['addprovider'] = '/addprovider'
-        copymockProps.proxyObj.proxy_conf['getprovider'] = '/getproviderError'
+        copymockProps.proxyObj.proxy_conf['addprovider'] = 'addprovider'
+        copymockProps.proxyObj.proxy_conf['getprovider'] = 'getproviderError'
     }
 
 
@@ -481,7 +481,7 @@ describe("Config Modal", () => {
         const callbackURL = screen.getByRole('textbox', {
             name: /callback url/i
         })
-        expect(callbackURL.getAttribute('value')).toEqual(emptyConfig.proxy_conf.base_path + '/oauth2/ProviderTest/callback')
+        expect(callbackURL.getAttribute('value')).toEqual(emptyConfig.proxy_conf.base_path + 'oauth2/ProviderTest/callback')
 
     }, 80000);
 
@@ -497,7 +497,7 @@ describe("Config Modal", () => {
         const callbackURL = screen.getByRole('textbox', {
             name: /callback url/i
         })
-        expect(callbackURL.getAttribute('value')).toEqual(emptyConfig.proxy_conf.base_path + '/oAuthCallback.html')
+        expect(callbackURL.getAttribute('value')).toEqual(emptyConfig.proxy_conf.base_path + 'oAuthCallback.html')
 
     }, 80000);
 
@@ -519,7 +519,7 @@ describe("Config Modal", () => {
         expect(tooltipCopied.getAttribute('aria-label')).toBe('Copied!')
     }, 80000);
 
-    it("MouseLeave from copy icon ", async () => {
+    it("MouseLeave from copy icon", async () => {
         user.setup()
         renderComponent('withoutProviderConf')
         const providerId = screen.getByRole('textbox', {
@@ -564,7 +564,7 @@ describe("Config Modal", () => {
 
     }, 80000)
 
-    it("Check ProviderID Disable While Render with Provider config data ", async () => {
+    it("Check ProviderID Disable While Render with Provider config data", async () => {
         user.setup()
         renderComponent('ProviderConfigWithoutPKCE')
         const modalTitle = screen.getByRole('heading', { name: /oauth provider configuration help/i })

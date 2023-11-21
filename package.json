@@ -1,7 +1,8 @@
 {
   "name": "rest-import-wavemaker",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.1.64",
+  "private": false,
+  "main": "./dist/core/components/RestImport.js",
   "release": {
     "branches": [
       "main",
@@ -47,15 +48,16 @@
     "redux": "^4.1.2",
     "redux-immutable": "^4.0.0",
     "reselect": "^4.1.8",
+    "rest-import-wavemaker": "^0.1.30",
     "serialize-error": "^8.1.0",
     "sha.js": "^2.4.11",
     "url-parse": "^1.5.10"
   },
   "scripts": {
     "start": "react-scripts start",
-    "dev": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack serve --config webpack/dev.babel.js",
+    "dev": "npx tsc --jsx preerve -t es2020 --outDir src/jsx --noEmit false && webpack serve --config webpack/dev.babel.js",
     "build": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/stylesheets.babel.js && webpack --color --config webpack/bundle.babel.js && webpack --color --config webpack/bundle.config.babel.js && bash dist-to-examples.sh",
-    "build-windows": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/stylesheets.babel.js && webpack --color --config webpack/bundle.babel.js && webpack --color --config webpack/bundle.config.babel.js && @powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./dist-to-examples.ps1",
+    "build-windows": "npx tsc --jsx preserve -t es2020 --outDir src/jsx --noEmit false && webpack --color --config webpack/stylesheets.babel.js && webpack --color --config webpack/bundle.babel.js && webpack --color --config webpack/bundle.config.babel.js",
     "test": "jest"
   },
   "eslintConfig": {

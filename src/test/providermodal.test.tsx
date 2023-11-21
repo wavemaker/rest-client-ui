@@ -7,7 +7,7 @@ import { restImportConfigI } from '../core/components/RestImport';
 import { ERROR_MESSAGES, emptyConfig } from './testdata';
 import { Provider } from 'react-redux'
 import appStore from '../core/components/appStore/Store';
-import { AxiosResponse } from 'axios';
+import { AxiosRequestConfig, AxiosResponse } from 'axios';
 interface mockPropsI {
     handleOpen: boolean,
     handleClose: () => void,
@@ -27,6 +27,7 @@ export const ProxyOFFConfig: restImportConfigI = {
     },
     state_val: "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
     default_proxy_state: "OFF", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
+    projectId: "",
     oAuthConfig: {
         base_path: "https://www.wavemakeronline.com/studio/services",
         proxy_path: "/proxy_path",
@@ -43,10 +44,13 @@ export const ProxyOFFConfig: restImportConfigI = {
         errorMessageTimeout: 5000,
         errorMethod: "default",
     },
-    handleResponse: (response?: AxiosResponse) => {
+    handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {
     },
-    hideMonacoEditor: (value: boolean) => {
-    }
+    hideMonacoEditor: (value: boolean) => { },
+    getServiceName(value: string) { },
+    setServiceName: '',
+    viewMode: false,
+    setResponseHeaders: { namespace: "test" },
 }
 
 const mockProxyOFFProps: mockPropsI = {
@@ -65,10 +69,10 @@ let mockProps: mockPropsI = {
 
 function renderComponent(type?: string) {
     const copymockProps = { ...mockProps }
-    if (type == 'withErrorAPI') {
+    if (type === 'withErrorAPI') {
         copymockProps.proxyObj.proxy_conf['getprovider'] = '/getproviderError'
         copymockProps.proxyObj.proxy_conf['list_provider'] = '/getproviderError'
-    } else if (type == 'withErrorAPIAfterSelectProvider') {
+    } else if (type === 'withErrorAPIAfterSelectProvider') {
         copymockProps.proxyObj.proxy_conf['authorizationUrl'] = '/authorizationUrlError'
     }
     render(<Provider store={appStore}><ProviderModal {...copymockProps} /></Provider >)
@@ -105,7 +109,7 @@ describe("Provider Modal", () => {
         expect(addprovider_text).toBeInTheDocument();
     }, 80000);
 
-    it("Click Add Provider - OAuth Provider Configuration Modal Render ", async () => {
+    it("Click Add Provider - OAuth Provider Configuration Modal Render", async () => {
         user.setup()
         renderComponent()
         const addprovider_card = await screen.findByTestId('add-provider')
