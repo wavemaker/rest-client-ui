@@ -16,15 +16,11 @@ export default function App() {
       authorizationUrl: "authorizationUrl",
     },
     useProxy: true,
-    url: "https://www.googleapis.com/oauth2/v1/userinfo",
+    url: "https://jsonplaceholder.typicode.com/posts/3",
     projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     loggenInUserId: "fe",
     appEnvVariables: [{ key: 'we', value: 'ew' }],
     loggenInUserName: 'vew',
-    httpAuth: {
-      type: 'OAUTH2',
-      providerId: "google"
-    },
     headerParams: [{
       name: "new",
       type: "DATE",
@@ -64,6 +60,8 @@ export default function App() {
     setServiceName: '',
     viewMode: false,
     setResponseHeaders: { kingkong: "test" },
+    monacoEditorURL: undefined as any,
+    monacoEditorHeight: 100
   }
 
   return (

@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react'
+import React, { ReactNode, useEffect, useRef, useState } from 'react'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table,
@@ -23,6 +23,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ConfigModel from './ConfigModel'
 import { useSelector } from 'react-redux'
 import '../../i18n';
+import MonacoEditor from './MonacoEditor'
 
 interface TabPanelProps {
     children?: ReactNode
@@ -68,6 +69,8 @@ export interface restImportConfigI {
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse, settingsUploadResponse?: any) => void,
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
+    monacoEditorURL: string,
+    monacoEditorHeight?: number,
 }
 interface ITypes {
     key: string
@@ -143,7 +146,7 @@ declare global {
 export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const theme = createTheme({
         typography: {
-            fontSize: 18, // Adjust the font size as needed
+            fontSize: 16, // Adjust the font size as needed
         },
     });
     const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
@@ -176,6 +179,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [serviceName, setserviceName] = useState(restImportConfig.setServiceName || "")
     const [serviceNameEnabled, setserviceNameEnabled] = useState(true)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
+    const editorRef: any = useRef(null)
 
     useEffect(() => {
         if (!window.google) {
@@ -196,6 +200,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         handleChangeResponseTabs(null, responseTabValue)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
+
 
     function handleToastError(message: string, response?: AxiosResponse) {
         if (restImportConfig.error.errorMethod === 'default') {
@@ -536,12 +541,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     codeVerifier = generateRandomCodeVerifier();
                                     const data = Uint8Array.from(codeVerifier.split("").map(x => x.charCodeAt(0)))
                                     window.crypto.subtle.digest("SHA-256", data)
-                                        .then(hashBuffer => {
+                                        .then((hashBuffer: ArrayBuffer) => {
                                             const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
                                             authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
                                             childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                                         })
-                                        .catch(error => {
+                                        .catch((error: any) => {
                                             console.error("Error calculating code challenge:", error);
                                         });
                                 }
@@ -615,6 +620,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     const config = useProxy ? configWProxy : configWOProxy
                     const response: any = await Apicall(config as AxiosRequestConfig)
                     if (response.status >= 200 && response.status < 300) {
+                        // handleResponse(response, config)
                         const settingsUploadData = await settingsUpload(config, response)
                         if (settingsUploadData) {
                             setserviceNameEnabled(false)
@@ -665,6 +671,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         if (responseValue.data === undefined || responseValue.headers === undefined) {
             responseValue = { data: response.message, status: response.code, headers: {} }
         }
+        editorRef.current.setValue(JSON.stringify(responseValue.data, undefined, 2))
         setresponse(responseValue as AxiosResponse)
         request.url = apiURL
         restImportConfig.handleResponse(request, responseValue as AxiosResponse, settingsUploadData)
@@ -896,8 +903,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     </Grid>
                     <Grid item md={12} data-testid="request-config-block">
                         <Box sx={{ width: '100%' }}>
-                            <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
-                                <Tabs value={requestTabValue} onChange={handleChangeHeaderTabs}>
+                            <Box sx={{ borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
+                                <Tabs sx={{ minHeight: "30px", height: "45px" }} value={requestTabValue} onChange={handleChangeHeaderTabs}>
                                     <Tab label={translate("AUTHORIZATION")} />
                                     <Tab label={translate("HEADER") + " " + translate("PARAMS")} />
                                     <Tab label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
@@ -1097,6 +1104,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     providerConf={selectedProvider}
                     proxyObj={restImportConfig}
                 />
+                <MonacoEditor monacoEditorHeight={restImportConfig?.monacoEditorHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2)} />
                 <div style={{ position: 'relative', height: '0px' }}>
                     <TextField sx={{ position: 'absolute', left: -10000, top: -10000 }} data-testid="mock-response" value={responseTabValue === 0 ? JSON.stringify(response.data) : JSON.stringify(response.headers)} disabled={true}></TextField>
                 </div>

@@ -109,7 +109,7 @@ export const githubOrGoogleUserInfoResponse = {
   family_name: "Doe",
   picture: "https://lh3.gitgoogleusercontent.com/a/ACg8ogAJ47YWegWNFpw=s96-c",
   locale: "en",
-}; 
+};
 export const amazonUserInfoResponse = {
   id: "1024312046741520124",
 };
@@ -304,6 +304,7 @@ export const emptyConfig: restImportConfigI = {
   setServiceName: "",
   setResponseHeaders: { namespace: "test" },
   viewMode: false,
+  monacoEditorURL: "",
 };
 export const mockEmptyProps: mockPropsI = {
   language: "en",
@@ -367,6 +368,7 @@ const configWithData: restImportConfigI = {
   setServiceName: "",
   viewMode: false,
   setResponseHeaders: { namespace: "test" },
+  monacoEditorURL: "",
 };
 
 export const preLoadedProps: mockPropsI = {
