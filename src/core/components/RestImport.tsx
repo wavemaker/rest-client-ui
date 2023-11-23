@@ -16,7 +16,6 @@ import DoneIcon from '@mui/icons-material/Done'
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import Apicall from './common/apicall'
 import { encode } from 'js-base64';
-import toast, { Toaster } from 'react-hot-toast'
 import FallbackSpinner from './common/loader'
 import { useTranslation } from 'react-i18next';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -24,6 +23,7 @@ import ConfigModel from './ConfigModel'
 import { useSelector } from 'react-redux'
 import '../../i18n';
 import MonacoEditor from './MonacoEditor'
+import Snackbar from '@mui/material/Snackbar';
 
 interface TabPanelProps {
     children?: ReactNode
@@ -180,6 +180,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [serviceNameEnabled, setserviceNameEnabled] = useState(true)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
     const editorRef: any = useRef(null)
+    const [errorMessage, seterrorMessage] = useState<{ message: string, type: "error" | 'info' | 'success' | 'warning' }>({ message: '', type: 'error' })
+    const [handleToastOpen, sethandleToastOpen] = useState(false);
+
+    const handleToastClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+
+        sethandleToastOpen(false);
+    };
 
     useEffect(() => {
         if (!window.google) {
@@ -202,17 +212,20 @@ export default function RestImport({ language, restImportConfig }: { language: s
     }, [response])
 
 
-    function handleToastError(message: string, response?: AxiosResponse) {
+    function handleToastError(error: { message: string, type: "error" | 'info' | 'success' | 'warning' }, response?: AxiosResponse) {
         if (restImportConfig.error.errorMethod === 'default') {
-            setAlertMsg(message)
+            setAlertMsg(error.message)
             return setTimeout(() => {
                 setAlertMsg(false)
             }, restImportConfig.error.errorMessageTimeout);
         }
-        if (restImportConfig.error.errorMethod === 'toast')
-            return toast.error(message)
+        if (restImportConfig.error.errorMethod === 'toast') {
+            seterrorMessage({ type: error.type, message: error.message })
+            sethandleToastOpen(true)
+            return null
+        }
         if (restImportConfig.error.errorMethod === 'customFunction')
-            return restImportConfig.error.errorFunction(message, response)
+            return restImportConfig.error.errorFunction(error.message, response)
     }
 
     const getPathParams = () => {
@@ -259,7 +272,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         updatedURL = updatedURL.replace(`/{${duplicatePath}}`, '')
                     })
                     setapiURL(updatedURL)
-                    handleToastError(`Parameters cannot have duplicates, removed the duplicates[${duplicatePathNames}]`)
+                    handleToastError({ message: `Parameters cannot have duplicates, removed the duplicates[${duplicatePathNames}]`, type: 'error' })
                 } else {
                     setpathParams(updatedPathParams)
                 }
@@ -267,7 +280,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             else
                 setpathParams([])
         } catch (error: any) {
-            handleToastError(error.message)
+            handleToastError({ message: error.message, type: 'error' })
         }
     }
     const handlePathParamsChanges = (value: string, currentIndex: number) => {
@@ -384,7 +397,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         const newQueryPart = constructUpdatedQueryString(queryArrayWithoutDuplicates)
                         const originalURL = apiURL.split('?')[0]
                         setapiURL(originalURL + newQueryPart)
-                        handleToastError(`Queries cannot have duplicates, removed the duplicates[${duplicateQueryNames}]`)
+                        handleToastError({ message: `Queries cannot have duplicates, removed the duplicates[${duplicateQueryNames}]`, type: 'error' })
                     } else {
                         updatedQueryParams.push({ name: '', value: '', type: 'string' })
                         setqueryParams(updatedQueryParams)
@@ -642,7 +655,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 throw new Error(translate("VALID_URL_ALERT"))
         } catch (error: any) {
             console.log(error)
-            handleToastError(error.message)
+            handleToastError({ message: error.message, type: 'error' })
         }
     }
     function handleResponse(response: any, request?: any, settingsUploadData?: any): void {
@@ -654,7 +667,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     responseValue = { data: response.data.responseBody !== "" ? JSON.parse(response.data.responseBody) : response.data.responseBody, status: response?.data.statusCode, headers: response?.data.headers }
                 else {
                     responseValue = { data: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), status: response?.data.statusCode, headers: response?.data.headers }
-                    handleToastError(httpStatusCodes.get(response?.data.statusCode) as string, response)
+                    handleToastError({ message: httpStatusCodes.get(response?.data.statusCode) as string, type: 'error' }, response)
                 }
             else
                 responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
@@ -663,7 +676,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 responseValue = { data: response?.data, status: response?.status, headers: response?.headers }
             else if (response.response !== undefined) {
                 responseValue = { data: response?.response.status + " " + httpStatusCodes.get(response.response?.status), status: response?.response.status, headers: response.response?.headers }
-                handleToastError(httpStatusCodes.get(response.response?.status) as string, response)
+                handleToastError({ message: httpStatusCodes.get(response.response?.status) as string, type: 'error' }, response)
             }
             else
                 responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
@@ -751,7 +764,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             return settingsUploadResponseData
         }
         else
-            handleToastError("Failed to get settings upload response", settingsUploadResponse)
+            handleToastError({ message: "Failed to get settings upload response", type: 'error' }, settingsUploadResponse)
     }
     function getParamsWithTypes(response: any): { paramaters: any[], firstKey: string, secondKey: string } {
         const swaggerPaths = response.swagger.paths;
@@ -846,7 +859,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
         <ThemeProvider theme={theme}>
             <Stack className='rest-import-ui'>
                 {loading && <FallbackSpinner />}
-                <Toaster position='top-right' />
                 <Grid gap={2} className='cmnflx' container>
                     <Grid item md={12}>
                         {alertMsg && (
@@ -1096,14 +1108,20 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         </Stack> : ''}
                     </Grid>
                 </Grid>
-                <ProviderModal handleOpen={providerOpen} handleClose={handleCloseProvider} proxyObj={restImportConfig} />
+                <ProviderModal handleToastError={handleToastError} handleOpen={providerOpen} handleClose={handleCloseProvider} proxyObj={restImportConfig} />
                 <ConfigModel
                     handleOpen={configOpen}
                     handleClose={handleCloseConfig}
                     handleParentModalClose={handleCloseProvider}
                     providerConf={selectedProvider}
                     proxyObj={restImportConfig}
+                    handleToastError={handleToastError}
                 />
+                <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
+                    <Alert onClose={handleToastClose} severity={errorMessage.type} sx={{ width: '100%' }}>
+                        {errorMessage.message}
+                    </Alert>
+                </Snackbar>
                 <MonacoEditor monacoEditorHeight={restImportConfig?.monacoEditorHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2)} />
                 <div style={{ position: 'relative', height: '0px' }}>
                     <TextField sx={{ position: 'absolute', left: -10000, top: -10000 }} data-testid="mock-response" value={responseTabValue === 0 ? JSON.stringify(response.data) : JSON.stringify(response.headers)} disabled={true}></TextField>

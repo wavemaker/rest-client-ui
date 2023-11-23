@@ -9,13 +9,13 @@ const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight }: { ed
                 initializeMonaco();
             } else {
                 const script = document.createElement('script');
-                script.src = url || 'https://unpkg.com/monaco-editor@0.25.2/min/vs/loader.js';
+                script.src = url || 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js';
                 script.onload = initializeMonaco;
                 document.body.appendChild(script);
             }
         };
         const initializeMonaco = () => {
-            window.require.config({ paths: { 'vs': url || 'https://unpkg.com/monaco-editor@0.25.2/min/vs' } });
+            window.require.config({ paths: { 'vs': url || 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
             window.require(['vs/editor/editor.main'], () => {
                 // Create Monaco Editor instance
                 const editorInstance = window.monaco.editor.create(editorRef.current, {

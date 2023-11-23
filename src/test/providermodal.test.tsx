@@ -13,7 +13,8 @@ interface mockPropsI {
     handleClose: () => void,
     handleParentModalClose?: () => void,
     providerConf?: ProviderI | null,
-    proxyObj: restImportConfigI
+    proxyObj: restImportConfigI,
+    handleToastError: () => void
 }
 
 export const ProxyOFFConfig: restImportConfigI = {
@@ -50,14 +51,15 @@ export const ProxyOFFConfig: restImportConfigI = {
     getServiceName(value: string) { },
     setServiceName: '',
     viewMode: false,
-    setResponseHeaders: { namespace: "test" }, 
+    setResponseHeaders: { namespace: "test" },
     monacoEditorURL: ""
 }
 
 const mockProxyOFFProps: mockPropsI = {
     handleOpen: true,
     handleClose: jest.fn(() => console.log("closed")),
-    proxyObj: ProxyOFFConfig
+    proxyObj: ProxyOFFConfig,
+    handleToastError: jest.fn(() => console.log("Toast Error")),
 }
 
 const proxyObjConfig = emptyConfig
@@ -65,7 +67,8 @@ const proxyObjConfig = emptyConfig
 let mockProps: mockPropsI = {
     handleOpen: true,
     handleClose: jest.fn(() => console.log("closed")),
-    proxyObj: proxyObjConfig
+    proxyObj: proxyObjConfig,
+    handleToastError: jest.fn(() => console.log("Toast Error")),
 }
 
 function renderComponent(type?: string) {

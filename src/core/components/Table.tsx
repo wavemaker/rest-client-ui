@@ -15,6 +15,7 @@ import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import { PathParamsI, restImportConfigI } from './RestImport';
 import { useTranslation } from 'react-i18next';
+import { AxiosResponse } from 'axios';
 
 export interface HeaderAndQueryI {
     name: string
@@ -42,7 +43,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
     {
         value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string,
         apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
-        pathParams: PathParamsI[], handleToastError: (msg: string) => void, restImportConfig: restImportConfigI
+        pathParams: PathParamsI[], handleToastError: (error: { message: string, type: "error" | 'info' | 'success' | 'warning' }, response?: AxiosResponse) => void, restImportConfig: restImportConfigI
     }) {
     const { t: translate } = useTranslation();
     var selectTypes =
@@ -167,9 +168,9 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
             if (from === 'header' && duplicates.length > 0)
-                return handleToastError(`parameter "${duplicates[0].name}" already exists`)
+                return handleToastError({ message: `parameter "${duplicates[0].name}" already exists`, type: 'error' })
             if (allDuplicates().length > 0)
-                return handleToastError(`parameter "${allDuplicates()[0].name}" already exists`)
+                return handleToastError({ message: `parameter "${allDuplicates()[0].name}" already exists`, type: 'error' })
             if (from === 'query' && allDuplicates().length === 0) {
                 const lastRowValuesArray = lastRow.value.split(',')
                 const lastRowValues = lastRowValuesArray.filter((value, index) => value && lastRowValuesArray.indexOf(value) === index)
@@ -208,7 +209,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             setValue(valueClone)
         }
         else {
-            handleToastError(translate("MANDATORY_ALERT"))
+            handleToastError({ message: translate("MANDATORY_ALERT"), type: 'error' })
         }
     }
 

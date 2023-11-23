@@ -1,6 +1,6 @@
 {
   "name": "rest-import-wavemaker",
-  "version": "0.1.70",
+  "version": "0.1.72",
   "private": false,
   "main": "./dist/core/components/RestImport.js",
   "release": {
@@ -41,14 +41,12 @@
     "react": "^18.2.0",
     "react-ace": "^10.1.0",
     "react-dom": "^18.2.0",
-    "react-hot-toast": "^2.4.1",
     "react-i18next": "^13.0.3",
     "react-immutable-proptypes": "2.2.0",
     "react-redux": "^8.1.1",
     "redux": "^4.1.2",
     "redux-immutable": "^4.0.0",
     "reselect": "^4.1.8",
-    "rest-import-wavemaker": "^0.1.30",
     "serialize-error": "^8.1.0",
     "sha.js": "^2.4.11",
     "url-parse": "^1.5.10"

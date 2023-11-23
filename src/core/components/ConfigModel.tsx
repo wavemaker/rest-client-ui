@@ -11,15 +11,15 @@ import { useTranslation } from 'react-i18next';
 import clipboardCopy from 'clipboard-copy';
 import { ProviderI, ScopeI } from './ProviderModal';
 import Apicall, { getProviderList } from './common/apicall';
-import { AxiosRequestConfig } from 'axios';
-import toast from 'react-hot-toast'
+import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { restImportConfigI } from './RestImport'
 import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
 import { useDispatch, useSelector } from 'react-redux';
 import FallbackSpinner from './common/loader';
 import '../../i18n';
 
-export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj, configModel }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean }) {
+export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj, configModel, handleToastError }:
+    { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean, handleToastError: (error: { message: string, type: "error" | 'info' | 'success' | 'warning' }, response?: AxiosResponse) => void }) {
     const dispatch = useDispatch();
     const { t: translate } = useTranslation();
     const [Flow, setFlow] = useState('AUTHORIZATION_CODE')
@@ -203,10 +203,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             const response: any = await Apicall(configWProvider)
             if (response.status === 200) {
                 setloading(false)
-                toast.success(translate('SUCCESS_MSG'), {
-                    position: 'top-right',
-                    duration: 5000
-                })
+                handleToastError({ message: translate('SUCCESS_MSG'), type: 'success' })
                 if (!configModel) {
                     handleProviderList()
                 }

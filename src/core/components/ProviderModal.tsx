@@ -12,6 +12,7 @@ import Apicall, { getProviderList } from './common/apicall';
 import { restImportConfigI } from './RestImport'
 import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
 import { useDispatch, useSelector } from 'react-redux';
+import { AxiosResponse } from 'axios';
 export interface ProviderI {
     providerId: string
     authorizationUrl: string
@@ -35,7 +36,8 @@ export interface ScopeI {
     checked?: boolean;
 }
 
-export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI }) {
+export default function ProviderModal({ handleOpen, handleClose, proxyObj, handleToastError }:
+    { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI, handleToastError: (error: { message: string, type: "error" | 'info' | 'success' | 'warning' }, response?: AxiosResponse) => void }) {
     const { t: translate } = useTranslation();
     const dispatch = useDispatch();
     const [openConfig, setopenConfig] = useState(false)
@@ -219,6 +221,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                         handleParentModalClose={handleClose}
                         providerConf={currentProvider}
                         proxyObj={proxyObj}
+                        handleToastError={handleToastError}
                     />
                 )
             }
