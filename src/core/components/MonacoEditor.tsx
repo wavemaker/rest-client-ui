@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 
 declare const window: any;
-const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight }: { editorRef: any, initialValue: string, url: string, monacoEditorHeight: number }) => {
+const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight, initialLanguage }:
+    { editorRef: any, initialValue: string, url: string, monacoEditorHeight: number, initialLanguage: string }) => {
 
     useEffect(() => {
         const loadMonaco = async () => {
@@ -20,7 +21,7 @@ const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight }: { ed
                 // Create Monaco Editor instance
                 const editorInstance = window.monaco.editor.create(editorRef.current, {
                     value: initialValue,
-                    language: 'json',
+                    language: initialLanguage,
                     theme: 'vs-dark',
                     minimap: {
                         enabled: false,
@@ -33,6 +34,7 @@ const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight }: { ed
         loadMonaco();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
 
     return <div ref={editorRef} style={{ height: monacoEditorHeight ? `${monacoEditorHeight}px` : '300px' }} />;
 };

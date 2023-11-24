@@ -142,7 +142,6 @@ declare global {
     }
 }
 
-
 export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const theme = createTheme({
         typography: {
@@ -181,7 +180,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
     const editorRef: any = useRef(null)
     const [errorMessage, seterrorMessage] = useState<{ message: string, type: "error" | 'info' | 'success' | 'warning' }>({ message: '', type: 'error' })
-    const [handleToastOpen, sethandleToastOpen] = useState(false);
+    const [handleToastOpen, sethandleToastOpen] = useState(false)
+    const [editorLanguage, seteditorLanguage] = useState('json')
+    const [monacoEditorValue, setmonacoEditorValue] = useState<any>()
 
     const handleToastClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
         if (reason === 'clickaway') {
@@ -410,7 +411,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 }
             }
         } catch (error: any) {
-            handleToastError(error.message)
+            handleToastError({ message: error.message, type: 'error' })
         }
     }
     const handleAddCustomContentType = () => {
@@ -633,16 +634,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     const config = useProxy ? configWProxy : configWOProxy
                     const response: any = await Apicall(config as AxiosRequestConfig)
                     if (response.status >= 200 && response.status < 300) {
-                        // handleResponse(response, config)
-                        const settingsUploadData = await settingsUpload(config, response)
-                        if (settingsUploadData) {
-                            setserviceNameEnabled(false)
-                            if (!restImportConfig.viewMode) {
-                                restImportConfig.getServiceName(settingsUploadData?.serviceId)
-                                setserviceName(settingsUploadData?.serviceId)
-                            }
-                            handleResponse(response, config, settingsUploadData)
-                        }
+                        handleResponse(response, config)
+                        // const settingsUploadData = await settingsUpload(config, response)
+                        // if (settingsUploadData) {
+                        //     setserviceNameEnabled(false)
+                        //     if (!restImportConfig.viewMode) {
+                        //         restImportConfig.getServiceName(settingsUploadData?.serviceId)
+                        //         setserviceName(settingsUploadData?.serviceId)
+                        //     }
+                        //     handleResponse(response, config, settingsUploadData)
+                        // }
                     } else {
                         setserviceNameEnabled(true)
                         handleResponse(response, config)
@@ -664,16 +665,19 @@ export default function RestImport({ language, restImportConfig }: { language: s
         if (useProxy) {
             if (response.status >= 200 && response.status < 300)
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
-                    responseValue = { data: response.data.responseBody !== "" ? JSON.parse(response.data.responseBody) : response.data.responseBody, status: response?.data.statusCode, headers: response?.data.headers }
+                    responseValue = { data: checkXMLorJSON(response.data.responseBody), status: response?.data.statusCode, headers: response?.data.headers }
                 else {
                     responseValue = { data: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), status: response?.data.statusCode, headers: response?.data.headers }
                     handleToastError({ message: httpStatusCodes.get(response?.data.statusCode) as string, type: 'error' }, response)
                 }
             else
                 responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
-        } else {
+        }
+        else {
             if (response.status >= 200 && response.status < 300)
-                responseValue = { data: response?.data, status: response?.status, headers: response?.headers }
+                responseValue = {
+                    data: checkXMLorJSON(response?.data), status: response?.status, headers: response?.headers
+                }
             else if (response.response !== undefined) {
                 responseValue = { data: response?.response.status + " " + httpStatusCodes.get(response.response?.status), status: response?.response.status, headers: response.response?.headers }
                 handleToastError({ message: httpStatusCodes.get(response.response?.status) as string, type: 'error' }, response)
@@ -684,10 +688,21 @@ export default function RestImport({ language, restImportConfig }: { language: s
         if (responseValue.data === undefined || responseValue.headers === undefined) {
             responseValue = { data: response.message, status: response.code, headers: {} }
         }
-        editorRef.current.setValue(JSON.stringify(responseValue.data, undefined, 2))
+        setmonacoEditorValue(response.data)
+        // editorRef.current.setValue(responseValue.data)
         setresponse(responseValue as AxiosResponse)
         request.url = apiURL
         restImportConfig.handleResponse(request, responseValue as AxiosResponse, settingsUploadData)
+    }
+    function checkXMLorJSON(responseValue: any): any {
+        let response
+        try {
+            response = JSON.stringify(JSON.parse(JSON.stringify(responseValue)), undefined, 2)
+        } catch (error) {
+            response = responseValue
+            seteditorLanguage('plaintext')
+        }
+        return response
     }
     async function settingsUpload(request: any, response: any) {
         const headers = response.headers;
@@ -1118,13 +1133,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     handleToastError={handleToastError}
                 />
                 <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
-                    <Alert onClose={handleToastClose} severity={errorMessage.type} sx={{ width: '100%' }}>
+                    <Alert data-testid={'alertMessage'} onClose={handleToastClose} severity={errorMessage.type} sx={{ width: '100%' }}>
                         {errorMessage.message}
                     </Alert>
                 </Snackbar>
-                <MonacoEditor monacoEditorHeight={restImportConfig?.monacoEditorHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2)} />
+                <MonacoEditor monacoEditorHeight={restImportConfig?.monacoEditorHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2)} initialLanguage={editorLanguage} />
                 <div style={{ position: 'relative', height: '0px' }}>
-                    <TextField sx={{ position: 'absolute', left: -10000, top: -10000 }} data-testid="mock-response" value={responseTabValue === 0 ? JSON.stringify(response.data) : JSON.stringify(response.headers)} disabled={true}></TextField>
+                    <TextField sx={{ position: 'absolute', left: -10000, top: -10000 }} data-testid="mock-response" value={responseTabValue === 0 ? response.data : JSON.stringify(response.headers)} disabled={true}></TextField>
                 </div>
             </Stack>
         </ThemeProvider>
