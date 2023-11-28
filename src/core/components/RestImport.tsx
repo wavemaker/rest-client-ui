@@ -6,7 +6,7 @@ import {
     TextareaAutosize, Alert, createTheme, ThemeProvider
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
-import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled } from './Table'
+import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled, tableHeaderStyle, tableRowStyle } from './Table'
 import {
     retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString, findDuplicatesByComparison, retrieveQueryDetailsFromURL, constructCommaSeparatedUniqueQueryValuesString
 } from './common/common'
@@ -83,6 +83,10 @@ export interface ICustomAxiosConfig extends AxiosRequestConfig {
         providerId?: string,
     },
 }
+export interface IToastError {
+    message: string,
+    type: "error" | 'info' | 'success' | 'warning'
+}
 
 interface APII {
     base_path: string,
@@ -101,6 +105,7 @@ function CustomTabPanel(props: TabPanelProps) {
             role="tabpanel"
             hidden={value !== index}
             {...other}
+            style={{ margin: "20px" }}
         >
             {value === index && (
                 <Box>
@@ -166,7 +171,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [addCustomType, setaddCustomType] = useState(false)
     const [contentTypes, setcontentTypes] = useState(defaultContentTypes)
     const [newContentType, setnewContentType] = useState('')
-    const [response, setresponse] = useState<AxiosResponse>({ headers: restImportConfig.setResponseHeaders, data: restImportConfig.setResponse } as any)
+    const [response, setresponse] = useState<AxiosResponse>({ headers: restImportConfig.setResponseHeaders, data: restImportConfig.setResponse || undefined } as any)
     const [userName, setuserName] = useState(restImportConfig?.userName || '')
     const [userPassword, setuserPassword] = useState(restImportConfig?.userPassword || '')
     const [loading, setloading] = useState(false)
@@ -179,18 +184,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [serviceNameEnabled, setserviceNameEnabled] = useState(true)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
     const editorRef: any = useRef(null)
-    const [errorMessage, seterrorMessage] = useState<{ message: string, type: "error" | 'info' | 'success' | 'warning' }>({ message: '', type: 'error' })
+    const [errorMessage, seterrorMessage] = useState<IToastError>()
     const [handleToastOpen, sethandleToastOpen] = useState(false)
     const [editorLanguage, seteditorLanguage] = useState('json')
-    const [monacoEditorValue, setmonacoEditorValue] = useState<any>()
 
     const handleToastClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
         if (reason === 'clickaway') {
             return;
         }
-
-        sethandleToastOpen(false);
-    };
+        sethandleToastOpen(false)
+    }
 
     useEffect(() => {
         if (!window.google) {
@@ -513,18 +516,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
                         let childWindow: any;
                         let authUrl: string
-                        const expires_time = window.sessionStorage.getItem(selectedProvider.providerId + "expires_in");
-                        let expiresIn = expires_time ? parseInt(expires_time, 10) : 0;
-                        let currentTimestamp = Math.floor(Date.now() / 1000);
-                        if (currentTimestamp > expiresIn) {
-                            sessionStorage.removeItem(selectedProvider.providerId + "expires_in");
-                            sessionStorage.removeItem(selectedProvider.providerId + "access_token");
-                        }
-                        const isToken = window.sessionStorage.getItem(selectedProvider.providerId + "access_token");
+                        const isToken = window.localStorage.getItem(`${providerId}.access_token`);
                         if (isToken) {
-                            if (currentTimestamp < expiresIn) {
-                                header['Authorization'] = `Bearer ` + isToken
-                            }
+                            header['Authorization'] = `Bearer ${isToken}`  
                         } else {
                             if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
                                 if (selectedProvider.providerId === "google") {
@@ -579,19 +573,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     }
                                 }, 1000);
                                 const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
-                                    if (event.data.tokenData) {
+                                    if (window.localStorage.getItem(`${providerId}.access_token`)) {
                                         clearInterval(interval);
-                                        const tokenData = JSON.parse(event.data.tokenData)
-                                        window.sessionStorage.setItem(selectedProvider.providerId + "access_token", tokenData.access_token);
-                                        const currentTimestamp = Math.floor(Date.now() / 1000);
-                                        const expiresIn = tokenData.expires_in
-                                        const expirationTimestamp = currentTimestamp + expiresIn;
-                                        window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
-                                        header['Authorization'] = `Bearer ` + tokenData.access_token
+                                        // const tokenData = JSON.parse(event.data.tokenData)
+                                        const access_token = window.localStorage.getItem(`${providerId}.access_token`) || null
+                                        console.log(access_token);
+                                        header['Authorization'] = `Bearer ${access_token}` //tokenData.access_token
                                         handleRestAPI(header);
                                         window.removeEventListener('message', messageHandler);
-                                    } else if (event.data.code) {
-                                        clearInterval(interval);
+                                    } else if (event.data.code) { //PKCE flow 
+                                        clearInterval(interval)
                                         getAccessToken(event.data.code, codeVerifier)
                                         setloading(false)
                                         window.removeEventListener('message', messageHandler);
@@ -634,16 +625,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     const config = useProxy ? configWProxy : configWOProxy
                     const response: any = await Apicall(config as AxiosRequestConfig)
                     if (response.status >= 200 && response.status < 300) {
-                        handleResponse(response, config)
-                        // const settingsUploadData = await settingsUpload(config, response)
-                        // if (settingsUploadData) {
-                        //     setserviceNameEnabled(false)
-                        //     if (!restImportConfig.viewMode) {
-                        //         restImportConfig.getServiceName(settingsUploadData?.serviceId)
-                        //         setserviceName(settingsUploadData?.serviceId)
-                        //     }
-                        //     handleResponse(response, config, settingsUploadData)
-                        // }
+                        // handleResponse(response, config)
+                        const settingsUploadData = await settingsUpload(config, response)
+                        if (settingsUploadData) {
+                            setserviceNameEnabled(false)
+                            if (!restImportConfig.viewMode) {
+                                restImportConfig.getServiceName(settingsUploadData?.serviceId)
+                                setserviceName(settingsUploadData?.serviceId)
+                            }
+                            handleResponse(response, config, settingsUploadData)
+                        }
                     } else {
                         setserviceNameEnabled(true)
                         handleResponse(response, config)
@@ -685,11 +676,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
             else
                 responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
         }
-        if (responseValue.data === undefined || responseValue.headers === undefined) {
+        if (responseValue.data === undefined || responseValue.headers === undefined)
             responseValue = { data: response.message, status: response.code, headers: {} }
-        }
-        setmonacoEditorValue(response.data)
-        // editorRef.current.setValue(responseValue.data)
+        editorRef.current.setValue(responseValue.data)
         setresponse(responseValue as AxiosResponse)
         request.url = apiURL
         restImportConfig.handleResponse(request, responseValue as AxiosResponse, settingsUploadData)
@@ -697,7 +686,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
     function checkXMLorJSON(responseValue: any): any {
         let response
         try {
-            response = JSON.stringify(JSON.parse(JSON.stringify(responseValue)), undefined, 2)
+            if (typeof 'string') {
+                response = JSON.stringify(JSON.parse(responseValue), undefined, 2)
+            } else if (typeof 'object')
+                response = JSON.stringify(JSON.parse(JSON.stringify(responseValue)), undefined, 2)
         } catch (error) {
             response = responseValue
             seteditorLanguage('plaintext')
@@ -874,7 +866,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         <ThemeProvider theme={theme}>
             <Stack className='rest-import-ui'>
                 {loading && <FallbackSpinner />}
-                <Grid gap={2} className='cmnflx' container>
+                <Grid gap={1} className='cmnflx' container>
                     <Grid item md={12}>
                         {alertMsg && (
                             <Alert sx={{ py: 0 }} severity="error" data-testid="default-error">{alertMsg}</Alert>
@@ -939,160 +931,162 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     <Tab label={translate("PATH") + " " + translate("PARAMS")} />
                                 </Tabs>
                             </Box>
-                            <CustomTabPanel value={requestTabValue} index={0}>
-                                <Grid spacing={2} mt={2} className='cmnflx' container>
-                                    <Grid item md={3}>
-                                        <Typography>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
-                                    </Grid>
-                                    <Grid item md={9}>
-                                        <FormControl size='small' >
-                                            <Select
-                                                data-testid="http-auth"
-                                                value={httpAuth}
-                                                onChange={handleChangehttpAuth}
-                                            >
-                                                <MenuItem value={'NONE'}>{translate("NONE")}</MenuItem>
-                                                <MenuItem value={'BASIC'}>{translate("BASIC")}</MenuItem>
-                                                <MenuItem value={'OAUTH2'}>{translate("OAUTH")} 2.0</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    {httpAuth === "BASIC" && <>
+                            <Box sx={{ border: '1px solid #ccc' }}>
+                                <CustomTabPanel value={requestTabValue} index={0}>
+                                    <Grid spacing={2} className='cmnflx' container>
                                         <Grid item md={3}>
-                                            <Typography>{translate("USER_NAME")}</Typography>
+                                            <Typography>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
                                         </Grid>
                                         <Grid item md={9}>
-                                            <Stack direction={'row'}>
-                                                <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
-                                                <Tooltip title={translate("USER_NAME")}>
-                                                    <IconButton>
-                                                        <HelpOutlineIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Stack>
-                                        </Grid>
-                                        <Grid item md={3}>
-                                            <Typography>{translate("PASSWORD")}</Typography>
-                                        </Grid>
-                                        <Grid item md={9}>
-                                            <Stack direction={'row'}>
-                                                <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
-                                                <Tooltip title={translate("PASSWORD")}>
-                                                    <IconButton>
-                                                        <HelpOutlineIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Stack>
-                                        </Grid>
-                                    </>}
-                                    {httpAuth === "OAUTH2" && <>
-                                        <Grid item md={3}>
-                                            <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
-                                        </Grid>
-                                        <Grid item md={9}>
-                                            <Stack spacing={2} direction={'row'}>
-                                                <TextField disabled size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
-                                                {
-                                                    providerId && (
-                                                        <Tooltip title={translate("Edit Provider")}>
-                                                            <IconButton onClick={() => setConfigOpen(true)} data-testid='edit-provider'>
-                                                                <EditOutlinedIcon />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    )
-                                                }
-                                                <Button onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
-                                            </Stack>
-                                        </Grid>
-                                    </>}
-                                </Grid>
-                            </CustomTabPanel>
-                            <CustomTabPanel value={requestTabValue} index={1}>
-                                <HeaderAndQueryTable restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
-                            </CustomTabPanel>
-                            <CustomTabPanel value={requestTabValue} index={2}>
-                                <Stack spacing={1} mt={2} ml={1}>
-                                    <Stack spacing={10} display={'flex'} alignItems={'center'} direction={'row'}>
-                                        <Typography>{translate("CONTENT") + " " + translate("TYPE")}</Typography>
-                                        <Stack spacing={3} display={'flex'} alignItems={'center'} direction={'row'}>
-                                            <FormControl size='small' sx={{ width: "20em" }}>
+                                            <FormControl size='small' >
                                                 <Select
-                                                    value={contentType}
-                                                    onChange={handleChangecontentType}
-                                                    data-testid="select-content-type"
+                                                    data-testid="http-auth"
+                                                    value={httpAuth}
+                                                    onChange={handleChangehttpAuth}
                                                 >
-                                                    {contentTypes.map((data) => <MenuItem key={data.value} value={data.value}>{translate(data.label)}</MenuItem>)}
+                                                    <MenuItem value={'NONE'}>{translate("NONE")}</MenuItem>
+                                                    <MenuItem value={'BASIC'}>{translate("BASIC")}</MenuItem>
+                                                    <MenuItem value={'OAUTH2'}>{translate("OAUTH")} 2.0</MenuItem>
                                                 </Select>
                                             </FormControl>
-                                            <Tooltip title={translate("Choose appropriate content type")}>
-                                                <IconButton>
-                                                    <HelpOutlineIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                            {addCustomType ? <Stack direction={'row'}>
-                                                <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
-                                                <Tooltip title={translate("ADD")}>
-                                                    <IconButton onClick={() => handleAddCustomContentType()}>
-                                                        <DoneIcon sx={{ cursor: 'pointer', color: 'black' }} />
+                                        </Grid>
+                                        {httpAuth === "BASIC" && <>
+                                            <Grid item md={3}>
+                                                <Typography>{translate("USER_NAME")}</Typography>
+                                            </Grid>
+                                            <Grid item md={9}>
+                                                <Stack direction={'row'}>
+                                                    <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
+                                                    <Tooltip title={translate("USER_NAME")}>
+                                                        <IconButton>
+                                                            <HelpOutlineIcon />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Stack>
+                                            </Grid>
+                                            <Grid item md={3}>
+                                                <Typography>{translate("PASSWORD")}</Typography>
+                                            </Grid>
+                                            <Grid item md={9}>
+                                                <Stack direction={'row'}>
+                                                    <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
+                                                    <Tooltip title={translate("PASSWORD")}>
+                                                        <IconButton>
+                                                            <HelpOutlineIcon />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Stack>
+                                            </Grid>
+                                        </>}
+                                        {httpAuth === "OAUTH2" && <>
+                                            <Grid item md={3}>
+                                                <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
+                                            </Grid>
+                                            <Grid item md={9}>
+                                                <Stack spacing={2} direction={'row'}>
+                                                    <TextField disabled size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
+                                                    {
+                                                        providerId && (
+                                                            <Tooltip title={translate("Edit Provider")}>
+                                                                <IconButton onClick={() => setConfigOpen(true)} data-testid='edit-provider'>
+                                                                    <EditOutlinedIcon />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        )
+                                                    }
+                                                    <Button onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
+                                                </Stack>
+                                            </Grid>
+                                        </>}
+                                    </Grid>
+                                </CustomTabPanel>
+                                <CustomTabPanel value={requestTabValue} index={1}>
+                                    <HeaderAndQueryTable restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                </CustomTabPanel>
+                                <CustomTabPanel value={requestTabValue} index={2}>
+                                    <Stack spacing={1}>
+                                        <Stack spacing={10} display={'flex'} alignItems={'center'} direction={'row'}>
+                                            <Typography>{translate("CONTENT") + " " + translate("TYPE")}</Typography>
+                                            <Stack spacing={3} display={'flex'} alignItems={'center'} direction={'row'}>
+                                                <FormControl size='small' sx={{ width: "20em" }}>
+                                                    <Select
+                                                        value={contentType}
+                                                        onChange={handleChangecontentType}
+                                                        data-testid="select-content-type"
+                                                    >
+                                                        {contentTypes.map((data) => <MenuItem key={data.value} value={data.value}>{translate(data.label)}</MenuItem>)}
+                                                    </Select>
+                                                </FormControl>
+                                                <Tooltip title={translate("Choose appropriate content type")}>
+                                                    <IconButton>
+                                                        <HelpOutlineIcon />
                                                     </IconButton>
                                                 </Tooltip>
-                                            </Stack> :
-                                                <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
-                                                    <IconButton onClick={() => setaddCustomType(true)}>
-                                                        <AddIcon sx={{ cursor: 'pointer', color: 'black' }} />
-                                                    </IconButton>
-                                                </Tooltip>}
+                                                {addCustomType ? <Stack direction={'row'}>
+                                                    <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
+                                                    <Tooltip title={translate("ADD")}>
+                                                        <IconButton onClick={() => handleAddCustomContentType()}>
+                                                            <DoneIcon sx={{ cursor: 'pointer', color: 'black' }} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Stack> :
+                                                    <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
+                                                        <IconButton onClick={() => setaddCustomType(true)}>
+                                                            <AddIcon sx={{ cursor: 'pointer', color: 'black' }} />
+                                                        </IconButton>
+                                                    </Tooltip>}
+                                            </Stack>
                                         </Stack>
+                                        {contentType === 'multipart/form-data' ? <MultipartTable handleToastError={handleToastError} value={multipartParams} setValue={handlemultipartParams} /> :
+                                            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
+                                        }
                                     </Stack>
-                                    {contentType === 'multipart/form-data' ? <MultipartTable value={multipartParams} setValue={handlemultipartParams} /> :
-                                        <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
-                                    }
-                                </Stack>
-                            </CustomTabPanel>
-                            <CustomTabPanel value={requestTabValue} index={3}>
-                                <HeaderAndQueryTable restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
-                            </CustomTabPanel>
-                            <CustomTabPanel value={requestTabValue} index={4}>
-                                {pathParams.length > 0 ? <TableContainer component={Paper}>
-                                    <Table>
-                                        <TableHead>
-                                            <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
-                                                <TableCell align='center'>{translate("NAME")}</TableCell>
-                                                <TableCell align='center'>{translate("TYPE")}</TableCell>
-                                                <TableCell align='center'>{translate("VALUE")}</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {pathParams.map((data, index) =>
-                                                <TableRowStyled key={index}>
-                                                    <TableCell align='center'>
-                                                        <FormLabel data-testid="path-param-label">{data.name}</FormLabel>
-                                                    </TableCell>
-                                                    <TableCell align='center'>
-                                                        <FormLabel>{translate("String")}</FormLabel>
-                                                    </TableCell>
-                                                    <TableCell align='center'>
-                                                        <TextField data-testid="path-param-value" value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
-                                                    </TableCell>
-                                                </TableRowStyled>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer> :
-                                    <Stack p={2} spacing={1} direction={'row'} sx={{ backgroundColor: "#d9edf7" }}>
-                                        <InfoIcon sx={{ height: 18, width: 18, color: '#31708f', mt: 0.5 }} />
-                                        <Stack>
-                                            <Typography>
-                                                {translate('NO_PATH_PARAMS')}
-                                                {translate('NO_PATH_PARAMS_DESC')}
-                                            </Typography>
-                                            <Typography>
-                                                {`e.g. For URL "http:wavemaker.com/projects/{pid}/?mode=json", "pid" is the path param.`}
-                                                (<a href='https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/'>{translate("MORE_INFO")}</a>)
-                                            </Typography>
-                                        </Stack>
-                                    </Stack>}
-                            </CustomTabPanel>
+                                </CustomTabPanel>
+                                <CustomTabPanel value={requestTabValue} index={3}>
+                                    <HeaderAndQueryTable restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                </CustomTabPanel>
+                                <CustomTabPanel value={requestTabValue} index={4}>
+                                    {pathParams.length > 0 ? <TableContainer component={Paper}>
+                                        <Table>
+                                            <TableHead>
+                                                <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
+                                                    <TableCell style={tableHeaderStyle} align='left'>{translate("NAME")}</TableCell>
+                                                    <TableCell style={tableHeaderStyle} align='left'>{translate("TYPE")}</TableCell>
+                                                    <TableCell style={tableHeaderStyle} align='left'>{translate("VALUE")}</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {pathParams.map((data, index) =>
+                                                    <TableRowStyled key={index}>
+                                                        <TableCell style={tableRowStyle} width={'33%'} align='left'>
+                                                            <FormLabel data-testid="path-param-label">{data.name}</FormLabel>
+                                                        </TableCell>
+                                                        <TableCell style={tableRowStyle} width={'33%'} align='left'>
+                                                            <FormLabel>{translate("String")}</FormLabel>
+                                                        </TableCell>
+                                                        <TableCell style={tableRowStyle} width={'33%'} align='left'>
+                                                            <TextField fullWidth data-testid="path-param-value" value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
+                                                        </TableCell>
+                                                    </TableRowStyled>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer> :
+                                        <Stack p={2} spacing={1} direction={'row'} sx={{ backgroundColor: "#d9edf7" }}>
+                                            <InfoIcon sx={{ height: 18, width: 18, color: '#31708f', mt: 0.5 }} />
+                                            <Stack>
+                                                <Typography>
+                                                    {translate('NO_PATH_PARAMS')}
+                                                    {translate('NO_PATH_PARAMS_DESC')}
+                                                </Typography>
+                                                <Typography>
+                                                    {`e.g. For URL "http:wavemaker.com/projects/{pid}/?mode=json", "pid" is the path param.`}
+                                                    (<a href='https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/'>{translate("MORE_INFO")}</a>)
+                                                </Typography>
+                                            </Stack>
+                                        </Stack>}
+                                </CustomTabPanel>
+                            </Box>
                         </Box>
                     </Grid>
                     <Grid item md={12} data-testid="response-block">
@@ -1104,8 +1098,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 </Tabs>
                             </Box>
                         </Box>
-                        {responseTabValue === 1 ? <Stack overflow={'hidden'} sx={{ wordBreak: 'break-word', backgroundColor: "rgb(40, 42, 54)", color: 'white' }} whiteSpace={'normal'} p={2} width={'100%'} direction={'row'}>
-                            {response === undefined ? "" : <TableContainer>
+                        {responseTabValue === 1 && <Stack height={restImportConfig.monacoEditorHeight ? `${restImportConfig.monacoEditorHeight}px` : '300px'} overflow={'auto'} sx={{ wordBreak: 'break-word', backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
+                            {response !== undefined && <TableContainer>
                                 <Table>
                                     <TableBody>
                                         {Object.keys(response?.headers as any).map(key => {
@@ -1113,14 +1107,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                 key={key}
                                                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                             >
-                                                <TableCell align='left' sx={{ color: 'white' }}>{key} :</TableCell>
-                                                <TableCell align='left' sx={{ color: 'white' }}>{(response?.headers as any)[key]}</TableCell>
+                                                <TableCell style={{ borderBottom: 'none', padding: '5px', width: '30%', paddingLeft: '2.5%' }} align='left' sx={{ color: 'white' }}>{key} :</TableCell>
+                                                <TableCell style={{ borderBottom: 'none', padding: '5px' }} align='left' sx={{ color: 'white' }}>{(response?.headers as any)[key]}</TableCell>
                                             </TableRow>
                                         })}
                                     </TableBody>
                                 </Table>
                             </TableContainer>}
-                        </Stack> : ''}
+                        </Stack>}
                     </Grid>
                 </Grid>
                 <ProviderModal handleToastError={handleToastError} handleOpen={providerOpen} handleClose={handleCloseProvider} proxyObj={restImportConfig} />
@@ -1133,11 +1127,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     handleToastError={handleToastError}
                 />
                 <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
-                    <Alert data-testid={'alertMessage'} onClose={handleToastClose} severity={errorMessage.type} sx={{ width: '100%' }}>
-                        {errorMessage.message}
+                    <Alert data-testid={'alertMessage'} onClose={handleToastClose} severity={errorMessage?.type} sx={{ width: '100%' }}>
+                        {errorMessage?.message}
                     </Alert>
                 </Snackbar>
-                <MonacoEditor monacoEditorHeight={restImportConfig?.monacoEditorHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2)} initialLanguage={editorLanguage} />
+                <div style={{ display: responseTabValue === 0 ? 'block' : 'none', width: '100%' }}>
+                    <MonacoEditor monacoEditorHeight={restImportConfig?.monacoEditorHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2) || undefined} initialLanguage={editorLanguage} />
+                </div>
                 <div style={{ position: 'relative', height: '0px' }}>
                     <TextField sx={{ position: 'absolute', left: -10000, top: -10000 }} data-testid="mock-response" value={responseTabValue === 0 ? response.data : JSON.stringify(response.headers)} disabled={true}></TextField>
                 </div>

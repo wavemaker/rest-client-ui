@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -6,14 +6,19 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, Stack, TextField } from '@mui/material';
+import {
+    Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, TextField, Typography
+} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { ChangeEvent } from 'react';
-import { constructCommaSeparatedUniqueQueryValuesString, constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison, getCurrentDateTime, retrieveQueryDetailsFromURL } from './common/common';
+import {
+    constructCommaSeparatedUniqueQueryValuesString, constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison,
+    getCurrentDateTime, retrieveQueryDetailsFromURL
+} from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
-import { PathParamsI, restImportConfigI } from './RestImport';
+import { IToastError, PathParamsI, restImportConfigI } from './RestImport';
 import { useTranslation } from 'react-i18next';
 import { AxiosResponse } from 'axios';
 
@@ -30,6 +35,7 @@ export interface BodyParamsI {
     filename?: string
 }
 
+
 export const TableRowStyled = styled(TableRow)`
   &:nth-of-type(odd) {
     background-color: #fff;
@@ -38,13 +44,28 @@ export const TableRowStyled = styled(TableRow)`
     background-color: #f3f3f3;
   } 
 `;
+export const tableHeaderStyle: CSSProperties = {
+    fontWeight: 700,
+    paddingTop: 5,
+    paddingBottom: 5,
+    border: "1px solid #ccc"
+}
+export const tableRowStyle: CSSProperties = {
+    paddingTop: 8,
+    paddingBottom: 8, 
+    border: "1px solid #ccc"
+}
 
-export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams, handleToastError, restImportConfig }:
+export function HeaderAndQueryTable(
     {
-        value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string,
-        apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
-        pathParams: PathParamsI[], handleToastError: (error: { message: string, type: "error" | 'info' | 'success' | 'warning' }, response?: AxiosResponse) => void, restImportConfig: restImportConfigI
-    }) {
+        value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams, handleToastError, restImportConfig
+    }:
+        {
+            value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string,
+            apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
+            pathParams: PathParamsI[], handleToastError: (error: IToastError, response?: AxiosResponse) => void, restImportConfig: restImportConfigI
+        }
+) {
     const { t: translate } = useTranslation();
     var selectTypes =
     {
@@ -270,63 +291,46 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }} data-testid="subheaders">
-                        <TableCell align='center'>{translate("NAME")}</TableCell>
-                        <TableCell align='center'>{translate("TYPE")}</TableCell>
-                        <TableCell align='center'>{translate("TEST") + " " + translate("VALUE")}</TableCell>
-                        <TableCell align='center'>{translate("ACTIONS")}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate("NAME")}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate("TYPE")}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate("TEST") + " " + translate("VALUE")}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate("ACTIONS")}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
-                            <TableCell align='center'>
-                                <Stack className='cmnflx'>
-                                    {from === 'query' ?
-                                        <Autocomplete
-                                            sx={{ width: 200 }}
-                                            size='small'
-                                            disabled={index !== value.length - 1}
-                                            inputValue={data.name}
-                                            onInputChange={(event, newValue: string) => {
-                                                handleChangeName(newValue, index);
-                                            }}
-                                            freeSolo
-                                            options={[]}
-                                            renderInput={(params) => <TextField  {...params} InputLabelProps={{ children: '' }} />}
-                                        /> :
-                                        <Autocomplete
-                                            sx={{ width: 200 }}
-                                            size='small'
-                                            disabled={index !== value.length - 1}
-                                            inputValue={data.name}
-                                            onInputChange={(event, newValue: string) => {
-                                                handleChangeName(newValue, index);
-                                            }}
-                                            freeSolo
-                                            options={selectNames.map((option) => option.label)}
-                                            renderInput={(params) => <TextField  {...params} InputLabelProps={{ children: '' }} />}
-                                        />}
-                                </Stack>
+                            <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
+                                {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <Autocomplete
+                                    fullWidth={true}
+                                    size='small'
+                                    disabled={index !== value.length - 1}
+                                    inputValue={data.name}
+                                    onInputChange={(event, newValue: string) => {
+                                        handleChangeName(newValue, index);
+                                    }}
+                                    freeSolo
+                                    options={from === 'query' ? [] : selectNames.map((option) => option.label)}
+                                    renderInput={(params) => <TextField  {...params} InputLabelProps={{ children: '' }} />}
+                                />}
                             </TableCell>
-                            <TableCell>
-                                <Stack className='cmnflx'>
-                                    <FormControl size='small' sx={{ minWidth: 200 }}>
-                                        <InputLabel>{translate("SELECT") + " " + translate("TYPE")}</InputLabel>
-                                        <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
-                                            <ListSubheader>{translate("UI_TYPES")}</ListSubheader>
-                                            {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                            <ListSubheader>{translate("SERVER_SIDE") + " " + translate("PROPERTIES")}</ListSubheader>
-                                            {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                            <ListSubheader>{translate("APPENVIRONMENT") + " " + translate("PROPERTIES")}</ListSubheader>
-                                            {getAppEnvProperties()}
-                                        </Select>
-                                    </FormControl>
-                                </Stack>
+                            <TableCell style={tableRowStyle} width={"30%"} align='left'>
+                                <FormControl size='small' fullWidth={true}>
+                                    <InputLabel>{translate("SELECT") + " " + translate("TYPE")}</InputLabel>
+                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
+                                        <ListSubheader>{translate("UI_TYPES")}</ListSubheader>
+                                        {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        <ListSubheader>{translate("SERVER_SIDE") + " " + translate("PROPERTIES")}</ListSubheader>
+                                        {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        <ListSubheader>{translate("APPENVIRONMENT") + " " + translate("PROPERTIES")}</ListSubheader>
+                                        {getAppEnvProperties()}
+                                    </Select>
+                                </FormControl>
                             </TableCell>
-                            <TableCell align='center'>
-                                <TextField data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue(index)} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
+                            <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
+                                <TextField fullWidth={true} data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue(index)} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
                             </TableCell>
-                            <TableCell align='center'>
+                            <TableCell style={tableRowStyle} width={"5%"} align='center'>
                                 {index === value.length - 1 ? <AddIcon onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
                             </TableCell>
                         </TableRowStyled>
@@ -337,7 +341,9 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
     )
 }
 
-export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setValue: (data: BodyParamsI[]) => void, }) {
+export function MultipartTable(
+    { value, setValue, handleToastError }:
+        { value: BodyParamsI[], setValue: (data: BodyParamsI[]) => void, handleToastError: (error: IToastError, response?: AxiosResponse) => void, }) {
 
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
@@ -384,15 +390,18 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
         setValue(valueClone)
     }
 
-    const handleChangeFile = (e: File, currentIndex: number) => {
-        const valueClone = [...value]
-        valueClone.forEach((data, index) => {
-            if (index === currentIndex) {
-                data.filename = e.name
-                data.value = e
-            }
-        })
-        setValue(valueClone)
+    const handleChangeFile = (e: React.ChangeEvent<HTMLInputElement>, currentIndex: number) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const valueClone = [...value];
+            valueClone.forEach((data, dataIndex) => {
+                if (dataIndex === currentIndex) {
+                    data.filename = files[0].name;
+                    data.value = files[0];
+                }
+            });
+            setValue(valueClone);
+        }
     }
 
     function handleAddRow() {
@@ -403,6 +412,8 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                 name: '', value: "", type: 'file', filename: ''
             })
             setValue(valueClone)
+        } else {
+            handleToastError({ message: translate("MANDATORY_ALERT"), type: 'error' })
         }
     }
 
@@ -418,20 +429,20 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
             <Table data-testid="multipart-table">
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
-                        <TableCell align='center'>{translate('NAME')}</TableCell>
-                        <TableCell align='center'>{translate('TYPE')}</TableCell>
-                        <TableCell align='center'>{translate('TEST') + " " + translate('VALUE')}</TableCell>
-                        <TableCell align='center'>{translate('ACTIONS')}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate('NAME')}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate('TYPE')}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate('TEST') + " " + translate('VALUE')}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate('ACTIONS')}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
-                            <TableCell align='center'>
-                                <TextField disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} data-testid="multipart-name" />
+                            <TableCell width={'32.5%'} style={tableRowStyle} align='left'>
+                                {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <TextField fullWidth disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} data-testid="multipart-name" />}
                             </TableCell>
-                            <TableCell>
-                                <FormControl size='small' sx={{ minWidth: 200 }}>
+                            <TableCell width={'30%'} style={tableRowStyle}>
+                                <FormControl size='small' fullWidth={true}>
                                     <InputLabel>{translate('SELECT') + " " + translate('TYPE')}</InputLabel>
                                     <Select sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }} onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')} data-testid="multipart-type">
                                         <MenuItem value={'file'}>{translate("FILE")}</MenuItem>
@@ -441,10 +452,12 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                                     </Select>
                                 </FormControl>
                             </TableCell>
-                            <TableCell align='center'>
+                            <TableCell width={'32.5%'} style={tableRowStyle} align='left'>
                                 {data.type === 'file' ? <TextField
-                                    variant="standard"
+                                    variant="outlined"
                                     type="text"
+                                    size='small'
+                                    fullWidth={true}
                                     disabled
                                     value={data.filename}
                                     data-testid="test-value"
@@ -457,8 +470,7 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                                                     type="file"
                                                     hidden
                                                     onChange={(e) => {
-                                                        //@ts-ignore
-                                                        handleChangeFile(e.target.files[0], index)
+                                                        handleChangeFile(e, index)
                                                     }}
                                                     data-testid="file-upload"
                                                 />
@@ -466,9 +478,9 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
                                         ),
                                     }}
                                 /> :
-                                    <TextField size='small' onChange={(e) => handleChangeTestValue(e.target.value, index)} value={data.value} />}
+                                    <TextField fullWidth size='small' onChange={(e) => handleChangeTestValue(e.target.value, index)} value={data.value} />}
                             </TableCell>
-                            <TableCell align='center'>
+                            <TableCell width={'5%'} style={tableRowStyle} align='center'>
                                 {index === value.length - 1 ? <AddIcon onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
                             </TableCell>
                         </TableRowStyled>

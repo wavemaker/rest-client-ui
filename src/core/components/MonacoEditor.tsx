@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 declare const window: any;
 const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight, initialLanguage }:
-    { editorRef: any, initialValue: string, url: string, monacoEditorHeight: number, initialLanguage: string }) => {
+    { editorRef: any, initialValue: string | undefined, url: string, monacoEditorHeight: number, initialLanguage: string }) => {
 
     useEffect(() => {
         const loadMonaco = async () => {
@@ -36,7 +36,7 @@ const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight, initia
     }, []);
 
 
-    return <div ref={editorRef} style={{ height: monacoEditorHeight ? `${monacoEditorHeight}px` : '300px' }} />;
+    return <div ref={editorRef} style={{ height: monacoEditorHeight ? `${monacoEditorHeight}px` : '300px', width: "100%" }} />;
 };
 
 export default MonacoEditor;
