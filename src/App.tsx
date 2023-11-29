@@ -61,7 +61,7 @@ export default function App() {
     viewMode: false,
     setResponseHeaders: { kingkong: "test" },
     monacoEditorURL: undefined as any,
-    monacoEditorHeight: 350
+    responseBlockHeight: 500
   }
 
   return (

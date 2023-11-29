@@ -35,7 +35,10 @@
     justify-content: center;
     align-items: center;
   }
-  .text-danger{
+  .text-danger {
     color: red;
+  }
+  :disabled {
+    cursor: not-allowed; /* or 'default' or any other cursor style */
   }
 }

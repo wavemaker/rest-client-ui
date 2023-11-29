@@ -36,7 +36,7 @@ const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight, initia
     }, []);
 
 
-    return <div ref={editorRef} style={{ height: monacoEditorHeight ? `${monacoEditorHeight}px` : '300px', width: "100%" }} />;
+    return <div ref={editorRef} style={{ height: monacoEditorHeight ? `${monacoEditorHeight / 1.2}px` : '300px', width: "100%" }} />;
 };
 
 export default MonacoEditor;

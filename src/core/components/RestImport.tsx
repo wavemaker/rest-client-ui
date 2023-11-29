@@ -70,7 +70,7 @@ export interface restImportConfigI {
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
     monacoEditorURL: string,
-    monacoEditorHeight?: number,
+    responseBlockHeight?: number,
 }
 interface ITypes {
     key: string
@@ -434,8 +434,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             setnewContentType("")
         }
         else {
-            setaddCustomType(false)
-            setnewContentType("")
+            handleToastError({ message: "Please add a custom content type", type: 'error' })
         }
     }
     const handleTestClick = async () => {
@@ -518,7 +517,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         let authUrl: string
                         const isToken = window.localStorage.getItem(`${providerId}.access_token`);
                         if (isToken) {
-                            header['Authorization'] = `Bearer ${isToken}`  
+                            header['Authorization'] = `Bearer ${isToken}`
                         } else {
                             if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
                                 if (selectedProvider.providerId === "google") {
@@ -684,14 +683,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
         restImportConfig.handleResponse(request, responseValue as AxiosResponse, settingsUploadData)
     }
     function checkXMLorJSON(responseValue: any): any {
-        let response
+        let response = responseValue
         try {
-            if (typeof 'string') {
+            if ('string' === typeof responseValue)
                 response = JSON.stringify(JSON.parse(responseValue), undefined, 2)
-            } else if (typeof 'object')
+            else if ('object' === typeof responseValue)
                 response = JSON.stringify(JSON.parse(JSON.stringify(responseValue)), undefined, 2)
         } catch (error) {
-            response = responseValue
             seteditorLanguage('plaintext')
         }
         return response
@@ -872,14 +870,21 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             <Alert sx={{ py: 0 }} severity="error" data-testid="default-error">{alertMsg}</Alert>
                         )}
                     </Grid>
-                    <Grid item md={12}>
+                    <Grid sx={{ border: restImportConfig.viewMode ? '2px solid #ccc' : 'none', padding: restImportConfig.viewMode ? 3 : 0, backgroundColor: '#faf8f9' }} item md={12}>
                         <Stack spacing={5} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                            <FormControl sx={{ minWidth: 120 }} size='small'>
+                            <FormControl
+                                disabled={restImportConfig.viewMode}
+                                sx={{ minWidth: 120, color: "red" }} size='small'>
                                 <Select
                                     data-testid="http-method"
                                     value={httpMethod}
+                                    sx={{
+                                        backgroundColor: restImportConfig.viewMode ? '#eeeced' : 'none',
+                                        "& .MuiInputBase-input.Mui-disabled": {
+                                            WebkitTextFillColor: restImportConfig.viewMode ? "#000" : 'none',
+                                        },
+                                    }}
                                     onChange={handleChangehttpMethod}
-                                    disabled={restImportConfig.viewMode}
                                 >
                                     <MenuItem value={'GET'}>{'GET'}</MenuItem>
                                     <MenuItem value={'POST'}>{'POST'}</MenuItem>
@@ -895,16 +900,21 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             }} autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
                             <Button onClick={handleTestClick} disabled={btnDisable} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
-                    </Grid>
-                    <Grid item md={12}>
-                        <Grid container>
+                        <Grid mt={2} container>
                             <Grid item md={6}>
                                 <Stack sx={{ cursor: "pointer" }} spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('SERVICE_NAME')}</Typography>
-                                    <TextField value={serviceName} onChange={(e) => {
-                                        setserviceName(e.target.value)
-                                        restImportConfig.getServiceName(e.target.value)
-                                    }} disabled={serviceNameEnabled || restImportConfig.viewMode} size='small' />
+                                    <TextField value={serviceName}
+                                        sx={{
+                                            backgroundColor: restImportConfig.viewMode ? '#eeeced' : 'none',
+                                            "& .MuiInputBase-input.Mui-disabled": {
+                                                WebkitTextFillColor: restImportConfig.viewMode ? "#000" : 'none',
+                                            },
+                                        }}
+                                        onChange={(e) => {
+                                            setserviceName(e.target.value)
+                                            restImportConfig.getServiceName(e.target.value)
+                                        }} disabled={serviceNameEnabled || restImportConfig.viewMode} size='small' />
                                 </Stack>
                             </Grid>
                             <Grid item md={6}>
@@ -920,8 +930,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             </Grid>
                         </Grid>
                     </Grid>
-                    <Grid item md={12} data-testid="request-config-block">
-                        <Box sx={{ width: '100%' }}>
+                    <Grid sx={{ overflowY: 'auto' }} height={restImportConfig.responseBlockHeight ? `${restImportConfig.responseBlockHeight}px` : '300px'} item md={12}>
+                        <Box data-testid="request-config-block" sx={{ width: '100%' }}>
                             <Box sx={{ borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                 <Tabs sx={{ minHeight: "30px", height: "45px" }} value={requestTabValue} onChange={handleChangeHeaderTabs}>
                                     <Tab label={translate("AUTHORIZATION")} />
@@ -1088,9 +1098,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 </CustomTabPanel>
                             </Box>
                         </Box>
-                    </Grid>
-                    <Grid item md={12} data-testid="response-block">
-                        <Box sx={{ width: '100%' }}>
+                        <Box data-testid="response-block" sx={{ width: '100%' }}>
                             <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                 <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
                                     <Tab label={translate("RESPONSE") + " " + translate("BODY")} />
@@ -1098,7 +1106,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 </Tabs>
                             </Box>
                         </Box>
-                        {responseTabValue === 1 && <Stack height={restImportConfig.monacoEditorHeight ? `${restImportConfig.monacoEditorHeight}px` : '300px'} overflow={'auto'} sx={{ wordBreak: 'break-word', backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
+                        <div style={{ display: responseTabValue === 0 ? 'block' : 'none', width: '100%' }}>
+                            <MonacoEditor monacoEditorHeight={restImportConfig?.responseBlockHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2) || undefined} initialLanguage={editorLanguage} />
+                        </div>
+                        {responseTabValue === 1 && <Stack overflow={'auto'} sx={{ wordBreak: 'break-word', backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
                             {response !== undefined && <TableContainer>
                                 <Table>
                                     <TableBody>
@@ -1131,9 +1142,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         {errorMessage?.message}
                     </Alert>
                 </Snackbar>
-                <div style={{ display: responseTabValue === 0 ? 'block' : 'none', width: '100%' }}>
-                    <MonacoEditor monacoEditorHeight={restImportConfig?.monacoEditorHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2) || undefined} initialLanguage={editorLanguage} />
-                </div>
                 <div style={{ position: 'relative', height: '0px' }}>
                     <TextField sx={{ position: 'absolute', left: -10000, top: -10000 }} data-testid="mock-response" value={responseTabValue === 0 ? response.data : JSON.stringify(response.headers)} disabled={true}></TextField>
                 </div>
