@@ -1,14 +1,14 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import {
-    Box, FormControl, FormLabel, Grid, IconButton, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table,
-    TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button,
-    TextareaAutosize, Alert, createTheme, ThemeProvider
+    Box, FormControl, FormLabel, Grid, IconButton, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table, TableBody, TableCell,
+    TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button, TextareaAutosize, Alert, createTheme, ThemeProvider
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled, tableHeaderStyle, tableRowStyle } from './Table'
 import {
-    retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString, findDuplicatesByComparison, retrieveQueryDetailsFromURL, constructCommaSeparatedUniqueQueryValuesString
+    retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString,
+    findDuplicatesByComparison, retrieveQueryDetailsFromURL, constructCommaSeparatedUniqueQueryValuesString
 } from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
@@ -189,9 +189,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [editorLanguage, seteditorLanguage] = useState('json')
 
     const handleToastClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
-        if (reason === 'clickaway') {
+        if (reason === 'clickaway')
             return;
-        }
         sethandleToastOpen(false)
     }
 
@@ -231,7 +230,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
         if (restImportConfig.error.errorMethod === 'customFunction')
             return restImportConfig.error.errorFunction(error.message, response)
     }
-
     const getPathParams = () => {
         try {
             let paths = retrievePathParamNamesFromURL(apiURL.split("?")[0], "{", "}")
@@ -296,45 +294,26 @@ export default function RestImport({ language, restImportConfig }: { language: s
         })
         setpathParams(pathParamsClone)
     }
-    const handleCloseProvider = () => {
-        setproviderOpen(false)
-    }
-    const handleChangeapiURL = (value: string) => {
-        setapiURL(value)
-    }
-    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => {
-        setheaderParams(data)
-    }
-    const handleChangeQueryParams = (data: HeaderAndQueryI[]) => {
-        setqueryParams(data)
-    }
-    const handlemultipartParams = (data: BodyParamsI[]) => {
-        setmultipartParams(data)
-    }
+    const handleCloseProvider = () => setproviderOpen(false)
+    const handleChangeapiURL = (value: string) => setapiURL(value)
+    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => setheaderParams(data)
+    const handleChangeQueryParams = (data: HeaderAndQueryI[]) => setqueryParams(data)
+    const handlemultipartParams = (data: BodyParamsI[]) => setmultipartParams(data)
+    const handleChangehttpMethod = (event: SelectChangeEvent) => sethttpMethod(event.target.value as any)
+    const handleChangecontentType = (event: SelectChangeEvent) => setcontentType(event.target.value as string)
+    const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => setrequestTabValue(newValue);
+    const handleChangeProxy = (event: React.ChangeEvent<HTMLInputElement>) => setuseProxy(event.target.checked);
     const handleChangehttpAuth = (event: SelectChangeEvent) => {
-        if (event.target.value === 'OAUTH2' && !selectedProvider.providerId) {
+        if (event.target.value === 'OAUTH2' && !selectedProvider.providerId)
             setBtnDisable(true)
-        } else {
+        else
             setBtnDisable(false)
-        }
         sethttpAuth(event.target.value as any)
     }
-    const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => {
-        setrequestTabValue(newValue);
-    };
     const handleChangeResponseTabs = (event: any, newValue: number) => {
         newValue === 0 ? restImportConfig.hideMonacoEditor(false) : restImportConfig.hideMonacoEditor(true)
         setresponseTabValue(newValue)
     };
-    const handleChangehttpMethod = (event: SelectChangeEvent) => {
-        sethttpMethod(event.target.value as any)
-    }
-    const handleChangecontentType = (event: SelectChangeEvent) => {
-        setcontentType(event.target.value as string)
-    }
-    const handleChangeProxy = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setuseProxy(event.target.checked);
-    }
     const handleQueryChange = () => {
         try {
             if (apiURL !== '') {
@@ -433,9 +412,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
             setcontentType(newContentType)
             setnewContentType("")
         }
-        else {
+        else
             handleToastError({ message: "Please add a custom content type", type: 'error' })
-        }
+
     }
     const handleTestClick = async () => {
         try {
@@ -474,9 +453,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             requestAPI = urlWithoutQuery + newQueryString
                             setapiURL(requestAPI)
                             setqueryParams(queryParamsClone)
-                        } else {
+                        } else
                             throw new Error(`parameter "${queryName}" already exists`)
-                        }
                     }
                 }
                 validateAndAddQueryAtLastRow()
@@ -576,7 +554,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         clearInterval(interval);
                                         // const tokenData = JSON.parse(event.data.tokenData)
                                         const access_token = window.localStorage.getItem(`${providerId}.access_token`) || null
-                                        console.log(access_token);
                                         header['Authorization'] = `Bearer ${access_token}` //tokenData.access_token
                                         handleRestAPI(header);
                                         window.removeEventListener('message', messageHandler);
@@ -709,7 +686,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     ? request?.data.authDetails
                     : request?.authDetails,
             contentType: 'application/json',
-            method: request?.method,
+            method: httpMethod,
             endpointAddress: apiURL,
             headers: constructHeaders,
             sampleHttpResponseDetails: {
