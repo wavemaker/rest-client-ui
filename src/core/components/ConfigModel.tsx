@@ -286,7 +286,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             </Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' onChange={handleProviderId}
+                            <TextField name="wm-webservice-provider-id-value" sx={{ width: "30em" }} size='small' onChange={handleProviderId}
                                 defaultValue={providerConf?.providerId} InputProps={{
                                     readOnly: !!providerConf,
                                 }}
@@ -303,6 +303,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     InputProps={{
                                         readOnly: !!providerConf,
                                     }}
+                                    name="wm-webservice-callback-url-value"
                                     helperText={translate('CALLBACK_iNFO')}
                                     fullWidth
                                     label={translate('CALLBACK') + ' ' + translate('URL')}
@@ -321,12 +322,13 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         <Grid item md={9}>
                             <FormControl sx={{ width: "30em" }} size='small' disabled={!!providerConf}>
                                 <Select
+                                    name="wm-webservice-flow-value"
                                     data-testid="flow"
                                     value={Flow}
                                     onChange={handleChangeFlow}
                                 >
-                                    <MenuItem value={'AUTHORIZATION_CODE'}>{translate("AUTHORIZATION") + " " + translate("CODE")} </MenuItem>
-                                    <MenuItem value={'IMPLICIT'}> {translate("IMPLICIT")} ({translate("NOT_RECOMMENDED")}) </MenuItem>
+                                    <MenuItem title={translate("AUTHORIZATION") + " " + translate("CODE")} value={'AUTHORIZATION_CODE'}>{translate("AUTHORIZATION") + " " + translate("CODE")} </MenuItem>
+                                    <MenuItem title={translate("NOT_RECOMMENDED")} value={'IMPLICIT'}> {translate("IMPLICIT")} ({translate("NOT_RECOMMENDED")}) </MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -336,8 +338,10 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             </Typography>
                         </Grid>
                         <Grid item md={PKCE ? 2 : 9}>
-                            <Checkbox data-testid='pkce-checkbox'
+                            <Checkbox
+                                data-testid='pkce-checkbox'
                                 checked={PKCE}
+                                name="wm-webservice-pkce-value"
                                 onChange={handleChangePKCE}
                             />
                             <Tooltip title={translate("PKCE")}>
@@ -349,11 +353,12 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         {PKCE && (
                             <Grid item md={7} className='cmnflx' container>
                                 <Grid item md={5}>
-                                    <Typography>Code Challenge Method </Typography>
+                                    <Typography>Code Challenge Method</Typography>
                                 </Grid>
                                 <Grid item md={7}>
                                     <FormControl size='small'>
                                         <Select
+                                            name="wm-webservice-code-challenge-method-value"
                                             data-testid="challenge-method"
                                             value={codeMethod}
                                             onChange={handleChangecodeMethod}
@@ -369,19 +374,33 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             <Typography>{translate("AUTHORIZATION") + " " + translate("URL")}  <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' onChange={handleAuthorizationURL} defaultValue={providerConf?.authorizationUrl} placeholder={translate("AUTHORIZATION") + " " + translate("URL")} label={translate("AUTHORIZATION") + " " + translate("URL")} />
+                            <TextField
+                                name="wm-webservice-authorization-url-value"
+                                sx={{ width: "30em" }} size='small' onChange={handleAuthorizationURL}
+                                defaultValue={providerConf?.authorizationUrl}
+                                placeholder={translate("AUTHORIZATION") + " " + translate("URL")}
+                                label={translate("AUTHORIZATION") + " " + translate("URL")} />
                         </Grid>
                         <Grid item md={3}>
                             <Typography>{translate("ACCESS_TOKEN") + " " + translate("URL")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' onChange={handleAccessTokenURL} defaultValue={providerConf?.accessTokenUrl} placeholder={translate("ACCESS_TOKEN") + " " + translate("URL")} label={translate("ACCESS_TOKEN") + " " + translate("URL")} />
+                            <TextField
+                                name="wm-webservice-access-token-value"
+                                sx={{ width: "30em" }} size='small' onChange={handleAccessTokenURL}
+                                defaultValue={providerConf?.accessTokenUrl}
+                                placeholder={translate("ACCESS_TOKEN") + " " + translate("URL")}
+                                label={translate("ACCESS_TOKEN") + " " + translate("URL")} />
                         </Grid>
                         <Grid item md={3}>
                             <Typography>{translate("CLIENT") + " " + translate("ID")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' defaultValue={providerConf?.clientId} onChange={handleClientId} placeholder={translate("CLIENT") + " " + translate("ID")} label={translate("CLIENT") + " " + translate("ID")} />
+                            <TextField
+                                name="wm-webservice-client-id-value"
+                                sx={{ width: "30em" }} size='small' defaultValue={providerConf?.clientId}
+                                onChange={handleClientId} placeholder={translate("CLIENT") + " " + translate("ID")}
+                                label={translate("CLIENT") + " " + translate("ID")} />
                         </Grid>
                         {!PKCE && (
                             <Grid item md={12} container className='cmnflx' spacing={2}>
@@ -389,7 +408,11 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     <Typography>{translate("CLIENT") + " " + translate("SECRET")} <span className='text-danger'>*</span></Typography>
                                 </Grid>
                                 <Grid item md={9}>
-                                    <TextField sx={{ width: "30em" }} defaultValue={providerConf?.clientSecret} size='small' onChange={handleClientSecret} placeholder={translate("CLIENT") + " " + translate("SECRET")} label={translate("CLIENT") + " " + translate("SECRET")} />
+                                    <TextField
+                                        name="wm-webservice-client-secret-value"
+                                        sx={{ width: "30em" }} defaultValue={providerConf?.clientSecret} size='small'
+                                        onChange={handleClientSecret} placeholder={translate("CLIENT") + " " + translate("SECRET")}
+                                        label={translate("CLIENT") + " " + translate("SECRET")} />
                                 </Grid>
                             </Grid>
                         )}
@@ -399,12 +422,13 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         <Grid item md={9}>
                             <FormControl sx={{ width: "30em" }} size='small'>
                                 <Select
+                                    name="wm-webservice-send-accesstoken-value"
                                     data-testid="send-accesstoken"
                                     value={sendTokenAs}
                                     onChange={handleChangesendTokenAs}
                                 >
-                                    <MenuItem value={'HEADER'}>{translate("HEADER")}</MenuItem>
-                                    <MenuItem value={'QUERY'}>{translate("QUERY")}</MenuItem>
+                                    <MenuItem title='header' value={'HEADER'}>{translate("HEADER")}</MenuItem>
+                                    <MenuItem title='query' value={'QUERY'}>{translate("QUERY")}</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -415,7 +439,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             <Grid className='cmnflx' spacing={1} container>
                                 <Grid item md={12}>
                                     <Stack>
-                                        {scopes.map(scope => <FormControlLabel key={scope.name} control={<Checkbox data-testid={scope.name} checked={scope.checked} onChange={(e) => handleScopeChange(e, scope.name)} />} label={scope.name} />)}
+                                        {scopes.map(scope => <FormControlLabel key={scope.name} control={<Checkbox title={scope.name} data-testid={scope.name} checked={scope.checked} onChange={(e) => handleScopeChange(e, scope.name)} />} label={scope.name} />)}
                                     </Stack>
                                 </Grid>
                                 <Grid item md={4}>
@@ -430,13 +454,23 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     <hr />
                                 </Grid>
                                 <Grid item md={4}>
-                                    <TextField size='small' value={scopeKey} onChange={(e) => setscopeKey(e.target.value)} placeholder={translate("SCOPE") + " " + translate("KEY")} label={translate("SCOPE") + " " + translate("KEY")} />
+                                    <TextField
+                                        name="wm-webservice-scope-key-value"
+                                        size='small' value={scopeKey} onChange={(e) => setscopeKey(e.target.value)}
+                                        placeholder={translate("SCOPE") + " " + translate("KEY")}
+                                        label={translate("SCOPE") + " " + translate("KEY")} />
                                 </Grid>
                                 <Grid item md={4}>
-                                    <TextField size='small' value={scopeValue} onChange={(e) => setscopeValue(e.target.value)} placeholder={translate("SCOPE") + " " + translate("VALUE")} label={translate("SCOPE") + " " + translate("VALUE")} />
+                                    <TextField size='small'
+                                        name="wm-webservice-scope-value-value"
+                                        value={scopeValue} onChange={(e) => setscopeValue(e.target.value)}
+                                        placeholder={translate("SCOPE") + " " + translate("VALUE")}
+                                        label={translate("SCOPE") + " " + translate("VALUE")} />
                                 </Grid>
                                 <Grid className='cmnflx' item md={4}>
-                                    <Button onClick={handleAddScope} variant='contained'>{translate("ADD")}</Button>
+                                    <Button
+                                        name="wm-webservice-add-new-scope"
+                                        onClick={handleAddScope} variant='contained'>{translate("ADD")}</Button>
                                 </Grid>
                             </Grid>
                         </Grid>

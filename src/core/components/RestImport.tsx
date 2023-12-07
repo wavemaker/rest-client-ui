@@ -115,6 +115,9 @@ function CustomTabPanel(props: TabPanelProps) {
         </div>
     );
 }
+const CustomTab = ({ label, name, disabled, ...rest }: { label: string, name: string, disabled?: boolean }) => (
+    <Tab label={label} disabled={disabled} {...rest} />
+);
 const defaultContentTypes = [
     {
         label: "application/json", value: "application/json"
@@ -153,6 +156,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
             fontSize: 16, // Adjust the font size as needed
         },
     });
+    const httpMethods = ["GET", "POST", "DELETE", "HEAD", "PATCH", "PUT"]
+    const httpAuthTypes = ["NONE", 'BASIC', 'OAUTH2']
     const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
     const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState<string>(restImportConfig?.url || '')
@@ -853,6 +858,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 disabled={restImportConfig.viewMode}
                                 sx={{ minWidth: 120, color: "red" }} size='small'>
                                 <Select
+                                    name="wm-webservice-http-method"
                                     data-testid="http-method"
                                     value={httpMethod}
                                     sx={{
@@ -863,25 +869,21 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     }}
                                     onChange={handleChangehttpMethod}
                                 >
-                                    <MenuItem value={'GET'}>{'GET'}</MenuItem>
-                                    <MenuItem value={'POST'}>{'POST'}</MenuItem>
-                                    <MenuItem value={'PUT'}>{'PUT'}</MenuItem>
-                                    <MenuItem value={'HEAD'}>{'HEAD'}</MenuItem>
-                                    <MenuItem value={'PATCH'}>{'PATCH'}</MenuItem>
-                                    <MenuItem value={'DELETE'}>{'DELETE'}</MenuItem>
+                                    {httpMethods.map((httpMethod) => <MenuItem key={httpMethod} title={httpMethod} value={httpMethod}>{httpMethod}</MenuItem>)}
                                 </Select>
                             </FormControl>
                             <TextField onBlur={() => {
                                 getPathParams()
                                 handleQueryChange()
-                            }} autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
-                            <Button onClick={handleTestClick} disabled={btnDisable} variant='contained'>{translate('TEST')}</Button>
+                            }} name='wm-webservice-sample-url' autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
+                            <Button name="wm-webservice-sample-test" onClick={handleTestClick} disabled={btnDisable} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
                         <Grid mt={2} container>
                             <Grid item md={6}>
                                 <Stack sx={{ cursor: "pointer" }} spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('SERVICE_NAME')}</Typography>
                                     <TextField value={serviceName}
+                                        name="wm-webservice-service-name"
                                         sx={{
                                             backgroundColor: restImportConfig.viewMode ? '#eeeced' : 'none',
                                             "& .MuiInputBase-input.Mui-disabled": {
@@ -897,7 +899,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             <Grid item md={6}>
                                 <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('USE_PROXY')}</Typography>
-                                    <Switch data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
+                                    <Switch name="wm-webservice-use-proxy" data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
                                     <Tooltip title={translate("USE_PROXY")}>
                                         <IconButton>
                                             <HelpOutlineIcon />
@@ -911,11 +913,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         <Box data-testid="request-config-block" sx={{ width: '100%' }}>
                             <Box sx={{ borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                 <Tabs sx={{ minHeight: "30px", height: "45px" }} value={requestTabValue} onChange={handleChangeHeaderTabs}>
-                                    <Tab label={translate("AUTHORIZATION")} />
-                                    <Tab label={translate("HEADER") + " " + translate("PARAMS")} />
-                                    <Tab label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
-                                    <Tab label={translate("QUERY") + " " + translate("PARAMS")} />
-                                    <Tab label={translate("PATH") + " " + translate("PARAMS")} />
+                                    <CustomTab name="wm-rest-authorization-params-header" label={translate("AUTHORIZATION")} />
+                                    <CustomTab name="wm-rest-headers-params-header" label={translate("HEADER") + " " + translate("PARAMS")} />
+                                    <CustomTab name="wm-rest-body-params-header" label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
+                                    <CustomTab name="wm-rest-query-params-header" label={translate("QUERY") + " " + translate("PARAMS")} />
+                                    <CustomTab name="wm-rest-path-params-header" label={translate("PATH") + " " + translate("PARAMS")} />
                                 </Tabs>
                             </Box>
                             <Box sx={{ border: '1px solid #ccc' }}>
@@ -927,13 +929,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         <Grid item md={9}>
                                             <FormControl size='small' >
                                                 <Select
+                                                    name="wm-rest-http-auth"
                                                     data-testid="http-auth"
                                                     value={httpAuth}
                                                     onChange={handleChangehttpAuth}
                                                 >
-                                                    <MenuItem value={'NONE'}>{translate("NONE")}</MenuItem>
-                                                    <MenuItem value={'BASIC'}>{translate("BASIC")}</MenuItem>
-                                                    <MenuItem value={'OAUTH2'}>{translate("OAUTH")} 2.0</MenuItem>
+                                                    {httpAuthTypes.map((httpAuth) => <MenuItem key={httpAuth} title={translate(httpAuth)} value={httpAuth}>{translate(httpAuth)}</MenuItem>)}
                                                 </Select>
                                             </FormControl>
                                         </Grid>
@@ -943,7 +944,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack direction={'row'}>
-                                                    <TextField value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
+                                                    <TextField name="wm-webservice-advanced-username" value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
                                                     <Tooltip title={translate("USER_NAME")}>
                                                         <IconButton>
                                                             <HelpOutlineIcon />
@@ -956,7 +957,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack direction={'row'}>
-                                                    <TextField value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
+                                                    <TextField name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
                                                     <Tooltip title={translate("PASSWORD")}>
                                                         <IconButton>
                                                             <HelpOutlineIcon />
@@ -975,7 +976,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                     {
                                                         providerId && (
                                                             <Tooltip title={translate("Edit Provider")}>
-                                                                <IconButton onClick={() => setConfigOpen(true)} data-testid='edit-provider'>
+                                                                <IconButton name='wm-webservice-edit-provider' title={translate("Edit Provider")} onClick={() => setConfigOpen(true)} data-testid='edit-provider'>
                                                                     <EditOutlinedIcon />
                                                                 </IconButton>
                                                             </Tooltip>
@@ -997,11 +998,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             <Stack spacing={3} display={'flex'} alignItems={'center'} direction={'row'}>
                                                 <FormControl size='small' sx={{ width: "20em" }}>
                                                     <Select
+                                                        name="wm-webservice-content-type"
                                                         value={contentType}
                                                         onChange={handleChangecontentType}
                                                         data-testid="select-content-type"
                                                     >
-                                                        {contentTypes.map((data) => <MenuItem key={data.value} value={data.value}>{translate(data.label)}</MenuItem>)}
+                                                        {contentTypes.map((data) => <MenuItem title={data.value} key={data.value} value={data.value}>
+                                                            {translate(data.label)}
+                                                        </MenuItem>)}
                                                     </Select>
                                                 </FormControl>
                                                 <Tooltip title={translate("Choose appropriate content type")}>
@@ -1010,22 +1014,22 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                     </IconButton>
                                                 </Tooltip>
                                                 {addCustomType ? <Stack direction={'row'}>
-                                                    <TextField value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
+                                                    <TextField name="wm-webservice-new-content-type" value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
                                                     <Tooltip title={translate("ADD")}>
                                                         <IconButton onClick={() => handleAddCustomContentType()}>
-                                                            <DoneIcon sx={{ cursor: 'pointer', color: 'black' }} />
+                                                            <DoneIcon name="wm-webservice-add-content-type" sx={{ cursor: 'pointer', color: 'black' }} />
                                                         </IconButton>
                                                     </Tooltip>
                                                 </Stack> :
                                                     <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
                                                         <IconButton onClick={() => setaddCustomType(true)}>
-                                                            <AddIcon sx={{ cursor: 'pointer', color: 'black' }} />
+                                                            <AddIcon name="wm-webservice-add-new-content-type" sx={{ cursor: 'pointer', color: 'black' }} />
                                                         </IconButton>
                                                     </Tooltip>}
                                             </Stack>
                                         </Stack>
                                         {contentType === 'multipart/form-data' ? <MultipartTable handleToastError={handleToastError} value={multipartParams} setValue={handlemultipartParams} /> :
-                                            <TextareaAutosize style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
+                                            <TextareaAutosize name="wm-webservice-body-type" style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
                                         }
                                     </Stack>
                                 </CustomTabPanel>
@@ -1052,7 +1056,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                             <FormLabel>{translate("String")}</FormLabel>
                                                         </TableCell>
                                                         <TableCell style={tableRowStyle} width={'33%'} align='left'>
-                                                            <TextField fullWidth data-testid="path-param-value" value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
+                                                            <TextField name={index === pathParams.length - 1 ? "wm-webservice-new-param-value" : "wm-webservice-param-value"} fullWidth data-testid="path-param-value" value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
                                                         </TableCell>
                                                     </TableRowStyled>
                                                 )}

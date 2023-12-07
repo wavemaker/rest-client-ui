@@ -17,7 +17,7 @@
   "BASIC": "Basic",
   "USER_NAME": "User Name",
   "PASSWORD": "Password",
-  "OAUTH": "OAuth",
+  "OAUTH2": "OAuth2.0",
   "PROVIDER": "Provider",
   "NO": "No",
   "SELECTED_YET": "Selected yet",
@@ -88,5 +88,7 @@
   "CLIENTSECRET_ALERT": "Client Secret is required",
   "ALREADY_EXIST": "already exists",
   "SUCCESS_MSG": "Saved Successfully",
-  "NO_PROPERTIES_FOUND": " No Properties Found"
+  "NO_PROPERTIES_FOUND": " No Properties Found",
+  "PLAINTEXT": "Text(Text/Plain)",
+  "APPLICATION/JSON": "application/json"
 }

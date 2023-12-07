@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, ReactNode } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -52,7 +52,7 @@ export const tableHeaderStyle: CSSProperties = {
 }
 export const tableRowStyle: CSSProperties = {
     paddingTop: 8,
-    paddingBottom: 8, 
+    paddingBottom: 8,
     border: "1px solid #ccc"
 }
 
@@ -177,8 +177,8 @@ export function HeaderAndQueryTable(
         const lastRow = value[value.length - 1]
         const valueClone = [...value]
         const duplicates = findDuplicateObjectsWithinArray(valueClone, "name")
-        const allDuplicates = (): any[] => {
-            let returnDuplicates: any[] = []
+        const allDuplicates = (): HeaderAndQueryI[] => {
+            let returnDuplicates: HeaderAndQueryI[] = []
             if (from === 'header') {
                 returnDuplicates = findDuplicatesByComparison([lastRow], [...queryParams, ...pathParams], "name")
             }
@@ -274,11 +274,11 @@ export function HeaderAndQueryTable(
         }
     }
 
-    function getAppEnvProperties(): React.ReactNode {
+    function getAppEnvProperties(): ReactNode {
         const nodes: JSX.Element[] = [];
         if (restImportConfig.appEnvVariables) {
             restImportConfig.appEnvVariables?.forEach((data) => {
-                nodes.push(<MenuItem key={data.value} value={data.value}>{data.value}</MenuItem>);
+                nodes.push(<MenuItem title={data.value} key={data.value} value={data.value}>{data.value}</MenuItem>);
             });
         } else {
             nodes.push(<MenuItem disabled={true}>{translate('NO_PROPERTIES_FOUND')}</MenuItem>);
@@ -311,27 +311,30 @@ export function HeaderAndQueryTable(
                                     }}
                                     freeSolo
                                     options={from === 'query' ? [] : selectNames.map((option) => option.label)}
-                                    renderInput={(params) => <TextField  {...params} InputLabelProps={{ children: '' }} />}
+                                    renderInput={(params) => <TextField
+                                        name="wm-webservice-new-param-name"
+                                        {...params}
+                                        InputLabelProps={{ children: '' }} />}
                                 />}
                             </TableCell>
                             <TableCell style={tableRowStyle} width={"30%"} align='left'>
                                 <FormControl size='small' fullWidth={true}>
                                     <InputLabel>{translate("SELECT") + " " + translate("TYPE")}</InputLabel>
-                                    <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
+                                    <Select name="wm-webservice-new-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
                                         <ListSubheader>{translate("UI_TYPES")}</ListSubheader>
-                                        {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        {selectTypes.UITypes.map((type) => <MenuItem title={type.value} key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                         <ListSubheader>{translate("SERVER_SIDE") + " " + translate("PROPERTIES")}</ListSubheader>
-                                        {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        {selectTypes.ServerSideProperties.map((type) => <MenuItem title={type.value} key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                         <ListSubheader>{translate("APPENVIRONMENT") + " " + translate("PROPERTIES")}</ListSubheader>
                                         {getAppEnvProperties()}
                                     </Select>
                                 </FormControl>
                             </TableCell>
                             <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
-                                <TextField fullWidth={true} data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue(index)} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
+                                <TextField name={index === value.length - 1 ? "wm-webservice-new-param-value" : "wm-webservice-param-value"} fullWidth={true} data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue(index)} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
                             </TableCell>
                             <TableCell style={tableRowStyle} width={"5%"} align='center'>
-                                {index === value.length - 1 ? <AddIcon onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
+                                {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon name="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
                             </TableCell>
                         </TableRowStyled>
                     )}
@@ -424,6 +427,8 @@ export function MultipartTable(
     }
     const { t: translate } = useTranslation();
 
+    const multipartTypes = ['file', 'text', 'plaintext', 'application/json']
+
     return (
         <TableContainer component={Paper}>
             <Table data-testid="multipart-table">
@@ -439,16 +444,15 @@ export function MultipartTable(
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
                             <TableCell width={'32.5%'} style={tableRowStyle} align='left'>
-                                {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <TextField fullWidth disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} data-testid="multipart-name" />}
+                                {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <TextField name="wm-webservice-new-param-name" fullWidth disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} data-testid="multipart-name" />}
                             </TableCell>
                             <TableCell width={'30%'} style={tableRowStyle}>
                                 <FormControl size='small' fullWidth={true}>
                                     <InputLabel>{translate('SELECT') + " " + translate('TYPE')}</InputLabel>
-                                    <Select sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }} onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')} data-testid="multipart-type">
-                                        <MenuItem value={'file'}>{translate("FILE")}</MenuItem>
-                                        <MenuItem value={'text'}>{translate("TEXT")}</MenuItem>
-                                        <MenuItem value={'plaintext'}>{translate("Text(Text/Plain)")}</MenuItem>
-                                        <MenuItem value={'application/json'}>{translate("application/json")}</MenuItem>
+                                    <Select name="wm-webservice-new-param-type" sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }}
+                                        onChange={(e) => handleChangeType(e, index)} value={data.type}
+                                        label={translate('SELECT') + " " + translate('TYPE')} data-testid="multipart-type">
+                                        {multipartTypes.map((type) => <MenuItem value={type}>{translate(type.toUpperCase())}</MenuItem>)}
                                     </Select>
                                 </FormControl>
                             </TableCell>
@@ -466,6 +470,7 @@ export function MultipartTable(
                                             <IconButton component="label">
                                                 <FileUploadOutlined />
                                                 <input
+                                                    name='wm-webservice-file-upload'
                                                     style={{ display: "none" }}
                                                     type="file"
                                                     hidden
@@ -478,10 +483,10 @@ export function MultipartTable(
                                         ),
                                     }}
                                 /> :
-                                    <TextField fullWidth size='small' onChange={(e) => handleChangeTestValue(e.target.value, index)} value={data.value} />}
+                                    <TextField name={index === value.length - 1 ? "wm-webservice-new-param-value" : "wm-webservice-param-value"} fullWidth size='small' onChange={(e) => handleChangeTestValue(e.target.value, index)} value={data.value} />}
                             </TableCell>
                             <TableCell width={'5%'} style={tableRowStyle} align='center'>
-                                {index === value.length - 1 ? <AddIcon onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
+                                {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon name="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
                             </TableCell>
                         </TableRowStyled>
                     )}
