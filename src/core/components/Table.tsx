@@ -320,12 +320,19 @@ export function HeaderAndQueryTable(
                             <TableCell style={tableRowStyle} width={"30%"} align='left'>
                                 <FormControl size='small' fullWidth={true}>
                                     <InputLabel>{translate("SELECT") + " " + translate("TYPE")}</InputLabel>
-                                    <Select name="wm-webservice-new-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
-                                        <ListSubheader>{translate("UI_TYPES")}</ListSubheader>
+                                    <Select
+                                        MenuProps={{
+                                            PaperProps: {
+                                                style: {
+                                                    height: '300px', // Set the maximum height of the dropdown menu
+                                                },
+                                            },
+                                        }} name="wm-webservice-new-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
+                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("UI_TYPES")}</ListSubheader>
                                         {selectTypes.UITypes.map((type) => <MenuItem title={type.value} key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader>{translate("SERVER_SIDE") + " " + translate("PROPERTIES")}</ListSubheader>
+                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("SERVER_SIDE_PROPERTIES")}</ListSubheader>
                                         {selectTypes.ServerSideProperties.map((type) => <MenuItem title={type.value} key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader>{translate("APPENVIRONMENT") + " " + translate("PROPERTIES")}</ListSubheader>
+                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("APPENVIRONMENT") + " " + translate("PROPERTIES")}</ListSubheader>
                                         {getAppEnvProperties()}
                                     </Select>
                                 </FormControl>
