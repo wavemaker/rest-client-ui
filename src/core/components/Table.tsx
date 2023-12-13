@@ -11,14 +11,13 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { ChangeEvent } from 'react';
 import {
     constructCommaSeparatedUniqueQueryValuesString, constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison,
     getCurrentDateTime, retrieveQueryDetailsFromURL
 } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
-import { IToastError, PathParamsI, restImportConfigI } from './RestImport';
+import { IToastError, PathParamsI, defaultContentTypes, restImportConfigI } from './RestImport';
 import { useTranslation } from 'react-i18next';
 import { AxiosResponse } from 'axios';
 
@@ -162,11 +161,11 @@ export function HeaderAndQueryTable(
     }
 
 
-    const handleChangeTestValue = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, currentIndex: number) => {
+    const handleChangeTestValue = (newValue: string, currentIndex: number) => {
         const valueClone = [...value]
         valueClone.map((data, index) => {
             if (index === currentIndex) {
-                data.value = event.target.value
+                data.value = newValue
             }
             return data
         })
@@ -312,7 +311,7 @@ export function HeaderAndQueryTable(
                                     freeSolo
                                     options={from === 'query' ? [] : selectNames.map((option) => option.label)}
                                     renderInput={(params) => <TextField
-                                        name="wm-webservice-new-param-name"
+                                        name="wm-webservice-param-name"
                                         {...params}
                                         InputLabelProps={{ children: '' }} />}
                                 />}
@@ -327,18 +326,37 @@ export function HeaderAndQueryTable(
                                                     height: '300px', // Set the maximum height of the dropdown menu
                                                 },
                                             },
-                                        }} name="wm-webservice-new-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
+                                        }} name="wm-webservice-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
                                         <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("UI_TYPES")}</ListSubheader>
-                                        {selectTypes.UITypes.map((type) => <MenuItem title={type.value} key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        {selectTypes.UITypes.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                         <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("SERVER_SIDE_PROPERTIES")}</ListSubheader>
-                                        {selectTypes.ServerSideProperties.map((type) => <MenuItem title={type.value} key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        {selectTypes.ServerSideProperties.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                         <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("APPENVIRONMENT") + " " + translate("PROPERTIES")}</ListSubheader>
                                         {getAppEnvProperties()}
                                     </Select>
                                 </FormControl>
                             </TableCell>
                             <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
-                                <TextField name={index === value.length - 1 ? "wm-webservice-new-param-value" : "wm-webservice-param-value"} fullWidth={true} data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue(index)} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
+                                {data.name !== 'Content-Type' ? <TextField
+                                    name="wm-webservice-param-value"
+                                    fullWidth={true} data-testid="param-value" size='small'
+                                    onBlur={() => handleOnBlurTestValue(index)}
+                                    onChange={(e) => handleChangeTestValue(e.target.value, index)}
+                                    value={data.value} />
+                                    : <Autocomplete
+                                        fullWidth={true}
+                                        size='small'
+                                        inputValue={data.value}
+                                        onInputChange={(event, newValue: string) => {
+                                            handleChangeTestValue(newValue, index)
+                                        }}
+                                        freeSolo
+                                        options={from === 'query' ? [] : defaultContentTypes.map((option) => option.label)}
+                                        renderInput={(params) => <TextField
+                                            name="wm-webservice-param-value"
+                                            {...params}
+                                            InputLabelProps={{ children: '' }} />}
+                                    />}
                             </TableCell>
                             <TableCell style={tableRowStyle} width={"5%"} align='center'>
                                 {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon name="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
@@ -451,15 +469,15 @@ export function MultipartTable(
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
                             <TableCell width={'32.5%'} style={tableRowStyle} align='left'>
-                                {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <TextField name="wm-webservice-new-param-name" fullWidth disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} data-testid="multipart-name" />}
+                                {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <TextField name="wm-webservice-param-name" fullWidth disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} data-testid="multipart-name" />}
                             </TableCell>
                             <TableCell width={'30%'} style={tableRowStyle}>
                                 <FormControl size='small' fullWidth={true}>
                                     <InputLabel>{translate('SELECT') + " " + translate('TYPE')}</InputLabel>
-                                    <Select name="wm-webservice-new-param-type" sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }}
+                                    <Select name="wm-webservice-param-type" sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }}
                                         onChange={(e) => handleChangeType(e, index)} value={data.type}
                                         label={translate('SELECT') + " " + translate('TYPE')} data-testid="multipart-type">
-                                        {multipartTypes.map((type) => <MenuItem value={type}>{translate(type.toUpperCase())}</MenuItem>)}
+                                        {multipartTypes.map((type) => <MenuItem key={type} value={type}>{translate(type.toUpperCase())}</MenuItem>)}
                                     </Select>
                                 </FormControl>
                             </TableCell>
@@ -490,7 +508,7 @@ export function MultipartTable(
                                         ),
                                     }}
                                 /> :
-                                    <TextField name={index === value.length - 1 ? "wm-webservice-new-param-value" : "wm-webservice-param-value"} fullWidth size='small' onChange={(e) => handleChangeTestValue(e.target.value, index)} value={data.value} />}
+                                    <TextField name={"wm-webservice-param-value"} fullWidth size='small' onChange={(e) => handleChangeTestValue(e.target.value, index)} value={data.value} />}
                             </TableCell>
                             <TableCell width={'5%'} style={tableRowStyle} align='center'>
                                 {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon name="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}

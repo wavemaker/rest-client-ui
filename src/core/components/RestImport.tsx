@@ -96,6 +96,7 @@ interface APII {
     addprovider: string,
     authorizationUrl: string,
     project_id?: string,
+    settingsUpload: string,
 }
 function CustomTabPanel(props: TabPanelProps) {
     const { children, value, index, ...other } = props
@@ -115,10 +116,7 @@ function CustomTabPanel(props: TabPanelProps) {
         </div>
     );
 }
-const CustomTab = ({ label, name, disabled, ...rest }: { label: string, name: string, disabled?: boolean }) => (
-    <Tab label={label} disabled={disabled} {...rest} />
-);
-const defaultContentTypes = [
+export const defaultContentTypes = [
     {
         label: "application/json", value: "application/json"
     },
@@ -150,6 +148,25 @@ declare global {
     }
 }
 
+const useProxyTooltip = () => {
+    return (
+        <div>
+            <p style={{ fontSize: 16 }}>
+                Disable the Use Proxy to make a direct call to the target API for bypassing the proxy server.
+                There may be issues if the API does not allow Cross Origin Resource Sharing.<br /><br />
+                <u>Note</u>: Use Proxy should be enabled if you want to configure a Header or Query param as a Server Side Property. A server side param is sent from the proxy server and is hidden from the UI.
+            </p>
+        </div>
+    )
+}
+const withCredentialsTooltip = () => {
+    return (
+        <div>
+            <p style={{ fontSize: 16 }}>Check this if the cookies from the endpoint API should be set and honored by the browser.</p>
+        </div>
+    )
+}
+
 export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const theme = createTheme({
         typography: {
@@ -160,16 +177,17 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const httpAuthTypes = ["NONE", 'BASIC', 'OAUTH2']
     const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
     const { t: translate, i18n } = useTranslation();
-    const [apiURL, setapiURL] = useState<string>(restImportConfig?.url || '')
+    const [apiURL, setapiURL] = useState(restImportConfig?.url || '')
     const [httpMethod, sethttpMethod] = useState<"GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT">(restImportConfig?.httpMethod || 'GET')
-    const [useProxy, setuseProxy] = useState<boolean>(restImportConfig?.useProxy === true ? true : false)
+    const [useProxy, setuseProxy] = useState(restImportConfig?.useProxy === true ? true : false)
+    const [withCredentials, setwithCredentials] = useState(restImportConfig?.useProxy === true ? false : true)
     const [requestTabValue, setrequestTabValue] = useState(0)
     const [responseTabValue, setresponseTabValue] = useState(0)
     const [httpAuth, sethttpAuth] = useState<"NONE" | "BASIC" | "OAUTH2">(restImportConfig?.httpAuth?.type || 'NONE')
     const [providerOpen, setproviderOpen] = useState(false)
     const [headerParams, setheaderParams] = useState<HeaderAndQueryI[]>(restImportConfig?.headerParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
     const [queryParams, setqueryParams] = useState<HeaderAndQueryI[]>(restImportConfig?.queryParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
-    const [bodyParams, setbodyParams] = useState<string>(restImportConfig?.bodyParams || '')
+    const [bodyParams, setbodyParams] = useState(restImportConfig?.bodyParams || '')
     const [multipartParams, setmultipartParams] = useState<BodyParamsI[]>(restImportConfig?.multipartParams?.concat({ name: '', value: '', type: 'file', filename: '' }) || [{ name: '', value: '', type: 'file', filename: '' }])
     const [pathParams, setpathParams] = useState<PathParamsI[]>([])
     const [contentType, setcontentType] = useState(restImportConfig?.contentType || 'application/json')
@@ -307,7 +325,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const handleChangehttpMethod = (event: SelectChangeEvent) => sethttpMethod(event.target.value as any)
     const handleChangecontentType = (event: SelectChangeEvent) => setcontentType(event.target.value as string)
     const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => setrequestTabValue(newValue);
-    const handleChangeProxy = (event: React.ChangeEvent<HTMLInputElement>) => setuseProxy(event.target.checked);
+    const handleChangeProxy = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setuseProxy(event.target.checked)
+        if (event.target.checked) setwithCredentials(!event.target.checked)
+    };
+    const handleChangeWithCredentials = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setwithCredentials(event.target.checked)
+    };
     const handleChangehttpAuth = (event: SelectChangeEvent) => {
         if (event.target.value === 'OAUTH2' && !selectedProvider.providerId)
             setBtnDisable(true)
@@ -396,7 +420,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 } else {
                     setqueryParams([{ name: '', value: '', type: 'string' }])
                 }
-            }
+            } else setqueryParams([{ name: '', value: '', type: 'string' }])
         } catch (error: any) {
             handleToastError({ message: error.message, type: 'error' })
         }
@@ -696,14 +720,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
             headers: constructHeaders,
             sampleHttpResponseDetails: {
                 headers: useProxy ? headers : request?.headers,
-                responseBody: useProxy ? response.data.responseBody : JSON.stringify(response?.data), // when useproxy is true return response.responseBody 
+                responseBody: useProxy ? response.data.responseBody : JSON.stringify(response?.data), // when useproxy is true return response.responseBody
                 convertedResponse: null,
                 statusCode: response?.status,
             },
             requestBody: request.body || ""
         };
         const dataConfig: AxiosRequestConfig = {
-            url: restImportConfig.proxy_conf.base_path + `services/projects/${restImportConfig.projectId}/restservice/settings`,
+            url: restImportConfig.proxy_conf.base_path + restImportConfig.proxy_conf.settingsUpload,
             data,
             method: 'POST'
         }
@@ -896,28 +920,39 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         }} disabled={serviceNameEnabled || restImportConfig.viewMode} size='small' />
                                 </Stack>
                             </Grid>
-                            <Grid item md={6}>
+                            <Grid item md={3}>
                                 <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('USE_PROXY')}</Typography>
                                     <Switch name="wm-webservice-use-proxy" data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
-                                    <Tooltip title={translate("USE_PROXY")}>
+                                    <Tooltip title={useProxyTooltip()}>
                                         <IconButton>
                                             <HelpOutlineIcon />
                                         </IconButton>
                                     </Tooltip>
                                 </Stack>
                             </Grid>
+                            {!useProxy && <Grid item md={3}>
+                                <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                                    <Typography>{translate('WITH_CREDENTIALS')}</Typography>
+                                    <Switch name="wm-webservice-with-credentials" data-testid="with-credentials" checked={withCredentials} onChange={handleChangeWithCredentials} />
+                                    <Tooltip title={withCredentialsTooltip()}>
+                                        <IconButton>
+                                            <HelpOutlineIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Stack>
+                            </Grid>}
                         </Grid>
                     </Grid>
                     <Grid sx={{ overflowY: 'auto' }} height={restImportConfig.responseBlockHeight ? `${restImportConfig.responseBlockHeight}px` : '300px'} item md={12}>
                         <Box data-testid="request-config-block" sx={{ width: '100%' }}>
                             <Box sx={{ borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                 <Tabs sx={{ minHeight: "30px", height: "45px" }} value={requestTabValue} onChange={handleChangeHeaderTabs}>
-                                    <CustomTab name="wm-rest-authorization-params-header" label={translate("AUTHORIZATION")} />
-                                    <CustomTab name="wm-rest-headers-params-header" label={translate("HEADER") + " " + translate("PARAMS")} />
-                                    <CustomTab name="wm-rest-body-params-header" label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
-                                    <CustomTab name="wm-rest-query-params-header" label={translate("QUERY") + " " + translate("PARAMS")} />
-                                    <CustomTab name="wm-rest-path-params-header" label={translate("PATH") + " " + translate("PARAMS")} />
+                                    <Tab title="wm-rest-authorization-params-header" label={translate("AUTHORIZATION")} />
+                                    <Tab title="wm-rest-headers-params-header" label={translate("HEADER") + " " + translate("PARAMS")} />
+                                    <Tab title="wm-rest-body-params-header" label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
+                                    <Tab title="wm-rest-query-params-header" label={translate("QUERY") + " " + translate("PARAMS")} />
+                                    <Tab title="wm-rest-path-params-header" label={translate("PATH") + " " + translate("PARAMS")} />
                                 </Tabs>
                             </Box>
                             <Box sx={{ border: '1px solid #ccc' }}>
@@ -934,7 +969,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                     value={httpAuth}
                                                     onChange={handleChangehttpAuth}
                                                 >
-                                                    {httpAuthTypes.map((httpAuth) => <MenuItem key={httpAuth} title={translate(httpAuth)} value={httpAuth}>{translate(httpAuth)}</MenuItem>)}
+                                                    {httpAuthTypes.map((httpAuth) => <MenuItem key={httpAuth} title={translate(httpAuth)} value={httpAuth}>{httpAuth === "OAUTH2" ? "OAuth 2.0" : translate(httpAuth)}</MenuItem>)}
                                                 </Select>
                                             </FormControl>
                                         </Grid>
@@ -982,7 +1017,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                             </Tooltip>
                                                         )
                                                     }
-                                                    <Button onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
+                                                    <Button name='wm-webservice-select-provider' onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
                                                 </Stack>
                                             </Grid>
                                         </>}
@@ -1056,7 +1091,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                             <FormLabel>{translate("String")}</FormLabel>
                                                         </TableCell>
                                                         <TableCell style={tableRowStyle} width={'33%'} align='left'>
-                                                            <TextField name={index === pathParams.length - 1 ? "wm-webservice-new-param-value" : "wm-webservice-param-value"} fullWidth data-testid="path-param-value" value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
+                                                            <TextField name={"wm-webservice-param-value"} fullWidth data-testid="path-param-value" value={data.value} onChange={(e) => handlePathParamsChanges(e.target.value, index)} size='small' />
                                                         </TableCell>
                                                     </TableRowStyled>
                                                 )}
@@ -1090,9 +1125,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         <div style={{ display: responseTabValue === 0 ? 'block' : 'none', width: '100%' }}>
                             <MonacoEditor monacoEditorHeight={restImportConfig?.responseBlockHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2) || undefined} initialLanguage={editorLanguage} />
                         </div>
-                        {responseTabValue === 1 && <Stack overflow={'auto'} sx={{ wordBreak: 'break-word', backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
-                            {response !== undefined && <TableContainer>
-                                <Table>
+                        {responseTabValue === 1 && <Stack overflow={'auto'} sx={{ backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
+                            {response !== undefined && <TableContainer style={{ height: restImportConfig?.responseBlockHeight ? `${restImportConfig?.responseBlockHeight / 1.2}px` : '300px' }}>
+                                <Table >
                                     <TableBody>
                                         {Object.keys(response?.headers as any).map(key => {
                                             return <TableRow
@@ -1118,7 +1153,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     proxyObj={restImportConfig}
                     handleToastError={handleToastError}
                 />
-                <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
+                <Snackbar sx={{ top: "0px !important" }} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
                     <Alert data-testid={'alertMessage'} onClose={handleToastClose} severity={errorMessage?.type} sx={{ width: '100%' }}>
                         {errorMessage?.message}
                     </Alert>
@@ -1127,6 +1162,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     <TextField sx={{ position: 'absolute', left: -10000, top: -10000 }} data-testid="mock-response" value={responseTabValue === 0 ? response.data : JSON.stringify(response.headers)} disabled={true}></TextField>
                 </div>
             </Stack>
-        </ThemeProvider>
+        </ThemeProvider >
     );
 }

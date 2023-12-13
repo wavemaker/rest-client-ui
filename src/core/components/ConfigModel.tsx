@@ -6,7 +6,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import CloseIcon from '@mui/icons-material/Close';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { Alert, Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, SelectChangeEvent, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, SelectChangeEvent, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import clipboardCopy from 'clipboard-copy';
 import { ProviderI, ScopeI } from './ProviderModal';
@@ -30,13 +30,11 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [scopeValue, setscopeValue] = useState('')
     const [codeMethod, setCodeMethod] = useState('S256')
     const [tooltipTitle, setTooltipTitle] = useState(translate("CLIPBOARD_TEXT"));
-    const [showErrorAlert, setShowErrorAlert] = useState(false);
     const [providerId, setProviderID] = useState('')
     const [authorizationUrl, setAuthorizationUrl] = useState('')
     const [accessTokenUrl, setAccessTokenUrl] = useState('')
     const [clientId, setClientId] = useState('')
     const [clientSecret, setClientSecret] = useState('')
-    const [alertMsg, setAlertMsg] = useState('')
     const [provider_auth_url, setProviderAuthURL] = useState('')
     const [loading, setloading] = useState(false)
     const [basePath, setBasePath] = useState('')
@@ -67,8 +65,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     useEffect(() => {
         setscopes([])
-        setAlertMsg('')
-        setShowErrorAlert(false);
         const scope_value: ScopeI[] = []
         providerConf?.scopes.forEach((scope) => {
             return scope_value.push({
@@ -153,22 +149,20 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     const handleValidation = async () => {
         const providerExists = customProviderList.some((provider: { providerId: string; }) => provider.providerId === providerId);
-        setShowErrorAlert(true);
         if (!providerId) {
-            setAlertMsg(translate("PROVIDERID_ALERT"))
+            handleToastError({ message: translate("PROVIDERID_ALERT"), type: 'error' })
         } else if (providerExists && !providerConf) {
-            setAlertMsg(translate('PROVIDER') + ` ("${providerId}") ` + translate('ALREADY_EXIST') + `!`)
+            handleToastError({ message: translate('PROVIDER') + ` ("${providerId}") ` + translate('ALREADY_EXIST') + `!`, type: 'error' })
         } else if (!authorizationUrl) {
-            setAlertMsg(translate('AUTHORIZATIONURL_ALERT'))
+            handleToastError({ message: translate("AUTHORIZATIONURL_ALERT"), type: 'error' })
         } else if (!accessTokenUrl) {
-            setAlertMsg(translate('ACCESSTOKEN_ALERT'))
+            handleToastError({ message: translate("ACCESSTOKEN_ALERT"), type: 'error' })
         } else if (!clientId) {
-            setAlertMsg(translate('CLIENTID_ALERT'))
+            handleToastError({ message: translate("CLIENTID_ALERT"), type: 'error' })
         } else if (!clientSecret && !PKCE) {
-            setAlertMsg(translate('CLIENTSECRET_ALERT'))
+            handleToastError({ message: translate("CLIENTSECRET_ALERT"), type: 'error' })
         } else {
             setloading(true)
-            setShowErrorAlert(false);
             const scopes_val: { name: string; value: string }[] = scopes.filter(item => item.checked).map(({ checked, ...rest }) => rest);
             const scope_map_obj: { [key: string]: boolean } = scopes.reduce((result, item) => {
                 result[item.name] = item.checked || false;
@@ -260,7 +254,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     return (
         <>
-            <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose} >
+            <Dialog id='wm-rest-config-model' className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose} >
                 {loading && <FallbackSpinner />}
                 <DialogTitle sx={{ backgroundColor: 'lightgray' }}>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
@@ -277,9 +271,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                     </Stack>
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
-                    {showErrorAlert && (
-                        <Alert sx={{ py: 0 }} data-testid="config-alert" severity="error">{alertMsg} </Alert>
-                    )}
                     <Grid spacing={2} mt={0.3} className='cmnflx' sx={{ width: '100%' }} container>
                         <Grid item md={3}>
                             <Typography>{translate('PROVIDER') + " " + translate('ID')} <span className='text-danger'>*</span>

@@ -275,6 +275,7 @@ export const emptyConfig: restImportConfigI = {
     proxy_path: "restimport",
     list_provider: "get-default-provider",
     getprovider: "getprovider",
+    settingsUpload:"",
     addprovider: "addprovider",
     authorizationUrl: "authorizationUrl",
   },
@@ -285,6 +286,7 @@ export const emptyConfig: restImportConfigI = {
   oAuthConfig: {
     base_path: "https://www.wavemakeronline.com/studio/services",
     proxy_path: "/proxy_path",
+    settingsUpload:"",
     project_id: "",
     list_provider: "/oauth2/providers/default",
     getprovider: "/projects/oauth2/providers", // /projects/{projectID}/oauth2/providers
@@ -298,9 +300,9 @@ export const emptyConfig: restImportConfigI = {
     errorMessageTimeout: 5000,
     errorMethod: "default",
   },
-  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {},
-  hideMonacoEditor: (value: boolean) => {},
-  getServiceName(value: string) {},
+  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => { },
+  hideMonacoEditor: (value: boolean) => { },
+  getServiceName(value: string) { },
   setServiceName: "",
   setResponseHeaders: { namespace: "test" },
   viewMode: false,
@@ -341,6 +343,7 @@ const configWithData: restImportConfigI = {
     list_provider: "get-default-provider",
     getprovider: "getprovider_error",
     addprovider: "addprovider",
+    settingsUpload:"",
     authorizationUrl: "authorizationUrl",
   },
   state_val:
@@ -349,7 +352,8 @@ const configWithData: restImportConfigI = {
   oAuthConfig: {
     base_path: "https://www.wavemakeronline.com/studio/services",
     proxy_path: "",
-    project_id: "",
+    project_id: "", 
+    settingsUpload: "",
     list_provider: "/oauth2/providers/default",
     getprovider: "", // /projects/{projectID}/oauth2/providers
     addprovider: "", // /projects/{projectID}/oauth2/providers
@@ -362,9 +366,9 @@ const configWithData: restImportConfigI = {
     errorMethod: "toast",
     errorMessageTimeout: 5000,
   },
-  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {},
-  hideMonacoEditor: (value: boolean) => {},
-  getServiceName(value: string) {},
+  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => { },
+  hideMonacoEditor: (value: boolean) => { },
+  getServiceName(value: string) { },
   setServiceName: "",
   viewMode: false,
   setResponseHeaders: { namespace: "test" },

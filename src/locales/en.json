@@ -17,7 +17,7 @@
   "BASIC": "Basic",
   "USER_NAME": "User Name",
   "PASSWORD": "Password",
-  "OAUTH2": "OAuth2.0",
+  "OAUTH2": "OAuth 2.0",
   "PROVIDER": "Provider",
   "NO": "No",
   "SELECTED_YET": "Selected yet",
@@ -90,5 +90,6 @@
   "SUCCESS_MSG": "Saved Successfully",
   "NO_PROPERTIES_FOUND": " No Properties Found",
   "PLAINTEXT": "Text(Text/Plain)",
-  "APPLICATION/JSON": "application/json"
+  "APPLICATION/JSON": "application/json",
+  "WITH_CREDENTIALS":"With Credentials"
 }

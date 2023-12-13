@@ -21,6 +21,7 @@ export const ProxyOFFConfig: restImportConfigI = {
     proxy_conf: {
         base_path: "http://localhost:4000",
         proxy_path: "/restimport",
+        settingsUpload:"",
         list_provider: "/get-default-provider",
         getprovider: "/getprovider",
         addprovider: "/addprovider",
@@ -34,6 +35,7 @@ export const ProxyOFFConfig: restImportConfigI = {
         proxy_path: "/proxy_path",
         project_id: "",
         list_provider: "/oauth2/providers/default",
+        settingsUpload: "",
         getprovider: "/projects/oauth2/providers", // /projects/{projectID}/oauth2/providers
         addprovider: "/projects/oauth2/addprovider", // /projects/{projectID}/oauth2/providers
         authorizationUrl: "/projects/oauth2/authorizationUrl", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl

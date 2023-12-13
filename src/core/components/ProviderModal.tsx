@@ -146,7 +146,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, handl
 
     return (
         <>
-            <Dialog className='rest-import-ui' maxWidth={'md'} data-testid='provider-modal' open={handleOpen} onClose={handleClose}>
+            <Dialog id='wm-rest-provider-model' className='rest-import-ui' maxWidth={'md'} data-testid='provider-modal' open={handleOpen} onClose={handleClose}>
                 <DialogTitle>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                         <Typography variant='h6' fontWeight={600}>{translate("SELECT") + " " + translate("OR") + " " + translate("ADD") + " " + translate("PROVIDER")}</Typography>

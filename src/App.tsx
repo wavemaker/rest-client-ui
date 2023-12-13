@@ -11,6 +11,7 @@ export default function App() {
       base_path: "http://localhost:4000/",
       proxy_path: "restimport",
       list_provider: "get-default-provider",
+      settingsUpload:"",
       getprovider: "getprovider",
       addprovider: "addprovider",
       authorizationUrl: "authorizationUrl",
@@ -35,6 +36,7 @@ export default function App() {
     default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
     oAuthConfig: {
       base_path: "https://www.wavemakeronline.com/studio/services",
+      settingsUpload:"",
       project_id: "",
       proxy_path: '', // /projects/{projectID}/restservices/invoke?optimizeResponse=true
       list_provider: "oauth2/providers/default",
