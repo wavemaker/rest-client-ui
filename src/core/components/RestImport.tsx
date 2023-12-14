@@ -51,9 +51,6 @@ export interface restImportConfigI {
     multipartParams?: BodyParamsI[]
     contentType?: string,
     proxy_conf: APII,
-    default_proxy_state: string,
-    state_val: string,
-    oAuthConfig: APII,
     error: {
         errorMethod: "default" | "toast" | "customFunction",
         errorFunction: (msg: string, response?: AxiosResponse) => void,
@@ -66,11 +63,12 @@ export interface restImportConfigI {
     loggenInUserId?: string,
     loggenInUserName?: string,
     appEnvVariables?: ITypes[],
+    monacoEditorURL: string,
+    responseBlockHeight?: number,
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse, settingsUploadResponse?: any) => void,
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
-    monacoEditorURL: string,
-    responseBlockHeight?: number,
+    getUseProxy: (value: boolean) => void
 }
 interface ITypes {
     key: string
@@ -173,6 +171,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             fontSize: 16, // Adjust the font size as needed
         },
     });
+    const state_val = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ=="
     const httpMethods = ["GET", "POST", "DELETE", "HEAD", "PATCH", "PUT"]
     const httpAuthTypes = ["NONE", 'BASIC', 'OAUTH2']
     const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
@@ -180,7 +179,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [apiURL, setapiURL] = useState(restImportConfig?.url || '')
     const [httpMethod, sethttpMethod] = useState<"GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT">(restImportConfig?.httpMethod || 'GET')
     const [useProxy, setuseProxy] = useState(restImportConfig?.useProxy === true ? true : false)
-    const [withCredentials, setwithCredentials] = useState(restImportConfig?.useProxy === true ? false : true)
+    const [withCredentials, setwithCredentials] = useState(false)
     const [requestTabValue, setrequestTabValue] = useState(0)
     const [responseTabValue, setresponseTabValue] = useState(0)
     const [httpAuth, sethttpAuth] = useState<"NONE" | "BASIC" | "OAUTH2">(restImportConfig?.httpAuth?.type || 'NONE')
@@ -326,6 +325,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const handleChangecontentType = (event: SelectChangeEvent) => setcontentType(event.target.value as string)
     const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => setrequestTabValue(newValue);
     const handleChangeProxy = (event: React.ChangeEvent<HTMLInputElement>) => {
+        restImportConfig.getUseProxy(event.target.checked)
         setuseProxy(event.target.checked)
         if (event.target.checked) setwithCredentials(!event.target.checked)
     };
@@ -445,56 +445,42 @@ export default function RestImport({ language, restImportConfig }: { language: s
             handleToastError({ message: "Please add a custom content type", type: 'error' })
 
     }
+    const validateAndAddQueryAtLastRow = (requestAPI: string) => {
+        if (queryParams && queryParams[queryParams.length - 1].name && queryParams[queryParams.length - 1].value) {
+            const queryName = queryParams[queryParams.length - 1].name
+            const queryValue = queryParams[queryParams.length - 1].value
+            const queryParamsClone = [...queryParams]
+            const lastRowValuesArray = queryValue.split(',')
+            const lastRowValues = lastRowValuesArray.filter((value, index) => value && lastRowValuesArray.indexOf(value) === index)
+            const duplicates = findDuplicatesByComparison([{ name: queryName, value: queryValue, type: 'string' }], [...headerParams, ...pathParams], "name")
+            if (duplicates.length === 0) {
+                const queriesArrayFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(requestAPI)
+                if (queriesArrayFromUrl.some(query => query.name === queryName)) {
+                    const queryIndex = queriesArrayFromUrl.findIndex(data => data.name === queryName)
+                    const valueCollection = [...queriesArrayFromUrl[queryIndex].value.split(','), ...lastRowValues]
+                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueCollection)
+                    queriesArrayFromUrl[queryIndex].value = valueToSet
+                    queryParamsClone[queryParamsClone.findIndex(data => data.name === queryName)].value = valueToSet
+                    queryParamsClone[queryParamsClone.length - 1] = { name: '', type: 'string', value: '' }
+                } else {
+                    queriesArrayFromUrl.push({ name: queryName, value: lastRowValues.join(','), type: 'string' })
+                    queryParamsClone.push({ name: '', type: 'string', value: '' })
+                }
+                const newQueryString = constructUpdatedQueryString(queriesArrayFromUrl)
+                const urlWithoutQuery = requestAPI.split('?')[0]
+                requestAPI = urlWithoutQuery + newQueryString
+                setapiURL(requestAPI)
+                setqueryParams(queryParamsClone)
+            } else
+                throw new Error(`parameter "${queryName}" already exists`)
+        }
+    }
     const handleTestClick = async () => {
         try {
             if (apiURL.length > 0) {
                 let header: any = {}, body;
                 let requestAPI = apiURL
-                pathParams.forEach((params) => {
-                    if (params.value.trim() !== "")
-                        requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
-                    else
-                        throw new Error(translate("PATHPARAMSALERT"))
-                })
-                const validateAndAddQueryAtLastRow = () => {
-                    if (queryParams && queryParams[queryParams.length - 1].name && queryParams[queryParams.length - 1].value) {
-                        const queryName = queryParams[queryParams.length - 1].name
-                        const queryValue = queryParams[queryParams.length - 1].value
-                        const queryParamsClone = [...queryParams]
-                        const lastRowValuesArray = queryValue.split(',')
-                        const lastRowValues = lastRowValuesArray.filter((value, index) => value && lastRowValuesArray.indexOf(value) === index)
-                        const duplicates = findDuplicatesByComparison([{ name: queryName, value: queryValue, type: 'string' }], [...headerParams, ...pathParams], "name")
-                        if (duplicates.length === 0) {
-                            const queriesArrayFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(requestAPI)
-                            if (queriesArrayFromUrl.some(query => query.name === queryName)) {
-                                const queryIndex = queriesArrayFromUrl.findIndex(data => data.name === queryName)
-                                const valueCollection = [...queriesArrayFromUrl[queryIndex].value.split(','), ...lastRowValues]
-                                const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueCollection)
-                                queriesArrayFromUrl[queryIndex].value = valueToSet
-                                queryParamsClone[queryParamsClone.findIndex(data => data.name === queryName)].value = valueToSet
-                                queryParamsClone[queryParamsClone.length - 1] = { name: '', type: 'string', value: '' }
-                            } else {
-                                queriesArrayFromUrl.push({ name: queryName, value: lastRowValues.join(','), type: 'string' })
-                                queryParamsClone.push({ name: '', type: 'string', value: '' })
-                            }
-                            const newQueryString = constructUpdatedQueryString(queriesArrayFromUrl)
-                            const urlWithoutQuery = requestAPI.split('?')[0]
-                            requestAPI = urlWithoutQuery + newQueryString
-                            setapiURL(requestAPI)
-                            setqueryParams(queryParamsClone)
-                        } else
-                            throw new Error(`parameter "${queryName}" already exists`)
-                    }
-                }
-                validateAndAddQueryAtLastRow()
                 if (isValidUrl(requestAPI)) {
-                    if (httpAuth === "BASIC") {
-                        if (userName.trim() === "")
-                            throw new Error("Please enter a username for basic authentication")
-                        if (userPassword.trim() === "")
-                            throw new Error("Please enter a password for basic authentication")
-                        header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
-                    }
                     headerParams.forEach((data, index) => {
                         if (data.name && data.value) {
                             if (data.name === 'Authorization' && header['Authorization'])
@@ -503,7 +489,20 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             index === headerParams.length - 1 && setheaderParams([...headerParams, { name: '', value: '', type: 'string' }])
                         }
                     })
-                    header['Content-Type'] = contentType
+                    pathParams.forEach((params) => {
+                        if (params.value.trim() !== "")
+                            requestAPI = requestAPI.replace(`{${params.name}}`, params.value)
+                        else
+                            throw new Error(translate("PATHPARAMSALERT"))
+                    })
+                    validateAndAddQueryAtLastRow(requestAPI)
+                    if (httpAuth === "BASIC") {
+                        if (userName.trim() === "")
+                            throw new Error("Please enter a username for basic authentication")
+                        if (userPassword.trim() === "")
+                            throw new Error("Please enter a password for basic authentication")
+                        header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
+                    }
                     if (contentType === 'multipart/form-data') {
                         const formData = new FormData()
                         multipartParams.forEach(data => {
@@ -516,12 +515,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     if (httpAuth === "OAUTH2") {
                         let codeVerifier: string;
                         const clientId = selectedProvider.clientId;
-                        let redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + `oauth2/${selectedProvider.providerId}/callback` : restImportConfig?.oAuthConfig?.base_path + `oauth2/${selectedProvider.providerId}/callback`;
+                        let redirectUri = restImportConfig?.proxy_conf?.base_path + `oauth2/${selectedProvider.providerId}/callback`;
                         const responseType = "code";
-                        const state = restImportConfig.state_val
+                        const state = state_val
                         const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
                         let childWindow: any;
-                        let authUrl: string
+                        var authUrl: string
                         const isToken = window.localStorage.getItem(`${providerId}.access_token`);
                         if (isToken) {
                             header['Authorization'] = `Bearer ${isToken}`
@@ -550,7 +549,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         client.requestAccessToken();
                                     }
                                 } else {
-                                    redirectUri = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + 'oAuthCallback.html' : restImportConfig?.oAuthConfig?.base_path + 'oAuthCallback.html'
+                                    redirectUri = restImportConfig?.proxy_conf?.base_path + 'oAuthCallback.html'
                                     const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
                                     codeVerifier = generateRandomCodeVerifier();
                                     const data = Uint8Array.from(codeVerifier.split("").map(x => x.charCodeAt(0)))
@@ -558,13 +557,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         .then((hashBuffer: ArrayBuffer) => {
                                             const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
                                             authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
-                                            childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                            childWindow = window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                                         })
                                         .catch((error: any) => {
                                             console.error("Error calculating code challenge:", error);
                                         });
                                 }
                             } else {
+                                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                 authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
                                 childWindow = window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             }
@@ -606,18 +606,19 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         method: httpMethod,
                         data: body,
                         authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
-                        useProxy: useProxy
+                        useProxy: useProxy,
+                        withCredentials: withCredentials
                     }
-                    const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
+                    const url = restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path //'http://localhost:4000/restimport' //
                     const configWProxy: ICustomAxiosConfig = {
                         url: url,
                         data: {
-                            "endpointAddress": requestAPI,
-                            "method": httpMethod,
-                            "contentType": contentType,
-                            "requestBody": body,
-                            "headers": header,
-                            "authDetails": httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
+                            endpointAddress: requestAPI,
+                            method: httpMethod,
+                            contentType: contentType,
+                            requestBody: body,
+                            headers: header,
+                            authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
                         },
                         method: "POST",
                         headers: {
@@ -629,8 +630,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     setloading(true)
                     const config = useProxy ? configWProxy : configWOProxy
                     const response: any = await Apicall(config as AxiosRequestConfig)
+                    setloading(false)
                     if (response.status >= 200 && response.status < 300) {
-                        // handleResponse(response, config)
+                        // handleResponse(response, config) 
                         const settingsUploadData = await settingsUpload(config, response)
                         if (settingsUploadData) {
                             setserviceNameEnabled(false)
@@ -644,7 +646,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         setserviceNameEnabled(true)
                         handleResponse(response, config)
                     }
-                    setloading(false)
                 } else
                     throw new Error(translate("VALID_URL_ALERT"))
             }
@@ -727,9 +728,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
             requestBody: request.body || ""
         };
         const dataConfig: AxiosRequestConfig = {
-            url: restImportConfig.proxy_conf.base_path + restImportConfig.proxy_conf.settingsUpload,
+            url: restImportConfig.proxy_conf.base_path + restImportConfig.proxy_conf.settingsUpload, //'http://localhost:4000/settingUpload'
             data,
-            method: 'POST'
+            method: 'POST',
+            withCredentials: true,
         }
         const settingsUploadResponse: any = await Apicall(dataConfig)
         if (response.status >= 200 && response.status < 300) {
@@ -769,7 +771,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             settingsUploadResponseData['proxySettings'] = {
                 mobile: useProxy ? 'PROXY' : 'DIRECT',
                 web: useProxy ? 'PROXY' : 'DIRECT',
-                withCredentials: false,
+                withCredentials: withCredentials,
             };
             settingsUploadResponseData['serviceId'] = serviceName.trim() !== '' ? serviceName : settingsUploadResponseData['serviceId']
             return settingsUploadResponseData
@@ -798,7 +800,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             data: bodyParams,
             authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId }
         }
-        const url = restImportConfig?.default_proxy_state === 'ON' ? restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path : restImportConfig?.oAuthConfig?.base_path + restImportConfig?.oAuthConfig?.proxy_path;
+        const url = restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path
         const configWProxy: AxiosRequestConfig = {
             url: url,
             data: {

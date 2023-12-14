@@ -53,8 +53,6 @@ function renderComponent(type: string) {
     } else if (type === 'ProviderConfigWithPKCEBasic') {
         copymockProps['providerConf'] = providerObj
         copymockProps.providerConf['oAuth2Pkce'] = { enabled: true, challengeMethod: "plain" }
-    } else if (type === 'withOAuthConfig') {
-        copymockProps.proxyObj['default_proxy_state'] = 'OFF'
     } else if (type === 'withAddProviderAPIError') {
         copymockProps.proxyObj.proxy_conf['addprovider'] = 'addErrorproviders'
     } else if (type === 'withListAPIError') {

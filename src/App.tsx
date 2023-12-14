@@ -11,7 +11,7 @@ export default function App() {
       base_path: "http://localhost:4000/",
       proxy_path: "restimport",
       list_provider: "get-default-provider",
-      settingsUpload:"",
+      settingsUpload: "",
       getprovider: "getprovider",
       addprovider: "addprovider",
       authorizationUrl: "authorizationUrl",
@@ -32,18 +32,6 @@ export default function App() {
       type: "TIME",
       value: "vew"
     }],
-    state_val: "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
-    default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
-    oAuthConfig: {
-      base_path: "https://www.wavemakeronline.com/studio/services",
-      settingsUpload:"",
-      project_id: "",
-      proxy_path: '', // /projects/{projectID}/restservices/invoke?optimizeResponse=true
-      list_provider: "oauth2/providers/default",
-      getprovider: "", // /projects/{projectID}/oauth2/providers
-      addprovider: "", // /projects/{projectID}/oauth2/providers
-      authorizationUrl: "studio/services/projects/WMPRJ2c9180868bb704a7018bb82b602a00cd/oauth2/:providerID/authorizationUrl", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
-    },
     setResponse: {
       testing: false,
     },
@@ -54,11 +42,15 @@ export default function App() {
       errorMethod: "toast",
       errorMessageTimeout: 5000
     },
-    handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse) => {
-      console.log(request, response)
+    handleResponse: (request: AxiosRequestConfig, settingsUploadData: any, response?: AxiosResponse) => {
+      console.log(request, response, settingsUploadData)
     },
-    hideMonacoEditor: (value: boolean) => { },
+    hideMonacoEditor: (value: boolean) => {
+    },
     getServiceName(value: string) { },
+    getUseProxy(value) {
+      console.log(value) 
+    },
     setServiceName: '',
     viewMode: false,
     setResponseHeaders: { kingkong: "test" },

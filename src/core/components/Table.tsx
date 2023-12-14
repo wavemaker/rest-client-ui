@@ -329,9 +329,9 @@ export function HeaderAndQueryTable(
                                         }} name="wm-webservice-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
                                         <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("UI_TYPES")}</ListSubheader>
                                         {selectTypes.UITypes.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("SERVER_SIDE_PROPERTIES")}</ListSubheader>
+                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>Server Side Properties</ListSubheader>
                                         {selectTypes.ServerSideProperties.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("APPENVIRONMENT") + " " + translate("PROPERTIES")}</ListSubheader>
+                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>App Environment Properties</ListSubheader>
                                         {getAppEnvProperties()}
                                     </Select>
                                 </FormControl>
@@ -371,8 +371,12 @@ export function HeaderAndQueryTable(
 
 export function MultipartTable(
     { value, setValue, handleToastError }:
-        { value: BodyParamsI[], setValue: (data: BodyParamsI[]) => void, handleToastError: (error: IToastError, response?: AxiosResponse) => void, }) {
+        {
+            value: BodyParamsI[], setValue: (data: BodyParamsI[]) => void,
+            handleToastError: (error: IToastError, response?: AxiosResponse) => void,
+        }) {
 
+    const { t: translate } = useTranslation();
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
         if (name !== null) {
@@ -450,9 +454,6 @@ export function MultipartTable(
         valueClone.splice(currentIndex, 1)
         setValue(valueClone)
     }
-    const { t: translate } = useTranslation();
-
-    const multipartTypes = ['file', 'text', 'plaintext', 'application/json']
 
     return (
         <TableContainer component={Paper}>
@@ -477,7 +478,10 @@ export function MultipartTable(
                                     <Select name="wm-webservice-param-type" sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }}
                                         onChange={(e) => handleChangeType(e, index)} value={data.type}
                                         label={translate('SELECT') + " " + translate('TYPE')} data-testid="multipart-type">
-                                        {multipartTypes.map((type) => <MenuItem key={type} value={type}>{translate(type.toUpperCase())}</MenuItem>)}
+                                        <MenuItem title={translate("FILE")} value={'file'}>{translate("FILE")}</MenuItem>
+                                        <MenuItem title={translate("TEXT")} value={'text'}>{translate("TEXT")}</MenuItem>
+                                        <MenuItem title={translate("Text(Text/Plain)")} value={'plaintext'}>{translate("Text(Text/Plain)")}</MenuItem>
+                                        <MenuItem title={translate("application/json")} value={'application/json'}>{translate("application/json")}</MenuItem>
                                     </Select>
                                 </FormControl>
                             </TableCell>

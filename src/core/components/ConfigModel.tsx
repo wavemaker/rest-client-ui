@@ -43,7 +43,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     const customProviderList = useSelector((store: any) => store.slice.providerList)
     useEffect(() => {
-        const base_path = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path : proxyObj?.oAuthConfig?.base_path
+        const base_path = proxyObj?.proxy_conf?.base_path
         setBasePath(base_path)
     }, [proxyObj])
 
@@ -184,7 +184,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             }
             const filteredProviders = customProviderList.filter((provider: { providerId: string; }) => provider.providerId !== providerId);
             const newProviderList = [...filteredProviders, newProvider];
-            const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.addprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.addprovider;
+            const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.addprovider
             const configWProvider: AxiosRequestConfig = {
                 url: url,
                 data: newProviderList,
@@ -212,7 +212,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     }
 
     const handleProviderList = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.getprovider;
+        const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider
         try {
             const response = await getProviderList(url);
             const sortedProviders = response.data;
@@ -223,7 +223,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     }
 
     const handleAuthorizationUrl = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", providerId) : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.authorizationUrl.replace(":providerID", providerId);
+        const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", providerId)
         const configProvider = {
             url: url,
             method: "GET",

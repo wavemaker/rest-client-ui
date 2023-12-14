@@ -38,7 +38,8 @@
   "LONG": "Long",
   "STRING": "String",
   "PROPERTIES": "Properties",
-  "SERVER_SIDE_PROPERTIES": "Server Side Properties",
+  "SERVER": "Server",
+  "SIDE": "Side",
   "CURRENT": "Current",
   "TIMESTAMP": "Timestamp",
   "USERID": "UserID",
@@ -91,5 +92,5 @@
   "NO_PROPERTIES_FOUND": " No Properties Found",
   "PLAINTEXT": "Text(Text/Plain)",
   "APPLICATION/JSON": "application/json",
-  "WITH_CREDENTIALS":"With Credentials"
+  "WITH_CREDENTIALS": "With Credentials"
 }
