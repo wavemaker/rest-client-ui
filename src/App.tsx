@@ -11,7 +11,7 @@ export default function App() {
       base_path: "http://localhost:4000/",
       proxy_path: "restimport",
       list_provider: "get-default-provider",
-      settingsUpload: "",
+      settingsUpload: "settingUpload",
       getprovider: "getprovider",
       addprovider: "addprovider",
       authorizationUrl: "authorizationUrl",

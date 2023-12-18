@@ -12,6 +12,7 @@ import {
 } from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
+import CloseIcon from '@mui/icons-material/Close';
 import DoneIcon from '@mui/icons-material/Done'
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import Apicall from './common/apicall'
@@ -443,7 +444,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
         }
         else
             handleToastError({ message: "Please add a custom content type", type: 'error' })
-
     }
     const validateAndAddQueryAtLastRow = (requestAPI: string) => {
         if (queryParams && queryParams[queryParams.length - 1].name && queryParams[queryParams.length - 1].value) {
@@ -478,8 +478,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const handleTestClick = async () => {
         try {
             if (apiURL.length > 0) {
-                let header: any = {}, body;
+                let header: any = {}, body: any;
                 let requestAPI = apiURL
+                const contentTypeCheck = contentType === 'multipart/form-data' ? true : false
                 if (isValidUrl(requestAPI)) {
                     headerParams.forEach((data, index) => {
                         if (data.name && data.value) {
@@ -503,15 +504,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             throw new Error("Please enter a password for basic authentication")
                         header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
                     }
-                    if (contentType === 'multipart/form-data') {
-                        const formData = new FormData()
-                        multipartParams.forEach(data => {
-                            if (data.name && data.value)
-                                formData.append(data.name, data.value)
-                        })
-                        body = formData
-                    } else
-                        body = bodyParams
                     if (httpAuth === "OAUTH2") {
                         let codeVerifier: string;
                         const clientId = selectedProvider.clientId;
@@ -600,6 +592,38 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             return
                         }
                     }
+                    function getBody(): FormData | {} {
+                        const jsonObject: any = {
+                            endpointAddress: requestAPI,
+                            method: httpMethod,
+                            contentType: contentType,
+                            requestBody: contentTypeCheck ? "" : bodyParams,
+                            headers: header,
+                            authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
+                        }
+                        const formDataOject = new FormData()
+                        if (contentTypeCheck) {
+                            const files: any[] = []
+                            multipartParams.forEach(data => {
+                                if (data.name && data.value) {
+                                    if (typeof data.value === 'object')
+                                        formDataOject.append(data.name, data.value)
+                                    else {
+                                        files.push({ name: data.name, type: data.type, list: false, testValue: data.value })
+                                    }
+                                }
+                            })
+                            multipartParams.forEach((data) => {
+                                if (data.name && data.value)
+                                    files.push({ name: data.name, type: data.type, list: true })
+                            })
+                            jsonObject['multiParamInfoList'] = files
+                        }
+                        const blob = new Blob([JSON.stringify(jsonObject)], { type: 'application/json' });
+                        formDataOject.append('wm_httpRequestDetails', blob)
+                        const data = contentTypeCheck ? formDataOject : jsonObject
+                        return data
+                    }
                     const configWOProxy: ICustomAxiosConfig = {
                         url: requestAPI,
                         headers: header,
@@ -609,20 +633,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         useProxy: useProxy,
                         withCredentials: withCredentials
                     }
-                    const url = restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path //'http://localhost:4000/restimport' //
+                    const url = restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path //'http://localhost:4000/restimport'
                     const configWProxy: ICustomAxiosConfig = {
                         url: url,
-                        data: {
-                            endpointAddress: requestAPI,
-                            method: httpMethod,
-                            contentType: contentType,
-                            requestBody: body,
-                            headers: header,
-                            authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
-                        },
+                        data: getBody(),
                         method: "POST",
                         headers: {
-                            'Content-Type': 'application/json',
+                            'Content-Type': contentTypeCheck ? 'multipart/form-data' : 'application/json',
                         },
                         withCredentials: true,
                         useProxy: useProxy,
@@ -630,7 +647,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     setloading(true)
                     const config = useProxy ? configWProxy : configWOProxy
                     const response: any = await Apicall(config as AxiosRequestConfig)
-                    setloading(false)
                     if (response.status >= 200 && response.status < 300) {
                         // handleResponse(response, config) 
                         const settingsUploadData = await settingsUpload(config, response)
@@ -646,13 +662,15 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         setserviceNameEnabled(true)
                         handleResponse(response, config)
                     }
+                    setloading(false)
                 } else
                     throw new Error(translate("VALID_URL_ALERT"))
             }
             else
                 throw new Error(translate("VALID_URL_ALERT"))
         } catch (error: any) {
-            console.log(error)
+            console.error(error)
+            setloading(false)
             handleToastError({ message: error.message, type: 'error' })
         }
     }
@@ -725,7 +743,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 convertedResponse: null,
                 statusCode: response?.status,
             },
-            requestBody: request.body || ""
+            requestBody: bodyParams
         };
         const dataConfig: AxiosRequestConfig = {
             url: restImportConfig.proxy_conf.base_path + restImportConfig.proxy_conf.settingsUpload, //'http://localhost:4000/settingUpload'
@@ -757,10 +775,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     else if (param.in === 'query') {
                         for (const key in query) {
                             if (query.hasOwnProperty(key)) {
-                                if (param.name === key) {
-                                    const type = queryParams.find(param => param.name === key)?.type
+                                if (param.name === query[key].name) {
+                                    const type = queryParams.find(param => param.name === query[key].name)?.type
                                     param['format'] = type
-                                    param.items.type = type
+                                    // param.items.type = type
                                 }
                             }
                         }
@@ -1052,6 +1070,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                 </Tooltip>
                                                 {addCustomType ? <Stack direction={'row'}>
                                                     <TextField name="wm-webservice-new-content-type" value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
+                                                    <Tooltip title={translate("CLOSE")}>
+                                                        <IconButton onClick={() => setaddCustomType(false)}>
+                                                            <CloseIcon name="wm-webservice-close-new-content-type" sx={{ cursor: 'pointer', color: 'black' }} />
+                                                        </IconButton>
+                                                    </Tooltip>
                                                     <Tooltip title={translate("ADD")}>
                                                         <IconButton onClick={() => handleAddCustomContentType()}>
                                                             <DoneIcon name="wm-webservice-add-content-type" sx={{ cursor: 'pointer', color: 'black' }} />
