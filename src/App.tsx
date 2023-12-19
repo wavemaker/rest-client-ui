@@ -20,7 +20,7 @@ export default function App() {
     url: "https://jsonplaceholder.typicode.com/posts/3",
     projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     loggenInUserId: "fe",
-    appEnvVariables: [{ key: 'we', value: 'ew' }],
+    appEnvVariables: [{ name: 'we', value: 'ew', type: "APP_ENVIRONMENT" }],
     loggenInUserName: 'vew',
     headerParams: [{
       name: "new",
@@ -39,8 +39,8 @@ export default function App() {
       errorFunction: (msg: string, response?: AxiosResponse) => {
         alert(msg)
       },
-      errorMethod: "toast",
-      errorMessageTimeout: 5000
+      errorMethod: "default",
+      errorMessageTimeout: null
     },
     handleResponse: (request: AxiosRequestConfig, settingsUploadData: any, response?: AxiosResponse) => {
       console.log(request, response, settingsUploadData)
@@ -49,7 +49,7 @@ export default function App() {
     },
     getServiceName(value: string) { },
     getUseProxy(value) {
-      console.log(value) 
+      console.log(value)
     },
     setServiceName: '',
     viewMode: false,

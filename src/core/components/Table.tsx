@@ -275,13 +275,12 @@ export function HeaderAndQueryTable(
 
     function getAppEnvProperties(): ReactNode {
         const nodes: JSX.Element[] = [];
-        if (restImportConfig.appEnvVariables) {
+        if (restImportConfig.appEnvVariables)
             restImportConfig.appEnvVariables?.forEach((data) => {
-                nodes.push(<MenuItem title={data.value} key={data.value} value={data.value}>{data.value}</MenuItem>);
+                nodes.push(<MenuItem title={data.name} key={data.name} value={data.name}>{data.name}</MenuItem>);
             });
-        } else {
+        else
             nodes.push(<MenuItem disabled={true}>{translate('NO_PROPERTIES_FOUND')}</MenuItem>);
-        }
         return nodes;
     }
 

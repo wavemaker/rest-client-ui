@@ -55,7 +55,7 @@ export interface restImportConfigI {
     error: {
         errorMethod: "default" | "toast" | "customFunction",
         errorFunction: (msg: string, response?: AxiosResponse) => void,
-        errorMessageTimeout: number
+        errorMessageTimeout: number | null
     },
     viewMode: boolean,
     setServiceName: string,
@@ -63,17 +63,13 @@ export interface restImportConfigI {
     setResponse?: any,
     loggenInUserId?: string,
     loggenInUserName?: string,
-    appEnvVariables?: ITypes[],
+    appEnvVariables?: HeaderAndQueryI[],
     monacoEditorURL: string,
     responseBlockHeight?: number,
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse, settingsUploadResponse?: any) => void,
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
     getUseProxy: (value: boolean) => void
-}
-interface ITypes {
-    key: string
-    value: string
 }
 export interface ICustomAxiosConfig extends AxiosRequestConfig {
     useProxy?: boolean,
@@ -139,6 +135,9 @@ export const defaultContentTypes = [
     },
     {
         label: 'text/plain', value: 'text/plain'
+    },
+    {
+        label: 'text/xml', value: 'text/xml'
     },
 ]
 declare global {
@@ -241,9 +240,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
     function handleToastError(error: { message: string, type: "error" | 'info' | 'success' | 'warning' }, response?: AxiosResponse) {
         if (restImportConfig.error.errorMethod === 'default') {
             setAlertMsg(error.message)
-            return setTimeout(() => {
-                setAlertMsg(false)
-            }, restImportConfig.error.errorMessageTimeout);
+            if (restImportConfig.error.errorMessageTimeout) {
+                return setTimeout(() => {
+                    setAlertMsg(false)
+                }, restImportConfig.error.errorMessageTimeout);
+            }
         }
         if (restImportConfig.error.errorMethod === 'toast') {
             seterrorMessage({ type: error.type, message: error.message })
@@ -478,6 +479,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const handleTestClick = async () => {
         try {
             if (apiURL.length > 0) {
+                setAlertMsg(false)
                 let header: any = {}, body: any;
                 let requestAPI = apiURL
                 const contentTypeCheck = contentType === 'multipart/form-data' ? true : false
@@ -603,21 +605,25 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         }
                         const formDataOject = new FormData()
                         if (contentTypeCheck) {
-                            const files: any[] = []
+                            const multiParamInfoList: any[] = []
                             multipartParams.forEach(data => {
                                 if (data.name && data.value) {
-                                    if (typeof data.value === 'object')
+                                    if (data.type === 'file') {
                                         formDataOject.append(data.name, data.value)
-                                    else {
-                                        files.push({ name: data.name, type: data.type, list: false, testValue: data.value })
+                                    } else {
+                                        formDataOject.append(data.name, new Blob([data.value], { type: 'application/json' }))
                                     }
                                 }
                             })
                             multipartParams.forEach((data) => {
-                                if (data.name && data.value)
-                                    files.push({ name: data.name, type: data.type, list: true })
+                                if (data.name && data.value) {
+                                    if (data.type === 'file')
+                                        multiParamInfoList.push({ name: data.name, type: data.type, list: true })
+                                    else
+                                        multiParamInfoList.push({ name: data.name, type: 'string', list: false, testValue: data.value, contentType: data.type })
+                                }
                             })
-                            jsonObject['multiParamInfoList'] = files
+                            jsonObject['multiParamInfoList'] = multiParamInfoList
                         }
                         const blob = new Blob([JSON.stringify(jsonObject)], { type: 'application/json' });
                         formDataOject.append('wm_httpRequestDetails', blob)
@@ -633,13 +639,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         useProxy: useProxy,
                         withCredentials: withCredentials
                     }
-                    const url = restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path //'http://localhost:4000/restimport'
+                    const url = restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path
                     const configWProxy: ICustomAxiosConfig = {
                         url: url,
                         data: getBody(),
                         method: "POST",
                         headers: {
-                            'Content-Type': contentTypeCheck ? 'multipart/form-data' : 'application/json',
+                            'Content-Type': 'application/json',
                         },
                         withCredentials: true,
                         useProxy: useProxy,
@@ -648,7 +654,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     const config = useProxy ? configWProxy : configWOProxy
                     const response: any = await Apicall(config as AxiosRequestConfig)
                     if (response.status >= 200 && response.status < 300) {
-                        // handleResponse(response, config) 
                         const settingsUploadData = await settingsUpload(config, response)
                         if (settingsUploadData) {
                             setserviceNameEnabled(false)
@@ -733,7 +738,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 useProxy
                     ? request?.data.authDetails
                     : request?.authDetails,
-            contentType: 'application/json',
+            contentType: contentType,
             method: httpMethod,
             endpointAddress: apiURL,
             headers: constructHeaders,
@@ -746,7 +751,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             requestBody: bodyParams
         };
         const dataConfig: AxiosRequestConfig = {
-            url: restImportConfig.proxy_conf.base_path + restImportConfig.proxy_conf.settingsUpload, //'http://localhost:4000/settingUpload'
+            url: restImportConfig.proxy_conf.base_path + restImportConfig.proxy_conf.settingsUpload,
             data,
             method: 'POST',
             withCredentials: true,
@@ -757,28 +762,34 @@ export default function RestImport({ language, restImportConfig }: { language: s
             const params: any[] = getParamsWithTypes(settingsUploadResponseData).paramaters
             const firstKey = getParamsWithTypes(settingsUploadResponseData).firstKey
             const secondKey = getParamsWithTypes(settingsUploadResponseData).secondKey
-            const headers = constructHeaders
+            const headers = headerParams
             const query = queryParams
             if (params && params.length > 0) {
                 params?.forEach((param) => {
                     if (param.in === 'header') {
                         for (const key in headers) {
-                            if (headers.hasOwnProperty(key)) {
-                                if (param.name === key) {
-                                    const type = headerParams.find(param => param.name === key)?.type
-                                    param['format'] = type
-                                    param.items.type = type
+                            if (param.name === headers[key].name) {
+                                const type = headerParams.find(param => param.name === headers[key].name)?.type
+                                param['format'] = type
+                                param.items.type = type
+                                if (headers[key].type === 'APP_ENVIRONMENT') {
+                                    param.items.type = "__APP_ENV__" + headers[key].name
+                                    param['format'] = "__APP_ENV__" + headers[key].name
+                                    param["x-WM-VARIABLE_KEY"] = headers[key].name
+                                    param["x-WM-VARIABLE_TYPE"] = headers[key].type
                                 }
                             }
                         }
                     }
                     else if (param.in === 'query') {
                         for (const key in query) {
-                            if (query.hasOwnProperty(key)) {
-                                if (param.name === query[key].name) {
-                                    const type = queryParams.find(param => param.name === query[key].name)?.type
-                                    param['format'] = type
-                                    // param.items.type = type
+                            if (param.name === query[key].name) {
+                                const type = queryParams.find(param => param.name === query[key].name)?.type
+                                param['format'] = type
+                                if (queryParams[key].type === 'APP_ENVIRONMENT') {
+                                    param['format'] = "__APP_ENV__" + query[key].name
+                                    param["x-WM-VARIABLE_KEY"] = query[key].name
+                                    param["x-WM-VARIABLE_TYPE"] = query[key].type
                                 }
                             }
                         }
