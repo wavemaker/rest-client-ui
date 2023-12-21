@@ -40,7 +40,7 @@ export default function App() {
         alert(msg)
       },
       errorMethod: "default",
-      errorMessageTimeout: null
+      errorMessageTimeout: 5000
     },
     handleResponse: (request: AxiosRequestConfig, settingsUploadData: any, response?: AxiosResponse) => {
       console.log(request, response, settingsUploadData)

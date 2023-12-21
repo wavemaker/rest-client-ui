@@ -206,7 +206,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [serviceNameEnabled, setserviceNameEnabled] = useState(true)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
     const editorRef: any = useRef(null)
-    const [errorMessage, seterrorMessage] = useState<IToastError>()
+    const [errorMessage, seterrorMessage] = useState<IToastError>({ type: 'error', message: '' })
     const [handleToastOpen, sethandleToastOpen] = useState(false)
     const [editorLanguage, seteditorLanguage] = useState('json')
 
@@ -480,7 +480,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         try {
             if (apiURL.length > 0) {
                 setAlertMsg(false)
-                let header: any = {}, body: any;
+                let header: any = {}
                 let requestAPI = apiURL
                 const contentTypeCheck = contentType === 'multipart/form-data' ? true : false
                 if (isValidUrl(requestAPI)) {
@@ -509,7 +509,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     if (httpAuth === "OAUTH2") {
                         let codeVerifier: string;
                         const clientId = selectedProvider.clientId;
-                        let redirectUri = restImportConfig?.proxy_conf?.base_path + `oauth2/${selectedProvider.providerId}/callback`;
+                        let redirectUri = restImportConfig?.proxy_conf?.base_path + `studio/services/oauth2/${selectedProvider.providerId}/callback`;
                         const responseType = "code";
                         const state = state_val
                         const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
@@ -543,7 +543,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         client.requestAccessToken();
                                     }
                                 } else {
-                                    redirectUri = restImportConfig?.proxy_conf?.base_path + 'oAuthCallback.html'
+                                    redirectUri = restImportConfig?.proxy_conf?.base_path + 'studio/oAuthCallback.html'
                                     const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
                                     codeVerifier = generateRandomCodeVerifier();
                                     const data = Uint8Array.from(codeVerifier.split("").map(x => x.charCodeAt(0)))
@@ -551,7 +551,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         .then((hashBuffer: ArrayBuffer) => {
                                             const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
                                             authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
-                                            childWindow = window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                            childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                                         })
                                         .catch((error: any) => {
                                             console.error("Error calculating code challenge:", error);
@@ -606,22 +606,17 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         const formDataOject = new FormData()
                         if (contentTypeCheck) {
                             const multiParamInfoList: any[] = []
-                            multipartParams.forEach(data => {
+                            multipartParams.forEach((data, index) => {
                                 if (data.name && data.value) {
                                     if (data.type === 'file') {
                                         formDataOject.append(data.name, data.value)
+                                        multiParamInfoList.push({ name: data.name, type: data.type, list: true })
                                     } else {
                                         formDataOject.append(data.name, new Blob([data.value], { type: 'application/json' }))
+                                        multiParamInfoList.push({ name: data.name, type: 'string', list: false, testValue: data.value, contentType: data.type })
                                     }
                                 }
-                            })
-                            multipartParams.forEach((data) => {
-                                if (data.name && data.value) {
-                                    if (data.type === 'file')
-                                        multiParamInfoList.push({ name: data.name, type: data.type, list: true })
-                                    else
-                                        multiParamInfoList.push({ name: data.name, type: 'string', list: false, testValue: data.value, contentType: data.type })
-                                }
+                                index === multipartParams.length - 1 && setmultipartParams([...multipartParams, { name: '', value: '', type: 'file' }])
                             })
                             jsonObject['multiParamInfoList'] = multiParamInfoList
                         }
@@ -634,7 +629,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         url: requestAPI,
                         headers: header,
                         method: httpMethod,
-                        data: body,
+                        data: getBody(),
                         authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
                         useProxy: useProxy,
                         withCredentials: withCredentials
@@ -645,7 +640,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         data: getBody(),
                         method: "POST",
                         headers: {
-                            'Content-Type': 'application/json',
+                            'Content-Type': contentTypeCheck ? contentType : 'application/json',
                         },
                         withCredentials: true,
                         useProxy: useProxy,
@@ -687,17 +682,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
                     responseValue = { data: checkXMLorJSON(response.data.responseBody), status: response?.data.statusCode, headers: response?.data.headers }
                 else {
-                    responseValue = { data: response?.data.statusCode + " " + httpStatusCodes.get(response?.data.statusCode), status: response?.data.statusCode, headers: response?.data.headers }
+                    responseValue = { data: checkXMLorJSON(response.data.responseBody), status: response?.data.statusCode, headers: response?.data.headers }
                     handleToastError({ message: httpStatusCodes.get(response?.data.statusCode) as string, type: 'error' }, response)
                 }
             else
                 responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
         }
         else {
-            if (response.status >= 200 && response.status < 300)
-                responseValue = {
-                    data: checkXMLorJSON(response?.data), status: response?.status, headers: response?.headers
-                }
+            if (response.status >= 200 && response.status < 300) {
+                responseValue = { data: checkXMLorJSON(response?.data), status: response?.status, headers: response?.headers }
+            }
             else if (response.response !== undefined) {
                 responseValue = { data: response?.response.status + " " + httpStatusCodes.get(response.response?.status), status: response?.response.status, headers: response.response?.headers }
                 handleToastError({ message: httpStatusCodes.get(response.response?.status) as string, type: 'error' }, response)
@@ -743,7 +737,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             endpointAddress: apiURL,
             headers: constructHeaders,
             sampleHttpResponseDetails: {
-                headers: useProxy ? headers : request?.headers,
+                headers: useProxy ? response.data.headers : headers,
                 responseBody: useProxy ? response.data.responseBody : JSON.stringify(response?.data), // when useproxy is true return response.responseBody
                 convertedResponse: null,
                 statusCode: response?.status,
@@ -827,7 +821,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             headers: header,
             method: httpMethod,
             data: bodyParams,
-            authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId }
+            authDetails: { type: "OAUTH2", providerId: providerId }
         }
         const url = restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path
         const configWProxy: AxiosRequestConfig = {
@@ -838,7 +832,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 "contentType": contentType,
                 "requestBody": bodyParams,
                 "headers": header,
-                "authDetails": httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
+                "authDetails": { type: "OAUTH2", providerId: providerId },
             },
             method: "POST",
             headers: {
@@ -848,6 +842,20 @@ export default function RestImport({ language, restImportConfig }: { language: s
         }
         const config = useProxy ? configWProxy : configWOProxy
         const response: any = await Apicall(config as AxiosRequestConfig)
+        if (response.status >= 200 && response.status < 300) {
+            const settingsUploadData = await settingsUpload(config, response)
+            if (settingsUploadData) {
+                setserviceNameEnabled(false)
+                if (!restImportConfig.viewMode) {
+                    restImportConfig.getServiceName(settingsUploadData?.serviceId)
+                    setserviceName(settingsUploadData?.serviceId)
+                }
+                handleResponse(response, config, settingsUploadData)
+            }
+        } else {
+            setserviceNameEnabled(true)
+            handleResponse(response, config)
+        }
         handleResponse(response, config)
         setloading(false)
     }
@@ -904,7 +912,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 <Grid gap={1} className='cmnflx' container>
                     <Grid item md={12}>
                         {alertMsg && (
-                            <Alert sx={{ py: 0 }} severity="error" data-testid="default-error">{alertMsg}</Alert>
+                            <Alert sx={{ py: 0 }} severity={errorMessage?.type} data-testid="default-error">{alertMsg}</Alert>
                         )}
                     </Grid>
                     <Grid sx={{ border: restImportConfig.viewMode ? '2px solid #ccc' : 'none', padding: restImportConfig.viewMode ? 3 : 0, backgroundColor: '#faf8f9' }} item md={12}>
@@ -1038,7 +1046,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </Grid>
                                             <Grid item md={9}>
                                                 <Stack spacing={2} direction={'row'}>
-                                                    <TextField disabled size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
+                                                    <TextField disabled={!providerId ? true : false} sx={{ backgroundColor: providerId ? 'lightgray' : 'white' }} size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
                                                     {
                                                         providerId && (
                                                             <Tooltip title={translate("Edit Provider")}>
@@ -1163,15 +1171,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         </div>
                         {responseTabValue === 1 && <Stack overflow={'auto'} sx={{ backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
                             {response !== undefined && <TableContainer style={{ height: restImportConfig?.responseBlockHeight ? `${restImportConfig?.responseBlockHeight / 1.2}px` : '300px' }}>
-                                <Table >
-                                    <TableBody>
-                                        {Object.keys(response?.headers as any).map(key => {
-                                            return <TableRow
-                                                key={key}
-                                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                                            >
-                                                <TableCell style={{ borderBottom: 'none', padding: '5px', width: '30%', paddingLeft: '2.5%' }} align='left' sx={{ color: 'white' }}>{key} :</TableCell>
-                                                <TableCell style={{ borderBottom: 'none', padding: '5px' }} align='left' sx={{ color: 'white' }}>{(response?.headers as any)[key]}</TableCell>
+                                <Table>
+                                    <TableBody sx={{ padding: 40 }}>
+                                        {Object.keys(response.headers as any).map((key) => {
+                                            return <TableRow key={key}>
+                                                <TableCell align='left' sx={{ color: 'white', width: '30%', borderBottom: 'none', padding: '5px' }}>
+                                                    {key} :
+                                                </TableCell>
+                                                <TableCell align='left' sx={{ color: 'white', borderBottom: 'none', padding: '5px', width: '70%', wordWrap: 'break-word', wordBreak: 'break-word' }}>
+                                                    {(response.headers as any)[key]}
+                                                </TableCell>
                                             </TableRow>
                                         })}
                                     </TableBody>

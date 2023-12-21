@@ -35,8 +35,7 @@ const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight, initia
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-
-    return <div ref={editorRef} style={{ height: monacoEditorHeight ? `${monacoEditorHeight / 1.2}px` : '300px', width: "100%" }} />;
+    return <div ref={editorRef} style={{ height: monacoEditorHeight ? `${monacoEditorHeight / 1.2}px` : '300px', width: "100vw" }} />;
 };
 
 export default MonacoEditor;
