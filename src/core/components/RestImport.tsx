@@ -63,7 +63,7 @@ export interface restImportConfigI {
     setResponse?: any,
     loggenInUserId?: string,
     loggenInUserName?: string,
-    appEnvVariables?: HeaderAndQueryI[],
+    appEnvVariables: HeaderAndQueryI[],
     monacoEditorURL: string,
     responseBlockHeight?: number,
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse, settingsUploadResponse?: any) => void,
@@ -606,6 +606,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         const formDataOject = new FormData()
                         if (contentTypeCheck) {
                             const multiParamInfoList: any[] = []
+                            console.log(multipartParams)
                             multipartParams.forEach((data, index) => {
                                 if (data.name && data.value) {
                                     if (data.type === 'file') {
@@ -616,7 +617,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         multiParamInfoList.push({ name: data.name, type: 'string', list: false, testValue: data.value, contentType: data.type })
                                     }
                                 }
-                                index === multipartParams.length - 1 && setmultipartParams([...multipartParams, { name: '', value: '', type: 'file' }])
+                                if (index === multipartParams.length - 1 && data.name.trim() !== '' && data.value) {
+                                    setmultipartParams([...multipartParams, { name: '', value: '', type: 'file' }])
+                                }
                             })
                             jsonObject['multiParamInfoList'] = multiParamInfoList
                         }
@@ -875,7 +878,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             code: code,
             client_id: selectedProvider.clientId,
             code_verifier: codeVerifier,
-            redirect_uri: restImportConfig?.proxy_conf?.base_path + 'oAuthCallback.html',
+            redirect_uri: restImportConfig?.proxy_conf?.base_path + 'studio/oAuthCallback.html',
         }
         const configToken: AxiosRequestConfig = {
             url: selectedProvider.accessTokenUrl,

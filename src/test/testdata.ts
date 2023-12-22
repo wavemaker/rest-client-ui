@@ -280,6 +280,7 @@ export const emptyConfig: restImportConfigI = {
     authorizationUrl: "authorizationUrl",
   },
   projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
+  appEnvVariables: [],
   error: {
     errorFunction: (msg: string) => {
       alert(msg);
@@ -290,7 +291,7 @@ export const emptyConfig: restImportConfigI = {
   handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => { },
   hideMonacoEditor: (value: boolean) => { },
   getServiceName(value: string) { },
-  getUseProxy(value) { 
+  getUseProxy(value) {
     return value
   },
   setServiceName: "",
@@ -312,6 +313,7 @@ const configWithData: restImportConfigI = {
   projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
   userName: "Ardella",
   userPassword: "HBubkbai89",
+  appEnvVariables: [],
   headerParams: [
     {
       name: "Authorization",

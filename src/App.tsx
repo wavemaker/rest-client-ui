@@ -20,7 +20,7 @@ export default function App() {
     url: "https://jsonplaceholder.typicode.com/posts/3",
     projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     loggenInUserId: "fe",
-    appEnvVariables: [{ name: 'we', value: 'ew', type: "APP_ENVIRONMENT" }],
+    appEnvVariables: [],
     loggenInUserName: 'vew',
     headerParams: [{
       name: "new",
@@ -35,6 +35,11 @@ export default function App() {
     setResponse: {
       testing: false,
     },
+    multipartParams: [{
+      name: 'few',
+      type: 'file',
+      value: ''
+    }],
     error: {
       errorFunction: (msg: string, response?: AxiosResponse) => {
         alert(msg)

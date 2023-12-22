@@ -22,7 +22,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean, handleToastError: (error: { message: string, type: "error" | 'info' | 'success' | 'warning' }, response?: AxiosResponse) => void }) {
     const dispatch = useDispatch();
     const { t: translate } = useTranslation();
-    const [Flow, setFlow] = useState('AUTHORIZATION_CODE')
+    const [flow, setFlow] = useState('AUTHORIZATION_CODE')
     const [sendTokenAs, setsendTokenAs] = useState('HEADER')
     const [PKCE, setPKCE] = useState(false)
     const [scopes, setscopes] = useState<ScopeI[]>([])
@@ -39,14 +39,21 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [loading, setloading] = useState(false)
     const [basePath, setBasePath] = useState('')
     const [callback_url, setCallbackUrl] = useState('')
-
-
     const customProviderList = useSelector((store: any) => store.slice.providerList)
     useEffect(() => {
-        const base_path = proxyObj?.proxy_conf?.base_path
-        setBasePath(base_path)
+        setBasePath(proxyObj?.proxy_conf?.base_path)
     }, [proxyObj])
 
+    useEffect(() => {
+        let callbackurl = providerConf
+            ? basePath + `studio/services/oauth2/${providerConf.providerId}/callback`
+            : providerId
+                ? basePath + `studio/services/oauth2/${providerId}/callback`
+                : basePath + `studio/services/oauth2/{providerId}/callback`
+        if (PKCE || flow === 'IMPLICIT') callbackurl = basePath + 'studio/oAuthCallback.html'
+        setCallbackUrl(callbackurl)
+    }, [providerConf, providerId, PKCE, flow, basePath])
+    
     useEffect(() => {
         dispatch(setProviderAuthorizationUrl(provider_auth_url))
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,17 +84,16 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleOpen])
 
-    const handleChangePKCE = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setPKCE(event.target.checked)
-    }
-
-    const handleChangeFlow = (event: SelectChangeEvent) => {
-        setFlow(event.target.value as string)
-    }
-
-    const handleChangesendTokenAs = (event: SelectChangeEvent) => {
-        setsendTokenAs(event.target.value as string)
-    }
+    const handleChangePKCE = (event: React.ChangeEvent<HTMLInputElement>) => setPKCE(event.target.checked)
+    const handleChangesendTokenAs = (event: SelectChangeEvent) => setsendTokenAs(event.target.value)
+    const handleTooltipMouseLeave = () => setTooltipTitle(translate("CLIPBOARD_TEXT"));
+    const handleChangecodeMethod = (event: SelectChangeEvent) => setCodeMethod(event.target.value)
+    const handleProviderId = (event: ChangeEvent<HTMLInputElement>) => setProviderID(event.target.value)
+    const handleAuthorizationURL = (event: ChangeEvent<HTMLInputElement>) => setAuthorizationUrl(event.target.value)
+    const handleAccessTokenURL = (event: ChangeEvent<HTMLInputElement>) => setAccessTokenUrl(event.target.value)
+    const handleClientId = (event: ChangeEvent<HTMLInputElement>) => setClientId(event.target.value)
+    const handleClientSecret = (event: ChangeEvent<HTMLInputElement>) => setClientSecret(event.target.value)
+    const handleChangeFlow = (event: SelectChangeEvent) => setFlow(event.target.value)
 
     const handleScopeChange = (event: React.ChangeEvent<HTMLInputElement>, name: string) => {
         const scopesCopy = [...scopes]
@@ -123,30 +129,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             });
     };
 
-    const handleTooltipMouseLeave = () => {
-        setTooltipTitle(translate("CLIPBOARD_TEXT"));
-    };
-
-    const handleChangecodeMethod = (event: SelectChangeEvent) => {
-        setCodeMethod(event.target.value as string)
-    }
-
-    const handleProviderId = (event: ChangeEvent<HTMLInputElement>) => {
-        setProviderID(event.target.value as string)
-    }
-    const handleAuthorizationURL = (event: ChangeEvent<HTMLInputElement>) => {
-        setAuthorizationUrl(event.target.value as string)
-    }
-    const handleAccessTokenURL = (event: ChangeEvent<HTMLInputElement>) => {
-        setAccessTokenUrl(event.target.value as string)
-    }
-    const handleClientId = (event: ChangeEvent<HTMLInputElement>) => {
-        setClientId(event.target.value as string)
-    }
-    const handleClientSecret = (event: ChangeEvent<HTMLInputElement>) => {
-        setClientSecret(event.target.value as string)
-    }
-
     const handleValidation = async () => {
         const providerExists = customProviderList.some((provider: { providerId: string; }) => provider.providerId === providerId);
         if (!providerId) {
@@ -174,7 +156,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 authorizationUrl: authorizationUrl,
                 clientId: clientId,
                 clientSecret: clientSecret,
-                oauth2Flow: Flow,
+                oauth2Flow: flow,
                 providerId: providerId,
                 responseType: "token",
                 scopeMap: scope_map_obj,
@@ -239,19 +221,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         }
     }
 
-    useEffect(() => {
-        let callbackurl = providerConf
-            ? basePath + `oauth2/${providerConf.providerId}/callback`
-            : providerId
-                ? basePath + `oauth2/${providerId}/callback`
-                : basePath + `oauth2/{providerId}/callback`
-        if (PKCE) {
-            callbackurl = basePath + 'oAuthCallback.html'
-        }
-        setCallbackUrl(callbackurl)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [providerConf, providerId, PKCE])
-
     return (
         <>
             <Dialog id='wm-rest-config-model' className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose} >
@@ -315,7 +284,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                 <Select
                                     name="wm-webservice-flow-value"
                                     data-testid="flow"
-                                    value={Flow}
+                                    value={flow}
                                     onChange={handleChangeFlow}
                                 >
                                     <MenuItem title={translate("AUTHORIZATION") + " " + translate("CODE")} value={'AUTHORIZATION_CODE'}>{translate("AUTHORIZATION") + " " + translate("CODE")} </MenuItem>

@@ -27,6 +27,7 @@ export const ProxyOFFConfig: restImportConfigI = {
         addprovider: "/addprovider",
         authorizationUrl: "/authorizationUrl",
     },
+    appEnvVariables: [],
     projectId: "",
     error: {
         errorFunction: (msg: string) => {
