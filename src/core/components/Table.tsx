@@ -454,6 +454,10 @@ export function MultipartTable(
         setValue(valueClone)
     }
 
+    function openFileSelectionWindow(index: number) {
+        document.getElementById('file-selector-' + index)?.click()
+    }
+
     return (
         <TableContainer component={Paper}>
             <Table data-testid="multipart-table">
@@ -485,32 +489,23 @@ export function MultipartTable(
                                 </FormControl>
                             </TableCell>
                             <TableCell width={'32.5%'} style={tableRowStyle} align='left'>
-                                {data.type === 'file' ? <TextField
+                                {data.type === 'file' ? <><TextField
                                     variant="outlined"
                                     type="text"
                                     size='small'
                                     fullWidth={true}
-                                    disabled
-                                    value={data.filename}
+                                    value={data.filename ?? ''}
                                     data-testid="test-value"
+                                    onClick={() => openFileSelectionWindow(index)}
                                     InputProps={{
+                                        readOnly: true,
                                         endAdornment: (
                                             <IconButton component="label">
                                                 <FileUploadOutlined />
-                                                <input
-                                                    name='wm-webservice-file-upload'
-                                                    style={{ display: "none" }}
-                                                    type="file"
-                                                    hidden
-                                                    onChange={(e) => {
-                                                        handleChangeFile(e, index)
-                                                    }}
-                                                    data-testid="file-upload"
-                                                />
                                             </IconButton>
                                         ),
                                     }}
-                                /> :
+                                /> <input id={'file-selector-' + index} type="file" style={{ display: "none" }} onChange={(e) => { handleChangeFile(e, index) }} /></> :
                                     <TextField name={"wm-webservice-param-value"} fullWidth size='small' onChange={(e) => handleChangeTestValue(e.target.value, index)} value={data.value} />}
                             </TableCell>
                             <TableCell width={'5%'} style={tableRowStyle} align='center'>
