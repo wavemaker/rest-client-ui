@@ -32,13 +32,12 @@ const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight, initia
             window.addEventListener('resize', function () {
                 editorRef.current.layout();
             });
-        };
-
+        }; 
         loadMonaco();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    return <div ref={editorRef} style={{ height: monacoEditorHeight ? `${monacoEditorHeight / 1.2}px` : '200px', width: "100%" }} />;
+    return <div ref={editorRef} style={{ height: monacoEditorHeight ? `${monacoEditorHeight / 0.8}px` : '200px', width: "100%" }} />;
 };
 
 export default MonacoEditor;

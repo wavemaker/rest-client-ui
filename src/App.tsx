@@ -21,7 +21,7 @@ export default function App() {
     projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     loggenInUserId: "fe",
     appEnvVariables: [],
-    loggenInUserName: 'vew',
+    loggenInUserName: 'vew', 
     headerParams: [{
       name: "new",
       type: "DATE",
@@ -45,7 +45,7 @@ export default function App() {
         alert(msg)
       },
       errorMethod: "default",
-      errorMessageTimeout: 5000
+      // errorMessageTimeout: 5000
     },
     handleResponse: (request: AxiosRequestConfig, settingsUploadData: any, response?: AxiosResponse) => {
       console.log(request, response, settingsUploadData)
@@ -60,7 +60,7 @@ export default function App() {
     viewMode: false,
     setResponseHeaders: { kingkong: "test" },
     monacoEditorURL: undefined as any,
-    responseBlockHeight: 500
+    responseBlockHeight: 550, 
   }
 
   return (

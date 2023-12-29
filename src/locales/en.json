@@ -85,12 +85,18 @@
   "CLIENTSECRET_ALERT": "Client Secret is required",
   "ALREADY_EXIST": "already exists",
   "SUCCESS_MSG": "Saved Successfully",
-  "NO_PROPERTIES_FOUND": " No Properties Found",
-  "PLAINTEXT": "Text(text/plain)",
+  "NO_PROPERTIES_FOUND": "No Properties Found",
   "APPLICATION/JSON": "application/json",
   "WITH_CREDENTIALS": "With Credentials",
   "PROPERTIES": "Properties",
   "SERVER": "Server",
   "SIDE": "Side",
-  "APPENVIRONMENT": "App Environment"
+  "APPENVIRONMENT": "App Environment",
+  "CORS_ERROR_MESSAGE": "It seems the target service does not allow Cross Origin Resource Sharing. \n\nPlease use proxy instead (Enable 'Use Proxy' option above)\n\nOR\n\nMake sure the target service allows Cross Origin Resource Sharing.",
+  "TOKEN": "Token",
+  "ID_TOKEN": "ID Token",
+  "RESPONSE_TYPE": "Response Type",
+  "FAILED_TO_SAVE": "Failed to save",
+  "PLAINTEXT": "Text (text/plain)",
+  "JSON": "JSON"
 }

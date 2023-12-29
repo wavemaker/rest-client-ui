@@ -80,7 +80,7 @@ export function HeaderAndQueryTable(
         ],
         ServerSideProperties: [
             { value: 'DATE', label: translate('CURRENT') + " " + translate('DATE') },
-            { value: 'DATETIME', label: translate('CURRENT') + " " + translate('DATE') + " " + translate('TIME') },
+            { value: 'DATETIME', label: translate('CURRENT') + " " + translate('DATE') + translate('TIME') },
             { value: 'TIME', label: translate('CURRENT') + " " + translate('TIME') },
             { value: 'TIMESTAMP', label: translate('CURRENT') + " " + translate('TIMESTAMP') },
             { value: 'USER_ID', label: translate('LOGGEDIN') + " " + translate('USERID') },
@@ -480,7 +480,7 @@ export function MultipartTable(
                                         <MenuItem title={translate("FILE")} value={'file'}>{translate("FILE")}</MenuItem>
                                         <MenuItem title={translate("TEXT")} value={'text'}>{translate("TEXT")}</MenuItem>
                                         <MenuItem title={translate("PLAINTEXT")} value={'plaintext'}>{translate("PLAINTEXT")}</MenuItem>
-                                        <MenuItem title={translate("APPLICATION/JSON")} value={'application/json'}>{translate("APPLICATION/JSON")}</MenuItem>
+                                        <MenuItem title={translate("APPLICATION/JSON")} value={'application/json'}>{translate("JSON") + " " + translate("APPLICATION/JSON")}</MenuItem>
                                     </Select>
                                 </FormControl>
                             </TableCell>

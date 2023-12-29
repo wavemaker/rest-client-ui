@@ -23,7 +23,7 @@ export interface ProviderI {
     responseType?: string,
     oAuth2Pkce?: oAuth2I
     clientId?: string,
-    clientSecret?: string
+    clientSecret?: string 
 }
 interface oAuth2I {
     enabled: boolean,

@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useRef, useState } from 'react'
+import React, { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useRef, useState } from 'react'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table, TableBody, TableCell,
@@ -55,7 +55,7 @@ export interface restImportConfigI {
     error: {
         errorMethod: "default" | "toast" | "customFunction",
         errorFunction: (msg: string, response?: AxiosResponse) => void,
-        errorMessageTimeout: number | null
+        errorMessageTimeout?: number | null
     },
     viewMode: boolean,
     setServiceName: string,
@@ -199,7 +199,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [loading, setloading] = useState(false)
     const [providerId, setProviderId] = useState(restImportConfig.httpAuth?.providerId)
     const [configOpen, setConfigOpen] = useState(false)
-    const [btnDisable, setBtnDisable] = useState(false)
     const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
     const [serviceName, setserviceName] = useState(restImportConfig.setServiceName || "")
@@ -209,12 +208,23 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [errorMessage, seterrorMessage] = useState<IToastError>({ type: 'error', message: '' })
     const [handleToastOpen, sethandleToastOpen] = useState(false)
     const [editorLanguage, seteditorLanguage] = useState('json')
+    var multiParamInfoList: any[] = []
+    var oAuthRetry = true
 
-    const handleToastClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
-        if (reason === 'clickaway')
-            return;
-        sethandleToastOpen(false)
-    }
+    useEffect(() => {
+        if (restImportConfig?.contentType) {
+            const existingContentType = contentTypes.some(contentType =>
+                contentType.value === restImportConfig?.contentType
+            );
+            if (!existingContentType) {
+                setcontentTypes((prevContentTypes: any) => [
+                    ...prevContentTypes,
+                    { label: restImportConfig.contentType, value: restImportConfig.contentType },
+                ]);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [restImportConfig?.contentType])
 
     useEffect(() => {
         if (!window.google) {
@@ -227,7 +237,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
 
     useEffect(() => {
         setProviderId(selectedProvider.providerId)
-        setBtnDisable(false)
     }, [selectedProvider])
 
     useEffect(() => {
@@ -236,8 +245,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
 
-
-    function handleToastError(error: { message: string, type: "error" | 'info' | 'success' | 'warning' }, response?: AxiosResponse) {
+    const handleToastClose = (_event?: SyntheticEvent | Event, reason?: string) => {
+        if (reason === 'clickaway')
+            return;
+        sethandleToastOpen(false)
+    }
+    function handleToastError(error: IToastError, response?: AxiosResponse) {
         if (restImportConfig.error.errorMethod === 'default') {
             setAlertMsg(error.message)
             if (restImportConfig.error.errorMessageTimeout) {
@@ -309,6 +322,20 @@ export default function RestImport({ language, restImportConfig }: { language: s
             handleToastError({ message: error.message, type: 'error' })
         }
     }
+    const handleCloseProvider = () => setproviderOpen(false)
+    const handleChangeapiURL = (value: string) => setapiURL(value)
+    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => setheaderParams(data)
+    const handleChangeQueryParams = (data: HeaderAndQueryI[]) => setqueryParams(data)
+    const handlemultipartParams = (data: BodyParamsI[]) => setmultipartParams(data)
+    const handleChangeWithCredentials = (event: ChangeEvent<HTMLInputElement>) => setwithCredentials(event.target.checked)
+    const handleChangehttpAuth = (event: SelectChangeEvent) => sethttpAuth(event.target.value as any)
+    const handleChangecontentType = (event: SelectChangeEvent) => setcontentType(event.target.value)
+    const handleChangeHeaderTabs = (_event: SyntheticEvent, newValue: number) => setrequestTabValue(newValue);
+    const handleChangeProxy = (event: ChangeEvent<HTMLInputElement>) => {
+        restImportConfig.getUseProxy(event.target.checked)
+        setuseProxy(event.target.checked)
+        if (event.target.checked) setwithCredentials(!event.target.checked)
+    };
     const handlePathParamsChanges = (value: string, currentIndex: number) => {
         const pathParamsClone = [...pathParams]
         pathParamsClone.map((data, index) => {
@@ -318,30 +345,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
         })
         setpathParams(pathParamsClone)
     }
-    const handleCloseProvider = () => setproviderOpen(false)
-    const handleChangeapiURL = (value: string) => setapiURL(value)
-    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => setheaderParams(data)
-    const handleChangeQueryParams = (data: HeaderAndQueryI[]) => setqueryParams(data)
-    const handlemultipartParams = (data: BodyParamsI[]) => setmultipartParams(data)
-    const handleChangehttpMethod = (event: SelectChangeEvent) => sethttpMethod(event.target.value as any)
-    const handleChangecontentType = (event: SelectChangeEvent) => setcontentType(event.target.value as string)
-    const handleChangeHeaderTabs = (event: React.SyntheticEvent, newValue: number) => setrequestTabValue(newValue);
-    const handleChangeProxy = (event: React.ChangeEvent<HTMLInputElement>) => {
-        restImportConfig.getUseProxy(event.target.checked)
-        setuseProxy(event.target.checked)
-        if (event.target.checked) setwithCredentials(!event.target.checked)
-    };
-    const handleChangeWithCredentials = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setwithCredentials(event.target.checked)
-    };
-    const handleChangehttpAuth = (event: SelectChangeEvent) => {
-        if (event.target.value === 'OAUTH2' && !selectedProvider.providerId)
-            setBtnDisable(true)
-        else
-            setBtnDisable(false)
-        sethttpAuth(event.target.value as any)
+    const handleChangehttpMethod = (event: SelectChangeEvent) => {
+        sethttpMethod(event.target.value as any)
+        handleChangeHeaderTabs(null as any, 0)
     }
-    const handleChangeResponseTabs = (event: any, newValue: number) => {
+    const handleChangeResponseTabs = (_event: any, newValue: number) => {
         newValue === 0 ? restImportConfig.hideMonacoEditor(false) : restImportConfig.hideMonacoEditor(true)
         setresponseTabValue(newValue)
     };
@@ -507,9 +515,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
                     }
                     if (httpAuth === "OAUTH2") {
+                        if (selectedProvider.providerId === '') {
+                            return handleToastError({ message: "Please select a provider", type: "error" })
+                        }
                         let codeVerifier: string;
                         const clientId = selectedProvider.clientId;
-                        let redirectUri = restImportConfig?.proxy_conf?.base_path + `studio/services/oauth2/${selectedProvider.providerId}/callback`;
+                        let redirectUri = restImportConfig?.proxy_conf?.base_path + `oauth2/${selectedProvider.providerId}/callback`;
                         const responseType = "code";
                         const state = state_val
                         const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
@@ -534,8 +545,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             },
                                             error_callback: (error: any) => {
                                                 if (error.type === "popup_closed") {
+                                                    const access_token = window.localStorage.getItem(`${providerId}.access_token`) || null
                                                     header['Authorization'] = `Bearer ` + null
-                                                    handleRestAPI(header)
+                                                    access_token !== null && handleRestAPI(header)
                                                     setloading(false)
                                                 }
                                             },
@@ -550,8 +562,22 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     window.crypto.subtle.digest("SHA-256", data)
                                         .then((hashBuffer: ArrayBuffer) => {
                                             const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                            authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
-                                            childWindow = window.open(authUrl, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                            const pkce_state = { providerId: selectedProvider.providerId, suffix: '.access_token', requestSourceType: "web", flow: 'pkce' };
+                                            let authUrlArr = selectedProvider.authorizationUrl.split('?'), connector;
+                                            if (authUrlArr.length === 1) {
+                                                //query params don't exist
+                                                connector = '?';
+                                            } else if (authUrlArr.length > 1 && authUrlArr[1] !== '') {
+                                                //query params exist. Append & instead of ?.
+                                                connector = '&';
+                                            } else {
+                                                //nothing exists after '?'. client_id can be directly appended;
+                                                connector = '';
+                                            }
+                                            const commonUrl = selectedProvider.authorizationUrl + connector + 'client_id=' + clientId + '&redirect_uri=' + redirectUri + '&state=' + encodeURIComponent(JSON.stringify(pkce_state)) + '&scope=' + encodeURIComponent(scope);
+                                            const implicitUri = commonUrl + '&response_type=code&code_challenge=' + codeChallenge + '&code_challenge_method=' + challengeMethod;
+                                            authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${pkce_state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
+                                            childWindow = window.open(implicitUri, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                                         })
                                         .catch((error: any) => {
                                             console.error("Error calculating code challenge:", error);
@@ -567,18 +593,24 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             if ((selectedProvider.providerId === 'google' && !selectedProvider.oAuth2Pkce) || selectedProvider.providerId !== 'google') {
                                 const interval = setInterval(() => {
                                     if (childWindow?.closed) {
+                                        const access_token = window.localStorage.getItem(`${providerId}.access_token`) || null
                                         clearInterval(interval);
                                         header['Authorization'] = `Bearer ` + null
-                                        handleRestAPI(header)
+                                        access_token !== null && handleRestAPI(header)
                                     }
                                 }, 1000);
                                 const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
-                                    if (window.localStorage.getItem(`${providerId}.access_token`)) {
+                                    const access_token = window.localStorage.getItem(`${providerId}.access_token`) || null
+                                    if (access_token) {
+                                        if (selectedProvider.oAuth2Pkce.enabled) {
+                                            getAccessToken(access_token, codeVerifier)
+                                            setloading(false)
+                                        } else {
+                                            header['Authorization'] = `Bearer ${access_token}` //tokenData.access_token
+                                            handleRestAPI(header);
+                                        }
                                         clearInterval(interval);
-                                        // const tokenData = JSON.parse(event.data.tokenData)
-                                        const access_token = window.localStorage.getItem(`${providerId}.access_token`) || null
-                                        header['Authorization'] = `Bearer ${access_token}` //tokenData.access_token
-                                        handleRestAPI(header);
+                                        // const tokenData = JSON.parse(event.data.tokenData).access_token  //for local testing 
                                         window.removeEventListener('message', messageHandler);
                                     } else if (event.data.code) { //PKCE flow 
                                         clearInterval(interval)
@@ -605,8 +637,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         }
                         const formDataOject = new FormData()
                         if (contentTypeCheck) {
-                            const multiParamInfoList: any[] = []
-                            console.log(multipartParams)
+                            multiParamInfoList = []
                             multipartParams.forEach((data, index) => {
                                 if (data.name && data.value) {
                                     if (data.type === 'file') {
@@ -652,6 +683,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     const config = useProxy ? configWProxy : configWOProxy
                     const response: any = await Apicall(config as AxiosRequestConfig)
                     if (response.status >= 200 && response.status < 300) {
+                        if (providerId) {
+                            if (response.status === 401 || response.data.statusCode === 401) {
+                                oAuthRetryF(config)
+                            }
+                        }
                         const settingsUploadData = await settingsUpload(config, response)
                         if (settingsUploadData) {
                             setserviceNameEnabled(false)
@@ -689,7 +725,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     handleToastError({ message: httpStatusCodes.get(response?.data.statusCode) as string, type: 'error' }, response)
                 }
             else
-                responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
+                responseValue = { data: response?.data?.errors.error[0].paramaters[0] || response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
         }
         else {
             if (response.status >= 200 && response.status < 300) {
@@ -699,14 +735,15 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 responseValue = { data: response?.response.status + " " + httpStatusCodes.get(response.response?.status), status: response?.response.status, headers: response.response?.headers }
                 handleToastError({ message: httpStatusCodes.get(response.response?.status) as string, type: 'error' }, response)
             }
-            else
-                responseValue = { data: response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
+            else {
+                const responseData = response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status)
+                responseValue = { data: response.code === "ERR_NETWORK" ? translate("CORS_ERROR_MESSAGE") : responseData, status: response.code, headers: {} }
+            }
         }
-        if (responseValue.data === undefined || responseValue.headers === undefined)
-            responseValue = { data: response.message, status: response.code, headers: {} }
         editorRef.current.setValue(responseValue.data)
         setresponse(responseValue as AxiosResponse)
         request.url = apiURL
+        setloading(false)
         restImportConfig.handleResponse(request, responseValue as AxiosResponse, settingsUploadData)
     }
     function checkXMLorJSON(responseValue: any): any {
@@ -739,6 +776,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             method: httpMethod,
             endpointAddress: apiURL,
             headers: constructHeaders,
+            multiParamInfoList: multiParamInfoList,
             sampleHttpResponseDetails: {
                 headers: useProxy ? response.data.headers : headers,
                 responseBody: useProxy ? response.data.responseBody : JSON.stringify(response?.data), // when useproxy is true return response.responseBody
@@ -759,8 +797,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
             const params: any[] = getParamsWithTypes(settingsUploadResponseData).paramaters
             const firstKey = getParamsWithTypes(settingsUploadResponseData).firstKey
             const secondKey = getParamsWithTypes(settingsUploadResponseData).secondKey
-            const headers = headerParams
-            const query = queryParams
+            const headers = [...headerParams]
+            const query = [...queryParams]
+            const multipart = [...multipartParams]
+            const paths = [...pathParams]
             if (params && params.length > 0) {
                 params?.forEach((param) => {
                     if (param.in === 'header') {
@@ -791,9 +831,31 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             }
                         }
                     }
+                    else if (param.in === 'formData') {
+                        for (const key in multipart) {
+                            if (param.name === multipart[key].name) {
+                                const type = multipartParams.find(param => param.name === multipart[key].name)?.type
+                                param['format'] = type
+                                if (param['type'] === 'array')
+                                    param.items.type = type
+                            }
+                        }
+                    }
                 })
-                settingsUploadResponseData.swagger.paths[firstKey][secondKey].parameters = params
             }
+            if (paths.length > 0) {
+                paths.forEach(path => {
+                    params.push({
+                        format: "string",
+                        in: "path",
+                        type: "string",
+                        name: path.name,
+                        "x-WM-VARIABLE_KEY": "",
+                        "x-WM-VARIABLE_TYPE": "PROMPT"
+                    })
+                })
+            }
+            settingsUploadResponseData.swagger.paths[firstKey][secondKey].parameters = params
             settingsUploadResponseData['proxySettings'] = {
                 mobile: useProxy ? 'PROXY' : 'DIRECT',
                 web: useProxy ? 'PROXY' : 'DIRECT',
@@ -811,7 +873,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const firstObject = swaggerPaths[firstKey];
         const [secondKey] = Object.keys(firstObject);
         const secondObject = firstObject[secondKey];
-        const paramaters = secondObject.parameters;
+        const paramaters = secondObject.parameters || [];
         return { paramaters, firstKey, secondKey };
     }
     const handleCloseConfig = () => {
@@ -846,21 +908,47 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const config = useProxy ? configWProxy : configWOProxy
         const response: any = await Apicall(config as AxiosRequestConfig)
         if (response.status >= 200 && response.status < 300) {
-            const settingsUploadData = await settingsUpload(config, response)
-            if (settingsUploadData) {
-                setserviceNameEnabled(false)
-                if (!restImportConfig.viewMode) {
-                    restImportConfig.getServiceName(settingsUploadData?.serviceId)
-                    setserviceName(settingsUploadData?.serviceId)
+            if (response.data.statusCode === 200) {
+                const settingsUploadData = await settingsUpload(config, response)
+                if (settingsUploadData) {
+                    setserviceNameEnabled(false)
+                    if (!restImportConfig.viewMode) {
+                        restImportConfig.getServiceName(settingsUploadData?.serviceId)
+                        setserviceName(settingsUploadData?.serviceId)
+                    }
+                    handleResponse(response, config, settingsUploadData)
                 }
-                handleResponse(response, config, settingsUploadData)
             }
-        } else {
-            setserviceNameEnabled(true)
-            handleResponse(response, config)
-        }
-        handleResponse(response, config)
+            else if (response.data.statusCode === 401) {
+                if (oAuthRetry) {
+                    oAuthRetryF(config)
+                }
+                else {
+                    handleOAuthError(config)
+                }
+            }
+            else
+                handleOAuthError(config)
+        } else
+            handleOAuthError(config)
         setloading(false)
+
+
+    }
+    function handleOAuthError(config: AxiosRequestConfig) {
+        setserviceNameEnabled(true)
+        handleResponse(response, config)
+    }
+
+    function oAuthRetryF(config: AxiosRequestConfig) {
+        if (oAuthRetry) {
+            window.localStorage.removeItem(`${providerId}.access_token`)
+            oAuthRetry = false
+            handleTestClick()
+        }
+        else {
+            handleOAuthError(config)
+        }
     }
 
     function generateRandomCodeVerifier() {
@@ -910,7 +998,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
 
     return (
         <ThemeProvider theme={theme}>
-            <Stack className='rest-import-ui'>
+            <Stack sx={{ height: "97vh" }} className='rest-import-ui'>
                 {loading && <FallbackSpinner />}
                 <Grid gap={1} className='cmnflx' container>
                     <Grid item md={12}>
@@ -942,7 +1030,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 getPathParams()
                                 handleQueryChange()
                             }} name='wm-webservice-sample-url' autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
-                            <Button name="wm-webservice-sample-test" onClick={handleTestClick} disabled={btnDisable} variant='contained'>{translate('TEST')}</Button>
+                            <Button name="wm-webservice-sample-test" onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
                         <Grid mt={2} container>
                             <Grid item md={6}>
@@ -1093,7 +1181,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                 {addCustomType ? <Stack direction={'row'}>
                                                     <TextField name="wm-webservice-new-content-type" value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
                                                     <Tooltip title={translate("CLOSE")}>
-                                                        <IconButton onClick={() => setaddCustomType(false)}>
+                                                        <IconButton onClick={() => { setnewContentType(''); setaddCustomType(false) }}>
                                                             <CloseIcon name="wm-webservice-close-new-content-type" sx={{ cursor: 'pointer', color: 'black' }} />
                                                         </IconButton>
                                                     </Tooltip>
@@ -1201,7 +1289,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     proxyObj={restImportConfig}
                     handleToastError={handleToastError}
                 />
-                <Snackbar sx={{ top: "0px !important" }} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
+                <Snackbar sx={{ top: "0px !important", zIndex: 10000 }} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
                     <Alert data-testid={'alertMessage'} onClose={handleToastClose} severity={errorMessage?.type} sx={{ width: '100%' }}>
                         {errorMessage?.message}
                     </Alert>
@@ -1211,5 +1299,5 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 </div>
             </Stack>
         </ThemeProvider >
-    );
+    )
 }

@@ -39,6 +39,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [loading, setloading] = useState(false)
     const [basePath, setBasePath] = useState('')
     const [callback_url, setCallbackUrl] = useState('')
+    const [responseType, setresponseType] = useState('')
     const customProviderList = useSelector((store: any) => store.slice.providerList)
     useEffect(() => {
         setBasePath(proxyObj?.proxy_conf?.base_path)
@@ -53,7 +54,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         if (PKCE || flow === 'IMPLICIT') callbackurl = basePath + 'studio/oAuthCallback.html'
         setCallbackUrl(callbackurl)
     }, [providerConf, providerId, PKCE, flow, basePath])
-    
+
     useEffect(() => {
         dispatch(setProviderAuthorizationUrl(provider_auth_url))
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -68,6 +69,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         setCodeMethod(providerConf?.oAuth2Pkce?.challengeMethod || "S256")
         setClientId(providerConf?.clientId || "")
         setClientSecret(providerConf?.clientSecret || "")
+        setresponseType(providerConf?.responseType || "token")
     }, [providerConf])
 
     useEffect(() => {
@@ -84,8 +86,9 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleOpen])
 
-    const handleChangePKCE = (event: React.ChangeEvent<HTMLInputElement>) => setPKCE(event.target.checked)
+    const handleChangePKCE = (event: ChangeEvent<HTMLInputElement>) => setPKCE(event.target.checked)
     const handleChangesendTokenAs = (event: SelectChangeEvent) => setsendTokenAs(event.target.value)
+    const handleChangeresponseType = (event: SelectChangeEvent) => setresponseType(event.target.value)
     const handleTooltipMouseLeave = () => setTooltipTitle(translate("CLIPBOARD_TEXT"));
     const handleChangecodeMethod = (event: SelectChangeEvent) => setCodeMethod(event.target.value)
     const handleProviderId = (event: ChangeEvent<HTMLInputElement>) => setProviderID(event.target.value)
@@ -95,7 +98,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const handleClientSecret = (event: ChangeEvent<HTMLInputElement>) => setClientSecret(event.target.value)
     const handleChangeFlow = (event: SelectChangeEvent) => setFlow(event.target.value)
 
-    const handleScopeChange = (event: React.ChangeEvent<HTMLInputElement>, name: string) => {
+    const handleScopeChange = (event: ChangeEvent<HTMLInputElement>, name: string) => {
         const scopesCopy = [...scopes]
         scopesCopy.map((scope) => {
             if (scope.name === name) {
@@ -137,11 +140,11 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             handleToastError({ message: translate('PROVIDER') + ` ("${providerId}") ` + translate('ALREADY_EXIST') + `!`, type: 'error' })
         } else if (!authorizationUrl) {
             handleToastError({ message: translate("AUTHORIZATIONURL_ALERT"), type: 'error' })
-        } else if (!accessTokenUrl) {
+        } else if (flow === 'AUTHORIZATION_CODE' && !accessTokenUrl) {
             handleToastError({ message: translate("ACCESSTOKEN_ALERT"), type: 'error' })
         } else if (!clientId) {
             handleToastError({ message: translate("CLIENTID_ALERT"), type: 'error' })
-        } else if (!clientSecret && !PKCE) {
+        } else if (flow === 'AUTHORIZATION_CODE' && !clientSecret && !PKCE) {
             handleToastError({ message: translate("CLIENTSECRET_ALERT"), type: 'error' })
         } else {
             setloading(true)
@@ -158,7 +161,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 clientSecret: clientSecret,
                 oauth2Flow: flow,
                 providerId: providerId,
-                responseType: "token",
+                responseType: responseType,
                 scopeMap: scope_map_obj,
                 scopes: scopes_val,
                 sendAccessTokenAs: sendTokenAs,
@@ -188,6 +191,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 handleClose()
                 handleParentModalClose?.()
             } else {
+                handleToastError({ message: translate("FAILED_TO_SAVE"), type: 'error' }, response)
                 setloading(false)
             }
         }
@@ -234,7 +238,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     <HelpOutlineIcon />
                                 </IconButton>
                             </Tooltip>
-                            <Link sx={{ color: 'gray' }}>{translate("HELP")}</Link>
+                            <Link sx={{ color: 'gray', cursor: 'pointer' }}>{translate("HELP")}</Link>
                             <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleClose} />
                         </Stack>
                     </Stack>
@@ -292,44 +296,48 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item md={3}>
-                            <Typography>
-                                {translate("USE_PKCE")}?
-                            </Typography>
-                        </Grid>
-                        <Grid item md={PKCE ? 2 : 9}>
-                            <Checkbox
-                                data-testid='pkce-checkbox'
-                                checked={PKCE}
-                                name="wm-webservice-pkce-value"
-                                onChange={handleChangePKCE}
-                            />
-                            <Tooltip title={translate("PKCE")}>
-                                <IconButton>
-                                    <HelpOutlineIcon />
-                                </IconButton>
-                            </Tooltip>
-                        </Grid>
-                        {PKCE && (
-                            <Grid item md={7} className='cmnflx' container>
-                                <Grid item md={5}>
-                                    <Typography>Code Challenge Method</Typography>
+                        {flow === 'AUTHORIZATION_CODE' &&
+                            <>
+                                <Grid item md={3}>
+                                    <Typography>
+                                        {translate("USE_PKCE")}?
+                                    </Typography>
                                 </Grid>
-                                <Grid item md={7}>
-                                    <FormControl size='small'>
-                                        <Select
-                                            name="wm-webservice-code-challenge-method-value"
-                                            data-testid="challenge-method"
-                                            value={codeMethod}
-                                            onChange={handleChangecodeMethod}
-                                        >
-                                            <MenuItem value={'S256'}>S256</MenuItem>
-                                            <MenuItem value={'plain'}>Basic</MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                <Grid item md={PKCE ? 2 : 9}>
+                                    <Checkbox
+                                        data-testid='pkce-checkbox'
+                                        checked={PKCE}
+                                        name="wm-webservice-pkce-value"
+                                        onChange={handleChangePKCE}
+                                    />
+                                    <Tooltip title={translate("PKCE")}>
+                                        <IconButton>
+                                            <HelpOutlineIcon />
+                                        </IconButton>
+                                    </Tooltip>
                                 </Grid>
-                            </Grid>
-                        )}
+                                {PKCE &&
+                                    <Grid item md={7} className='cmnflx' container>
+                                        <Grid item md={5}>
+                                            <Typography>Code Challenge Method</Typography>
+                                        </Grid>
+                                        <Grid item md={7}>
+                                            <FormControl size='small'>
+                                                <Select
+                                                    name="wm-webservice-code-challenge-method-value"
+                                                    data-testid="challenge-method"
+                                                    value={codeMethod}
+                                                    onChange={handleChangecodeMethod}
+                                                >
+                                                    <MenuItem value={'S256'}>S256</MenuItem>
+                                                    <MenuItem value={'plain'}>Basic</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+                                    </Grid>
+                                }
+                            </>
+                        }
                         <Grid item md={3}>
                             <Typography>{translate("AUTHORIZATION") + " " + translate("URL")}  <span className='text-danger'>*</span></Typography>
                         </Grid>
@@ -341,17 +349,21 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                 placeholder={translate("AUTHORIZATION") + " " + translate("URL")}
                                 label={translate("AUTHORIZATION") + " " + translate("URL")} />
                         </Grid>
-                        <Grid item md={3}>
-                            <Typography>{translate("ACCESS_TOKEN") + " " + translate("URL")} <span className='text-danger'>*</span></Typography>
-                        </Grid>
-                        <Grid item md={9}>
-                            <TextField
-                                name="wm-webservice-access-token-value"
-                                sx={{ width: "30em" }} size='small' onChange={handleAccessTokenURL}
-                                defaultValue={providerConf?.accessTokenUrl}
-                                placeholder={translate("ACCESS_TOKEN") + " " + translate("URL")}
-                                label={translate("ACCESS_TOKEN") + " " + translate("URL")} />
-                        </Grid>
+                        {flow === 'AUTHORIZATION_CODE' &&
+                            <>
+                                <Grid item md={3}>
+                                    <Typography>{translate("ACCESS_TOKEN") + " " + translate("URL")} <span className='text-danger'>*</span></Typography>
+                                </Grid>
+                                <Grid item md={9}>
+                                    <TextField
+                                        name="wm-webservice-access-token-value"
+                                        sx={{ width: "30em" }} size='small' onChange={handleAccessTokenURL}
+                                        defaultValue={providerConf?.accessTokenUrl}
+                                        placeholder={translate("ACCESS_TOKEN") + " " + translate("URL")}
+                                        label={translate("ACCESS_TOKEN") + " " + translate("URL")} />
+                                </Grid>
+                            </>
+                        }
                         <Grid item md={3}>
                             <Typography>{translate("CLIENT") + " " + translate("ID")} <span className='text-danger'>*</span></Typography>
                         </Grid>
@@ -362,7 +374,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                 onChange={handleClientId} placeholder={translate("CLIENT") + " " + translate("ID")}
                                 label={translate("CLIENT") + " " + translate("ID")} />
                         </Grid>
-                        {!PKCE && (
+                        {!PKCE && flow === 'AUTHORIZATION_CODE' && (
                             <Grid item md={12} container className='cmnflx' spacing={2}>
                                 <Grid item md={3} >
                                     <Typography>{translate("CLIENT") + " " + translate("SECRET")} <span className='text-danger'>*</span></Typography>
@@ -392,6 +404,26 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                 </Select>
                             </FormControl>
                         </Grid>
+                        {flow === 'IMPLICIT' &&
+                            <>
+                                <Grid item md={3}>
+                                    <Typography>{translate("RESPONSE_TYPE")} <span className='text-danger'>*</span></Typography>
+                                </Grid>
+                                <Grid item md={9}>
+                                    <FormControl sx={{ width: "30em" }} size='small'>
+                                        <Select
+                                            name="wm-webservice-response-type-value"
+                                            defaultValue='token'
+                                            value={responseType}
+                                            onChange={handleChangeresponseType}
+                                        >
+                                            <MenuItem title='token' value={'token'}>{translate("TOKEN")}</MenuItem>
+                                            <MenuItem title='id token' value={'id_token'}>{translate("ID_TOKEN")}</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                            </>
+                        }
                         <Grid item md={3}>
                             <Typography>{translate("SCOPE")}</Typography>
                         </Grid>
