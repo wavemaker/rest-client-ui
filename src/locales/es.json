@@ -79,5 +79,17 @@
   "IMPLICIT": "Implícito",
   "DELETE": "Eliminar",
   "MANDATORY_ALERT": "Por favor, complete los campos obligatorios",
-  "CUSTOM": "Personalizado"
+  "CUSTOM": "Personalizado",
+  "NO_PROPERTIES_FOUND": "No Properties Found",
+  "APPLICATION/JSON": "application/json",
+  "WITH_CREDENTIALS": "With Credentials",
+  "SERVER": "Server",
+  "SIDE": "Side",
+  "CORS_ERROR_MESSAGE": "It seems the target service does not allow Cross Origin Resource Sharing. \n\nPlease use proxy instead (Enable 'Use Proxy' option above)\n\nOR\n\nMake sure the target service allows Cross Origin Resource Sharing.",
+  "TOKEN": "Token",
+  "ID_TOKEN": "ID Token",
+  "RESPONSE_TYPE": "Response Type",
+  "FAILED_TO_SAVE": "Failed to save",
+  "PLAINTEXT": "Text (text/plain)",
+  "JSON": "JSON"
 }

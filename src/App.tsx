@@ -21,7 +21,7 @@ export default function App() {
     projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     loggenInUserId: "fe",
     appEnvVariables: [],
-    loggenInUserName: 'vew', 
+    loggenInUserName: 'vew',
     headerParams: [{
       name: "new",
       type: "DATE",
@@ -60,7 +60,11 @@ export default function App() {
     viewMode: false,
     setResponseHeaders: { kingkong: "test" },
     monacoEditorURL: undefined as any,
-    responseBlockHeight: 550, 
+    responseBlockHeight: 550,
+    httpAuth: {
+      type: "OAUTH2",
+      providerId: "google"
+    }
   }
 
   return (

@@ -328,9 +328,9 @@ export function HeaderAndQueryTable(
                                         }} name="wm-webservice-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
                                         <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("UI_TYPES")}</ListSubheader>
                                         {selectTypes.UITypes.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{'Server Side ' + translate('PROPERTIES')}</ListSubheader>
+                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("SERVER") + " " + translate("SIDE") + ' ' + translate('PROPERTIES')}</ListSubheader>
                                         {selectTypes.ServerSideProperties.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{'App Environment ' + translate('PROPERTIES')} </ListSubheader>
+                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("APPENVIRONMENT") + translate('PROPERTIES')} </ListSubheader>
                                         {getAppEnvProperties()}
                                     </Select>
                                 </FormControl>

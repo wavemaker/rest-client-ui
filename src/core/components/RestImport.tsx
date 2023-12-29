@@ -531,7 +531,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         if (isToken) {
                             header['Authorization'] = `Bearer ${isToken}`
                         } else {
-                            if (selectedProvider.oAuth2Pkce && selectedProvider.oAuth2Pkce.enabled) {
+                            if (selectedProvider.oAuth2Pkce && selectedProvider?.oAuth2Pkce?.enabled) {
                                 if (selectedProvider.providerId === "google") {
                                     if (window && window?.google) {
                                         const client = window?.google?.accounts.oauth2.initTokenClient({
@@ -602,7 +602,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
                                     const access_token = window.localStorage.getItem(`${providerId}.access_token`) || null
                                     if (access_token) {
-                                        if (selectedProvider.oAuth2Pkce.enabled) {
+                                        if (selectedProvider?.oAuth2Pkce?.enabled) {
                                             getAccessToken(access_token, codeVerifier)
                                             setloading(false)
                                         } else {
@@ -706,7 +706,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
             else
                 throw new Error(translate("VALID_URL_ALERT"))
         } catch (error: any) {
-            console.error(error)
             setloading(false)
             handleToastError({ message: error.message, type: 'error' })
         }
@@ -1138,7 +1137,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                     {
                                                         providerId && (
                                                             <Tooltip title={translate("Edit Provider")}>
-                                                                <IconButton name='wm-webservice-edit-provider' title={translate("Edit Provider")} onClick={() => setConfigOpen(true)} data-testid='edit-provider'>
+                                                                <IconButton name='wm-webservice-edit-provider' onClick={() => setConfigOpen(true)} data-testid='edit-provider'>
                                                                     <EditOutlinedIcon />
                                                                 </IconButton>
                                                             </Tooltip>
