@@ -71,7 +71,7 @@ export function HeaderAndQueryTable(
         UITypes: [
             { value: 'boolean', label: translate('BOOLEAN') },
             { value: 'date', label: translate('DATE') },
-            { value: 'date-time', label: translate('DATE') + " " + translate('TIME') },
+            { value: 'date-time', label: translate('DATE') + translate('TIME') },
             { value: 'double', label: translate('DOUBLE') },
             { value: 'float', label: translate('FLOAT') },
             { value: 'int32', label: translate('INTEGER') },

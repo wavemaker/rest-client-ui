@@ -590,7 +590,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 childWindow = window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             }
                             // providerAuthURL
-                            setloading(true)
                             if ((selectedProvider.providerId === 'google' && !selectedProvider.oAuth2Pkce) || selectedProvider.providerId !== 'google') {
                                 const interval = setInterval(() => {
                                     if (childWindow?.closed) {
@@ -618,8 +617,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         getAccessToken(event.data.code, codeVerifier)
                                         setloading(false)
                                         window.removeEventListener('message', messageHandler);
-                                    } else {
-                                        setloading(false)
                                     }
                                 }
                                 window.addEventListener('message', messageHandler);
@@ -907,6 +904,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             withCredentials: true
         }
         const config = useProxy ? configWProxy : configWOProxy
+        setloading(true)
         const response: any = await Apicall(config as AxiosRequestConfig)
         if (response.status >= 200 && response.status < 300) {
             if (response.data.statusCode === 200) {
@@ -933,8 +931,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
         } else
             handleOAuthError(config)
         setloading(false)
-
-
     }
     function handleOAuthError(config: AxiosRequestConfig) {
         setserviceNameEnabled(true)
@@ -985,11 +981,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const response: any = await Apicall(configToken)
         if (response.status === 200) {
             header['Authorization'] = `Bearer ` + response.data.access_token
-            window.sessionStorage.setItem(selectedProvider.providerId + "access_token", response.data.access_token);
-            const currentTimestamp = Math.floor(Date.now() / 1000);
-            const expiresIn = response.data.expires_in
-            const expirationTimestamp = currentTimestamp + expiresIn;
-            window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
+            window.localStorage.setItem(selectedProvider.providerId + "access_token", response.data.access_token);
+            // const currentTimestamp = Math.floor(Date.now() / 1000);
+            // const expiresIn = response.data.expires_in
+            // const expirationTimestamp = currentTimestamp + expiresIn;
+            // window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
             handleRestAPI(header)
         } else {
             header['Authorization'] = `Bearer ` + null
@@ -1004,7 +1000,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 <Grid gap={1} className='cmnflx' container>
                     <Grid item md={12}>
                         {alertMsg && (
-                            <Alert sx={{ py: 0 }} severity={errorMessage?.type} data-testid="default-error" onClose={()=>setAlertMsg(false)}>{errorMessage.message}</Alert>
+                            <Alert sx={{ py: 0 }} severity={errorMessage?.type} data-testid="default-error" onClose={() => setAlertMsg(false)}>{errorMessage.message}</Alert>
                         )}
                     </Grid>
                     <Grid sx={{ border: restImportConfig.viewMode ? '2px solid #ccc' : 'none', padding: restImportConfig.viewMode ? 3 : 0, backgroundColor: '#faf8f9' }} item md={12}>
