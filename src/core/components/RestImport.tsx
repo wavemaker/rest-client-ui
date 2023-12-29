@@ -199,7 +199,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [loading, setloading] = useState(false)
     const [providerId, setProviderId] = useState(restImportConfig.httpAuth?.providerId)
     const [configOpen, setConfigOpen] = useState(false)
-    const [alertMsg, setAlertMsg] = useState<string | boolean>(false)
+    const [alertMsg, setAlertMsg] = useState<boolean>(false)
     const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
     const [serviceName, setserviceName] = useState(restImportConfig.setServiceName || "")
     const [serviceNameEnabled, setserviceNameEnabled] = useState(true)
@@ -252,7 +252,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
     }
     function handleToastError(error: IToastError, response?: AxiosResponse) {
         if (restImportConfig.error.errorMethod === 'default') {
-            setAlertMsg(error.message)
+            seterrorMessage({ type: error.type, message: error.message })
+            error.message && setAlertMsg(true)
             if (restImportConfig.error.errorMessageTimeout) {
                 return setTimeout(() => {
                     setAlertMsg(false)
@@ -1003,7 +1004,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 <Grid gap={1} className='cmnflx' container>
                     <Grid item md={12}>
                         {alertMsg && (
-                            <Alert sx={{ py: 0 }} severity={errorMessage?.type} data-testid="default-error">{alertMsg}</Alert>
+                            <Alert sx={{ py: 0 }} severity={errorMessage?.type} data-testid="default-error" onClose={()=>setAlertMsg(false)}>{errorMessage.message}</Alert>
                         )}
                     </Grid>
                     <Grid sx={{ border: restImportConfig.viewMode ? '2px solid #ccc' : 'none', padding: restImportConfig.viewMode ? 3 : 0, backgroundColor: '#faf8f9' }} item md={12}>
