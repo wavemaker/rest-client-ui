@@ -1297,14 +1297,21 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         </Stack>}
                     </Grid>
                 </Grid>
-                <ProviderModal handleToastError={handleToastError} handleOpen={providerOpen} handleClose={handleCloseProvider} proxyObj={restImportConfig} />
+                <ProviderModal
+                    handleOpen={providerOpen} 
+                    handleClose={handleCloseProvider} 
+                    proxyObj={restImportConfig}
+                    isCustomErrorFunc={restImportConfig.error.errorMethod === 'customFunction' ? true : false}
+                    customFunction={restImportConfig.error.errorFunction}
+                    />
                 <ConfigModel
                     handleOpen={configOpen}
                     handleClose={handleCloseConfig}
                     handleParentModalClose={handleCloseProvider}
                     providerConf={selectedProvider}
                     proxyObj={restImportConfig}
-                    handleToastError={handleToastError}
+                    isCustomErrorFunc={restImportConfig.error.errorMethod === 'customFunction' ? true : false}
+                    customFunction={restImportConfig.error.errorFunction}
                 />
                 <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
                     <Alert data-testid={'alertMessage'} onClose={handleToastClose} severity={errorMessage?.type}>

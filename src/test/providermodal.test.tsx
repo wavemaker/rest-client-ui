@@ -14,7 +14,8 @@ interface mockPropsI {
     handleParentModalClose?: () => void,
     providerConf?: ProviderI | null,
     proxyObj: restImportConfigI,
-    handleToastError: () => void
+    isCustomErrorFunc: boolean,
+    customFunction: () => void
 }
 
 export const ProxyOFFConfig: restImportConfigI = {
@@ -53,7 +54,8 @@ const mockProxyOFFProps: mockPropsI = {
     handleOpen: true,
     handleClose: jest.fn(() => console.log("closed")),
     proxyObj: ProxyOFFConfig,
-    handleToastError: jest.fn(() => console.log("Toast Error")),
+    isCustomErrorFunc: false,
+    customFunction: jest.fn(() => console.log("Toast Error")),
 }
 
 const proxyObjConfig = emptyConfig
@@ -62,7 +64,8 @@ let mockProps: mockPropsI = {
     handleOpen: true,
     handleClose: jest.fn(() => console.log("closed")),
     proxyObj: proxyObjConfig,
-    handleToastError: jest.fn(() => console.log("Toast Error")),
+    isCustomErrorFunc: false,
+    customFunction: jest.fn(() => console.log("Toast Error")),
 }
 
 function renderComponent(type?: string) {

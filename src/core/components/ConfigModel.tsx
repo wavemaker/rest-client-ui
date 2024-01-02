@@ -7,6 +7,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import {
+    Alert,
     Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, SelectChangeEvent, Stack,
     TextField, Tooltip, Typography
 } from '@mui/material';
@@ -15,14 +16,14 @@ import clipboardCopy from 'clipboard-copy';
 import { ProviderI, ScopeI } from './ProviderModal';
 import Apicall, { getProviderList } from './common/apicall';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { restImportConfigI } from './RestImport'
+import { IToastError, restImportConfigI } from './RestImport'
 import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
 import { useDispatch, useSelector } from 'react-redux';
 import FallbackSpinner from './common/loader';
 import '../../i18n';
 
-export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj, configModel, handleToastError }:
-    { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean, handleToastError: (error: { message: string, type: "error" | 'info' | 'success' | 'warning' }, response?: AxiosResponse) => void }) {
+export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj, configModel, isCustomErrorFunc, customFunction }:
+    { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void }) {
     const dispatch = useDispatch();
     const { t: translate } = useTranslation();
     const [flow, setFlow] = useState('AUTHORIZATION_CODE')
@@ -43,6 +44,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [basePath, setBasePath] = useState('')
     const [callback_url, setCallbackUrl] = useState('')
     const [responseType, setresponseType] = useState('')
+    const [showAlert, setShowAlert] = useState(false)
+    const [alertMsg, setAlertMsg] = useState<IToastError>({ message: '', type: 'error' })
     const customProviderList = useSelector((store: any) => store.slice.providerList)
     useEffect(() => {
         setBasePath(proxyObj?.proxy_conf?.base_path)
@@ -77,6 +80,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     useEffect(() => {
         setscopes([])
+        setShowAlert(false)
+        setAlertMsg({ message: '', type: 'error' })
         const scope_value: ScopeI[] = []
         providerConf?.scopes.forEach((scope) => {
             return scope_value.push({
@@ -88,6 +93,15 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         setscopes(scope_value)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleOpen])
+
+    function handleErrorMsg(error: IToastError, response?: AxiosResponse) {
+        if (isCustomErrorFunc && error.type === 'error')
+            return customFunction(error.message, response)
+        else if(error.type === 'error'){
+            setShowAlert(true)
+            setAlertMsg(error)
+        }
+    }
 
     const handleChangePKCE = (event: ChangeEvent<HTMLInputElement>) => setPKCE(event.target.checked)
     const handleChangesendTokenAs = (event: SelectChangeEvent) => setsendTokenAs(event.target.value)
@@ -138,18 +152,20 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const handleValidation = async () => {
         const providerExists = customProviderList.some((provider: { providerId: string; }) => provider.providerId === providerId);
         if (!providerId) {
-            handleToastError({ message: translate("PROVIDERID_ALERT"), type: 'error' })
+            handleErrorMsg({ message: translate("PROVIDERID_ALERT"), type: 'error' })
         } else if (providerExists && !providerConf) {
-            handleToastError({ message: translate('PROVIDER') + ` ("${providerId}") ` + translate('ALREADY_EXIST') + `!`, type: 'error' })
+            handleErrorMsg({ message: translate('PROVIDER') + ` ("${providerId}") ` + translate('ALREADY_EXIST') + `!`, type: 'error' })
         } else if (!authorizationUrl) {
-            handleToastError({ message: translate("AUTHORIZATIONURL_ALERT"), type: 'error' })
+            handleErrorMsg({ message: translate("AUTHORIZATIONURL_ALERT"), type: 'error' })
         } else if (flow === 'AUTHORIZATION_CODE' && !accessTokenUrl) {
-            handleToastError({ message: translate("ACCESSTOKEN_ALERT"), type: 'error' })
+            handleErrorMsg({ message: translate("ACCESSTOKEN_ALERT"), type: 'error' })
         } else if (!clientId) {
-            handleToastError({ message: translate("CLIENTID_ALERT"), type: 'error' })
+            handleErrorMsg({ message: translate("CLIENTID_ALERT"), type: 'error' })
         } else if (flow === 'AUTHORIZATION_CODE' && !clientSecret && !PKCE) {
-            handleToastError({ message: translate("CLIENTSECRET_ALERT"), type: 'error' })
+            console.log(clientSecret)
+            handleErrorMsg({ message: translate("CLIENTSECRET_ALERT"), type: 'error' })
         } else {
+            setShowAlert(false)
             setloading(true)
             const scopes_val: { name: string; value: string }[] = scopes.filter(item => item.checked).map(({ checked, ...rest }) => rest);
             const scope_map_obj: { [key: string]: boolean } = scopes.reduce((result, item) => {
@@ -185,7 +201,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             const response: any = await Apicall(configWProvider)
             if (response.status === 200) {
                 setloading(false)
-                handleToastError({ message: translate('SUCCESS_MSG'), type: 'success' })
+                // setShowAlert(true)
+                // setAlertMsg({ message: translate('SUCCESS_MSG'), type: 'success' })
                 if (!configModel) {
                     handleProviderList()
                 }
@@ -194,7 +211,9 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 handleClose()
                 handleParentModalClose?.()
             } else {
-                handleToastError({ message: translate("FAILED_TO_SAVE"), type: 'error' }, response)
+                handleErrorMsg({ message: translate("FAILED_TO_SAVE"), type: 'error' }, response)
+                // setShowAlert(true)
+                // setAlertMsg({ message: translate("FAILED_TO_SAVE"), type: 'error' })
                 setloading(false)
             }
         }
@@ -252,6 +271,9 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                     </Stack>
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
+                    {showAlert && (
+                        <Alert sx={{ py: 0, position: 'fixed', width: '55%' }} data-testid="config-alert" severity={alertMsg.type} onClose={() => setShowAlert(false)}>{alertMsg.message} </Alert>
+                    )}
                     <Grid spacing={2} mt={0.3} className='cmnflx' sx={{ width: '100%' }} container>
                         <Grid item md={3}>
                             <Typography>{translate('PROVIDER') + " " + translate('ID')} <span className='text-danger'>*</span>

@@ -9,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import ConfigModel from './ConfigModel';
 import { useTranslation } from 'react-i18next';
 import Apicall, { getProviderList } from './common/apicall';
-import { restImportConfigI } from './RestImport'
+import { IToastError, restImportConfigI } from './RestImport'
 import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
 import { useDispatch, useSelector } from 'react-redux';
 import { AxiosResponse } from 'axios';
@@ -36,8 +36,8 @@ export interface ScopeI {
     checked?: boolean;
 }
 
-export default function ProviderModal({ handleOpen, handleClose, proxyObj, handleToastError }:
-    { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI, handleToastError: (error: { message: string, type: "error" | 'info' | 'success' | 'warning' }, response?: AxiosResponse) => void }) {
+export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCustomErrorFunc, customFunction }:
+    { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void }) {
     const { t: translate } = useTranslation();
     const dispatch = useDispatch();
     const [openConfig, setopenConfig] = useState(false)
@@ -221,8 +221,9 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, handl
                         handleParentModalClose={handleClose}
                         providerConf={currentProvider}
                         proxyObj={proxyObj}
-                        handleToastError={handleToastError}
-                    />
+                        isCustomErrorFunc={isCustomErrorFunc}
+                        customFunction={customFunction}
+                        />
                 )
             }
         </>
