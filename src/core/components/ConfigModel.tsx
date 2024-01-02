@@ -162,7 +162,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         } else if (!clientId) {
             handleErrorMsg({ message: translate("CLIENTID_ALERT"), type: 'error' })
         } else if (flow === 'AUTHORIZATION_CODE' && !clientSecret && !PKCE) {
-            console.log(clientSecret)
             handleErrorMsg({ message: translate("CLIENTSECRET_ALERT"), type: 'error' })
         } else {
             setShowAlert(false)
