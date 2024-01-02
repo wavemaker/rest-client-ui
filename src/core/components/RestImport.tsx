@@ -593,24 +593,36 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             if ((selectedProvider.providerId === 'google' && !selectedProvider.oAuth2Pkce) || selectedProvider.providerId !== 'google') {
                                 const interval = setInterval(() => {
                                     if (childWindow?.closed) {
-                                        const access_token = window.localStorage.getItem(`${providerId}.access_token`) || null
                                         clearInterval(interval);
-                                        header['Authorization'] = `Bearer ` + null
-                                        access_token !== null && handleRestAPI(header)
+                                        handleResponse({
+                                            data: {
+                                                errors: {
+                                                    error: [
+                                                        {
+                                                            parameters: [{
+                                                                "code": 401,
+                                                                "message": "Request is missing required authentication credential. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.",
+                                                                "status": "UNAUTHENTICATED"
+                                                            }]
+                                                        }
+                                                    ]
+                                                }
+                                            }, config: undefined as any, headers: { 'Content-Type': 'application/json' }, status: 401, statusText: "",
+                                        })
                                     }
                                 }, 1000);
                                 const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
                                     const access_token = window.localStorage.getItem(`${providerId}.access_token`) || null
+                                    // const tokenData = JSON.parse(event?.data?.tokenData)?.access_token  //for local testing 
                                     if (access_token) {
                                         if (selectedProvider?.oAuth2Pkce?.enabled) {
-                                            getAccessToken(access_token, codeVerifier)
+                                            getAccessToken(access_token as string, codeVerifier)
                                             setloading(false)
                                         } else {
                                             header['Authorization'] = `Bearer ${access_token}` //tokenData.access_token
                                             handleRestAPI(header);
                                         }
                                         clearInterval(interval);
-                                        // const tokenData = JSON.parse(event.data.tokenData).access_token  //for local testing 
                                         window.removeEventListener('message', messageHandler);
                                     } else if (event.data.code) { //PKCE flow 
                                         clearInterval(interval)
@@ -683,7 +695,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     if (response.status >= 200 && response.status < 300) {
                         if (providerId) {
                             if (response.status === 401 || response.data.statusCode === 401) {
-                                oAuthRetryF(config)
+                                return oAuthRetryF(config)
                             }
                         }
                         const settingsUploadData = await settingsUpload(config, response)
@@ -718,11 +730,15 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
                     responseValue = { data: checkXMLorJSON(response.data.responseBody), status: response?.data.statusCode, headers: response?.data.headers }
                 else {
-                    responseValue = { data: checkXMLorJSON(response.data.responseBody), status: response?.data.statusCode, headers: response?.data.headers }
+                    responseValue = { data: checkXMLorJSON(response.data.responseBody) || JSON.stringify(response?.data?.errors?.error[0]?.parameters[0], undefined, 2), status: response?.data.statusCode, headers: response?.data.headers }
                     handleToastError({ message: httpStatusCodes.get(response?.data.statusCode) as string, type: 'error' }, response)
                 }
             else
-                responseValue = { data: response?.data?.errors.error[0].paramaters[0] || response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status), status: response?.response?.data.status, headers: response?.response?.headers }
+                responseValue = {
+                    data: JSON.stringify(response?.data?.errors?.error[0]?.parameters[0], undefined, 2) ||
+                        response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status),
+                    status: response?.response?.data.status, headers: response?.response?.headers
+                }
         }
         else {
             if (response.status >= 200 && response.status < 300) {
@@ -811,6 +827,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     param['format'] = "__APP_ENV__" + headers[key].name
                                     param["x-WM-VARIABLE_KEY"] = headers[key].name
                                     param["x-WM-VARIABLE_TYPE"] = headers[key].type
+                                    param["x-WM-EDITABLE"] = headers[key].type
                                 }
                             }
                         }
@@ -824,6 +841,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     param['format'] = "__APP_ENV__" + query[key].name
                                     param["x-WM-VARIABLE_KEY"] = query[key].name
                                     param["x-WM-VARIABLE_TYPE"] = query[key].type
+                                    param["x-WM-EDITABLE"] = query[key].type
                                 }
                             }
                         }
@@ -833,6 +851,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             if (param.name === multipart[key].name) {
                                 const type = multipartParams.find(param => param.name === multipart[key].name)?.type
                                 param['format'] = type
+                                param["x-WM-VARIABLE_KEY"] = multipart[key].name
+                                param["x-WM-VARIABLE_TYPE"] = multipart[key].type
+                                param["x-WM-EDITABLE"] = multipart[key].type
                                 if (param['type'] === 'array')
                                     param.items.type = type
                             }
@@ -922,16 +943,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     oAuthRetryF(config)
                 }
                 else {
-                    handleOAuthError(config)
+                    handleOAuthError(config, response)
                 }
             }
             else
-                handleOAuthError(config)
+                handleOAuthError(config, response)
         } else
-            handleOAuthError(config)
+            handleOAuthError(config, response)
         setloading(false)
     }
-    function handleOAuthError(config: AxiosRequestConfig) {
+    function handleOAuthError(config: AxiosRequestConfig, response: AxiosResponse) {
         setserviceNameEnabled(true)
         handleResponse(response, config)
     }
@@ -943,7 +964,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             handleTestClick()
         }
         else {
-            handleOAuthError(config)
+            handleOAuthError(config, response)
         }
     }
 
@@ -1285,8 +1306,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     proxyObj={restImportConfig}
                     handleToastError={handleToastError}
                 />
-                <Snackbar sx={{ top: "0px !important", zIndex: 10000 }} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
-                    <Alert data-testid={'alertMessage'} onClose={handleToastClose} severity={errorMessage?.type} sx={{ width: '100%' }}>
+                <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
+                    <Alert data-testid={'alertMessage'} onClose={handleToastClose} severity={errorMessage?.type}>
                         {errorMessage?.message}
                     </Alert>
                 </Snackbar>

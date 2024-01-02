@@ -113,19 +113,17 @@ export function HeaderAndQueryTable(
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
         if (name !== null) {
-            valueClone.map((data: HeaderAndQueryI, index) => {
+            valueClone.forEach((data: HeaderAndQueryI, index) => {
                 if (index === currentIndex) {
                     data.name = name
                 }
-                return data
             })
         }
         else {
-            valueClone.map((data: HeaderAndQueryI, index) => {
+            valueClone.forEach((data: HeaderAndQueryI, index) => {
                 if (index === currentIndex) {
                     data.name = ''
                 }
-                return data
             })
         }
         setValue(valueClone)
@@ -133,7 +131,7 @@ export function HeaderAndQueryTable(
 
     const handleChangeType = (event: SelectChangeEvent, currentIndex: number) => {
         const valueClone = [...value]
-        valueClone.map((data, index) => {
+        valueClone.forEach((data, index) => {
             if (index === currentIndex) {
                 if (selectTypes.ServerSideProperties.find(e => e.value === event.target.value)) {
                     if (from === 'query') {
@@ -155,7 +153,6 @@ export function HeaderAndQueryTable(
                     data.type = event.target.value
                 }
             }
-            return data
         })
         setValue(valueClone)
     }
@@ -163,11 +160,10 @@ export function HeaderAndQueryTable(
 
     const handleChangeTestValue = (newValue: string, currentIndex: number) => {
         const valueClone = [...value]
-        valueClone.map((data, index) => {
+        valueClone.forEach((data, index) => {
             if (index === currentIndex) {
                 data.value = newValue
             }
-            return data
         })
         setValue(valueClone)
     }
@@ -280,7 +276,7 @@ export function HeaderAndQueryTable(
                 nodes.push(<MenuItem title={data.name} key={data.name} value={data.name}>{data.name}</MenuItem>);
             });
         else
-            nodes.push(<MenuItem disabled={true}>{translate('NO_PROPERTIES_FOUND')}</MenuItem>);
+            nodes.push(<MenuItem key={translate('NO_PROPERTIES_FOUND')} disabled={true}>{translate('NO_PROPERTIES_FOUND')}</MenuItem>);
         return nodes;
     }
 
@@ -379,19 +375,17 @@ export function MultipartTable(
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
         if (name !== null) {
-            valueClone.map((data: BodyParamsI, index) => {
+            valueClone.forEach((data: BodyParamsI, index) => {
                 if (index === currentIndex) {
                     data.name = name as string
                 }
-                return data
             })
         }
         else {
-            valueClone.map((data: BodyParamsI, index) => {
+            valueClone.forEach((data: BodyParamsI, index) => {
                 if (index === currentIndex) {
                     data.name = ''
                 }
-                return data
             })
         }
         setValue(valueClone)
@@ -399,24 +393,22 @@ export function MultipartTable(
 
     const handleChangeType = (event: SelectChangeEvent, currentIndex: number) => {
         const valueClone = [...value]
-        valueClone.map((data, index) => {
+        valueClone.forEach((data, index) => {
             if (index === currentIndex) {
                 data.type = event.target.value
                 data.value = ''
                 data.filename = ''
             }
-            return data
         })
         setValue(valueClone)
     }
     const handleChangeTestValue = (currentValue: string, currentIndex: number) => {
         const valueClone = [...value]
-        valueClone.map((data, index) => {
+        valueClone.forEach((data, index) => {
             if (index === currentIndex) {
                 data.value = currentValue
                 data.filename = ''
             }
-            return data
         })
         setValue(valueClone)
     }
@@ -484,7 +476,7 @@ export function MultipartTable(
                                         <MenuItem title={translate("FILE")} value={'file'}>{translate("FILE")}</MenuItem>
                                         <MenuItem title={translate("TEXT")} value={'text'}>{translate("TEXT")}</MenuItem>
                                         <MenuItem title={translate("PLAINTEXT")} value={'plaintext'}>{translate("PLAINTEXT")}</MenuItem>
-                                        <MenuItem title={translate("APPLICATION/JSON")} value={'application/json'}>{translate("JSON") + " " + translate("APPLICATION/JSON")}</MenuItem>
+                                        <MenuItem title={translate("APPLICATION/JSON")} value={'application/json'}>{translate("JSON") + "  (" + translate("APPLICATION/JSON") + ")"}</MenuItem>
                                     </Select>
                                 </FormControl>
                             </TableCell>

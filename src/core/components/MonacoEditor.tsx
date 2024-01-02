@@ -30,9 +30,9 @@ const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight, initia
                 editorRef.current = editorInstance;
             });
             window.addEventListener('resize', function () {
-                editorRef.current.layout();
+                editorRef?.current?.layout();
             });
-        }; 
+        };
         loadMonaco();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

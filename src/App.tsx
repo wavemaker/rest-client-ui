@@ -20,7 +20,11 @@ export default function App() {
     url: "https://jsonplaceholder.typicode.com/posts/3",
     projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     loggenInUserId: "fe",
-    appEnvVariables: [],
+    appEnvVariables: [{
+      name:"gwe",
+      value:"vew",
+      type:"APP_ENVIRONMENT"
+    }],
     loggenInUserName: 'vew',
     headerParams: [{
       name: "new",
@@ -60,11 +64,8 @@ export default function App() {
     viewMode: false,
     setResponseHeaders: { kingkong: "test" },
     monacoEditorURL: undefined as any,
-    responseBlockHeight: 550,
-    httpAuth: {
-      type: "OAUTH2",
-      providerId: "google"
-    }
+    responseBlockHeight: 550, 
+    
   }
 
   return (

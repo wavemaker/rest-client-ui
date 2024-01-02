@@ -6,7 +6,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import CloseIcon from '@mui/icons-material/Close';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, SelectChangeEvent, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import {
+    Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, SelectChangeEvent, Stack,
+    TextField, Tooltip, Typography
+} from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import clipboardCopy from 'clipboard-copy';
 import { ProviderI, ScopeI } from './ProviderModal';
@@ -223,6 +226,11 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             const authorization_url = response.data
             setProviderAuthURL(authorization_url)
         }
+    }
+
+    function handleCloseWConfigProvider() {
+        setFlow("AUTHORIZATION_CODE")
+        handleClose()
     }
 
     return (
@@ -470,7 +478,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 </DialogContent>
                 <hr />
                 <DialogActions sx={{ p: 2 }}>
-                    <Button variant='contained' color='warning' onClick={handleClose}>
+                    <Button variant='contained' color='warning' onClick={handleCloseWConfigProvider}>
                         {translate("CLOSE")}
                     </Button>
                     <Button variant='contained' onClick={handleValidation}>
