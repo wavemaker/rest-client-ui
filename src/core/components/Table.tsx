@@ -17,7 +17,7 @@ import {
 } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
-import { IToastError, PathParamsI, defaultContentTypes, restImportConfigI } from './RestImport';
+import { INotifyMessage, PathParamsI, defaultContentTypes, restImportConfigI } from './RestImport';
 import { useTranslation } from 'react-i18next';
 import { AxiosResponse } from 'axios';
 
@@ -62,7 +62,7 @@ export function HeaderAndQueryTable(
         {
             value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string,
             apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
-            pathParams: PathParamsI[], handleToastError: (error: IToastError, response?: AxiosResponse) => void, restImportConfig: restImportConfigI
+            pathParams: PathParamsI[], handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void, restImportConfig: restImportConfigI
         }
 ) {
     const { t: translate } = useTranslation();
@@ -368,7 +368,7 @@ export function MultipartTable(
     { value, setValue, handleToastError }:
         {
             value: BodyParamsI[], setValue: (data: BodyParamsI[]) => void,
-            handleToastError: (error: IToastError, response?: AxiosResponse) => void,
+            handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void,
         }) {
 
     const { t: translate } = useTranslation();

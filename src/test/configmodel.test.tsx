@@ -14,7 +14,9 @@ interface mockPropsI {
     handleParentModalClose?: () => void,
     providerConf?: ProviderI | null,
     proxyObj: restImportConfigI,
-    handleToastError: () => void
+    isCustomErrorFunc: boolean,
+    customFunction: () => void,
+    handleSuccessCallback: () => void
 }
 
 const providerObj = {
@@ -39,7 +41,9 @@ let mockProps: mockPropsI = {
     handleParentModalClose: jest.fn(() => console.log("Parent Modal Closed")),
     handleClose: jest.fn(() => console.log("closed")),
     proxyObj: emptyConfig,
-    handleToastError: jest.fn(() => console.log("Toast Error")),
+    isCustomErrorFunc: false,
+    customFunction: jest.fn(() => console.log("Toast Error")),
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg"))
 }
 
 function renderComponent(type: string) {
