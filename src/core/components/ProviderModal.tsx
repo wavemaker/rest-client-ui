@@ -21,7 +21,7 @@ export interface ProviderI {
     accessTokenParamName: string
     scopes: ScopeI[],
     responseType?: string,
-    oAuth2Pkce?: oAuth2I
+    oAuth2Pkce: oAuth2I | null,
     clientId?: string,
     clientSecret?: string
 }
@@ -41,8 +41,8 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
     const { t: translate } = useTranslation();
     const dispatch = useDispatch();
     const [openConfig, setopenConfig] = useState(false)
-    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] })
-    const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] }])
+    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null })
+    const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null }])
     const [defaultProviderIds, setDefaultProviderId] = useState([])
     const providers = useSelector((store: any) => store.slice.providerList)
 
