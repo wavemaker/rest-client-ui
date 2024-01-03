@@ -78,7 +78,7 @@ export interface ICustomAxiosConfig extends AxiosRequestConfig {
         providerId?: string,
     },
 }
-export interface IToastError {
+export interface INotifyMessage {
     message: string,
     type: "error" | 'info' | 'success' | 'warning'
 }
@@ -205,7 +205,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [serviceNameEnabled, setserviceNameEnabled] = useState(true)
     const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
     const editorRef: any = useRef(null)
-    const [errorMessage, seterrorMessage] = useState<IToastError>({ type: 'error', message: '' })
+    const [errorMessage, seterrorMessage] = useState<INotifyMessage>({ type: 'error', message: '' })
     const [handleToastOpen, sethandleToastOpen] = useState(false)
     const [editorLanguage, seteditorLanguage] = useState('json')
     var multiParamInfoList: any[] = []
@@ -250,7 +250,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             return;
         sethandleToastOpen(false)
     }
-    function handleToastError(error: IToastError, response?: AxiosResponse) {
+    function handleToastError(error: INotifyMessage, response?: AxiosResponse) {
         if (restImportConfig.error.errorMethod === 'default') {
             seterrorMessage({ type: error.type, message: error.message })
             error.message && setAlertMsg(true)
@@ -1298,12 +1298,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     </Grid>
                 </Grid>
                 <ProviderModal
-                    handleOpen={providerOpen} 
-                    handleClose={handleCloseProvider} 
+                    handleOpen={providerOpen}
+                    handleClose={handleCloseProvider}
                     proxyObj={restImportConfig}
                     isCustomErrorFunc={restImportConfig.error.errorMethod === 'customFunction' ? true : false}
                     customFunction={restImportConfig.error.errorFunction}
-                    />
+                    handleSuccessCallback={handleToastError}
+                />
                 <ConfigModel
                     handleOpen={configOpen}
                     handleClose={handleCloseConfig}
@@ -1312,6 +1313,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     proxyObj={restImportConfig}
                     isCustomErrorFunc={restImportConfig.error.errorMethod === 'customFunction' ? true : false}
                     customFunction={restImportConfig.error.errorFunction}
+                    handleSuccessCallback={handleToastError}
                 />
                 <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={handleToastOpen} autoHideDuration={restImportConfig.error.errorMessageTimeout} onClose={handleToastClose}>
                     <Alert data-testid={'alertMessage'} onClose={handleToastClose} severity={errorMessage?.type}>

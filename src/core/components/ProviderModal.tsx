@@ -9,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import ConfigModel from './ConfigModel';
 import { useTranslation } from 'react-i18next';
 import Apicall, { getProviderList } from './common/apicall';
-import { IToastError, restImportConfigI } from './RestImport'
+import { INotifyMessage, restImportConfigI } from './RestImport'
 import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
 import { useDispatch, useSelector } from 'react-redux';
 import { AxiosResponse } from 'axios';
@@ -23,7 +23,7 @@ export interface ProviderI {
     responseType?: string,
     oAuth2Pkce?: oAuth2I
     clientId?: string,
-    clientSecret?: string 
+    clientSecret?: string
 }
 interface oAuth2I {
     enabled: boolean,
@@ -36,8 +36,8 @@ export interface ScopeI {
     checked?: boolean;
 }
 
-export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCustomErrorFunc, customFunction }:
-    { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void }) {
+export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCustomErrorFunc, customFunction, handleSuccessCallback }:
+    { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void, handleSuccessCallback: (msg: INotifyMessage, response?: AxiosResponse) => void }) {
     const { t: translate } = useTranslation();
     const dispatch = useDispatch();
     const [openConfig, setopenConfig] = useState(false)
@@ -223,7 +223,8 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
                         proxyObj={proxyObj}
                         isCustomErrorFunc={isCustomErrorFunc}
                         customFunction={customFunction}
-                        />
+                        handleSuccessCallback={handleSuccessCallback}
+                    />
                 )
             }
         </>

@@ -15,7 +15,8 @@ interface mockPropsI {
     providerConf?: ProviderI | null,
     proxyObj: restImportConfigI,
     isCustomErrorFunc: boolean,
-    customFunction: () => void
+    customFunction: () => void,
+    handleSuccessCallback: () => void
 }
 
 export const ProxyOFFConfig: restImportConfigI = {
@@ -56,6 +57,7 @@ const mockProxyOFFProps: mockPropsI = {
     proxyObj: ProxyOFFConfig,
     isCustomErrorFunc: false,
     customFunction: jest.fn(() => console.log("Toast Error")),
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg"))
 }
 
 const proxyObjConfig = emptyConfig
@@ -66,6 +68,7 @@ let mockProps: mockPropsI = {
     proxyObj: proxyObjConfig,
     isCustomErrorFunc: false,
     customFunction: jest.fn(() => console.log("Toast Error")),
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg"))
 }
 
 function renderComponent(type?: string) {

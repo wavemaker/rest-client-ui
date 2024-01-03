@@ -16,14 +16,14 @@ import clipboardCopy from 'clipboard-copy';
 import { ProviderI, ScopeI } from './ProviderModal';
 import Apicall, { getProviderList } from './common/apicall';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { IToastError, restImportConfigI } from './RestImport'
+import { INotifyMessage, restImportConfigI } from './RestImport'
 import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
 import { useDispatch, useSelector } from 'react-redux';
 import FallbackSpinner from './common/loader';
 import '../../i18n';
 
-export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj, configModel, isCustomErrorFunc, customFunction }:
-    { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void }) {
+export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj, configModel, isCustomErrorFunc, customFunction, handleSuccessCallback }:
+    { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void, handleSuccessCallback: (msg: INotifyMessage, response?: AxiosResponse) => void }) {
     const dispatch = useDispatch();
     const { t: translate } = useTranslation();
     const [flow, setFlow] = useState('AUTHORIZATION_CODE')
@@ -45,7 +45,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [callback_url, setCallbackUrl] = useState('')
     const [responseType, setresponseType] = useState('')
     const [showAlert, setShowAlert] = useState(false)
-    const [alertMsg, setAlertMsg] = useState<IToastError>({ message: '', type: 'error' })
+    const [alertMsg, setAlertMsg] = useState<INotifyMessage>({ message: '', type: 'error' })
     const customProviderList = useSelector((store: any) => store.slice.providerList)
     useEffect(() => {
         setBasePath(proxyObj?.proxy_conf?.base_path)
@@ -94,10 +94,10 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleOpen])
 
-    function handleErrorMsg(error: IToastError, response?: AxiosResponse) {
+    function handleErrorMsg(error: INotifyMessage, response?: AxiosResponse) {
         if (isCustomErrorFunc && error.type === 'error')
             return customFunction(error.message, response)
-        else if(error.type === 'error'){
+        else if (error.type === 'error') {
             setShowAlert(true)
             setAlertMsg(error)
         }
@@ -200,8 +200,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             const response: any = await Apicall(configWProvider)
             if (response.status === 200) {
                 setloading(false)
-                // setShowAlert(true)
-                // setAlertMsg({ message: translate('SUCCESS_MSG'), type: 'success' })
                 if (!configModel) {
                     handleProviderList()
                 }
@@ -209,10 +207,9 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 dispatch(setSelectedProvider(newProvider))
                 handleClose()
                 handleParentModalClose?.()
+                handleSuccessCallback({ message: translate('SUCCESS_MSG'), type: 'success' })
             } else {
                 handleErrorMsg({ message: translate("FAILED_TO_SAVE"), type: 'error' }, response)
-                // setShowAlert(true)
-                // setAlertMsg({ message: translate("FAILED_TO_SAVE"), type: 'error' })
                 setloading(false)
             }
         }
@@ -271,7 +268,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
                     {showAlert && (
-                        <Alert sx={{ py: 0, position: 'fixed', width: '55%' }} data-testid="config-alert" severity={alertMsg.type} onClose={() => setShowAlert(false)}>{alertMsg.message} </Alert>
+                        <Alert sx={{ py: 0 }} data-testid="config-alert" severity={alertMsg.type} onClose={() => setShowAlert(false)}>{alertMsg.message} </Alert>
                     )}
                     <Grid spacing={2} mt={0.3} className='cmnflx' sx={{ width: '100%' }} container>
                         <Grid item md={3}>

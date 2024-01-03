@@ -15,7 +15,8 @@ interface mockPropsI {
     providerConf?: ProviderI | null,
     proxyObj: restImportConfigI,
     isCustomErrorFunc: boolean,
-    customFunction: () => void
+    customFunction: () => void,
+    handleSuccessCallback: () => void
 }
 
 const providerObj = {
@@ -42,6 +43,7 @@ let mockProps: mockPropsI = {
     proxyObj: emptyConfig,
     isCustomErrorFunc: false,
     customFunction: jest.fn(() => console.log("Toast Error")),
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg"))
 }
 
 function renderComponent(type: string) {
