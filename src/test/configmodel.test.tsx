@@ -31,6 +31,7 @@ const providerObj = {
     scopes: [{ name: "Basic Profile", value: "profile" }],
     oauth2Flow: "AUTHORIZATION_CODE",
     responseType: "token",
+    oAuth2Pkce: null 
 }
 
 

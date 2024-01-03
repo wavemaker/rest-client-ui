@@ -70,7 +70,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         setsendTokenAs(providerConf ? providerConf.sendAccessTokenAs : 'HEADER' as string)
         setProviderID(providerConf?.providerId as string)
         setAuthorizationUrl(providerConf?.authorizationUrl as string)
-        setAccessTokenUrl(providerConf?.accessTokenUrl as string)
+        setAccessTokenUrl(providerConf?.accessTokenUrl || "")
         setPKCE(providerConf?.oAuth2Pkce?.enabled || false);
         setCodeMethod(providerConf?.oAuth2Pkce?.challengeMethod || "S256")
         setClientId(providerConf?.clientId || "")
@@ -183,7 +183,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 scopeMap: scope_map_obj,
                 scopes: scopes_val,
                 sendAccessTokenAs: sendTokenAs,
-                ...(PKCE ? { oAuth2Pkce: { enabled: PKCE, challengeMethod: codeMethod } } : {})
+                ...(PKCE ? { oAuth2Pkce: { enabled: PKCE, challengeMethod: codeMethod } } : { oAuth2Pkce: null })
             }
             const filteredProviders = customProviderList.filter((provider: { providerId: string; }) => provider.providerId !== providerId);
             const newProviderList = [...filteredProviders, newProvider];

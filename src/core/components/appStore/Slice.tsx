@@ -12,7 +12,7 @@ interface CommonState {
 const providerState = createSlice({
     name: 'providerId',
     initialState: {
-        selectedProvider: { providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] },
+        selectedProvider: { providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null },
         providerAuthURL: "",
         providerList: [],
         configOpen: false,
