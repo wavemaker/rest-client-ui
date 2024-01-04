@@ -492,7 +492,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 let header: any = {}
                 let requestAPI = apiURL
                 const contentTypeCheck = contentType === 'multipart/form-data' ? true : false
-                if (isValidUrl(requestAPI)) {
+                if (isValidUrl(encodeURI(requestAPI))) {
                     headerParams.forEach((data, index) => {
                         if (data.name && data.value) {
                             if (data.name === 'Authorization' && header['Authorization'])
@@ -1021,7 +1021,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const response: any = await Apicall(configToken)
         if (response.status === 200) {
             header['Authorization'] = `Bearer ` + response.data.access_token
-            window.localStorage.setItem(selectedProvider.providerId + "access_token", response.data.access_token);
+            window.localStorage.setItem(selectedProvider.providerId + ".access_token", response.data.access_token);
             // const currentTimestamp = Math.floor(Date.now() / 1000);
             // const expiresIn = response.data.expires_in
             // const expirationTimestamp = currentTimestamp + expiresIn;
@@ -1295,7 +1295,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             </Box>
                         </Box>
                         <div style={{ display: responseTabValue === 0 ? 'block' : 'none', width: '100%' }}>
-                            <MonacoEditor monacoEditorHeight={restImportConfig?.responseBlockHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2) || undefined} initialLanguage={editorLanguage} />
+                            <MonacoEditor monacoEditorHeight={restImportConfig?.responseBlockHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2)} initialLanguage={editorLanguage} />
                         </div>
                         {responseTabValue === 1 && <Stack overflow={'auto'} sx={{ backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
                             {response !== undefined && <TableContainer style={{ height: restImportConfig?.responseBlockHeight ? `${restImportConfig?.responseBlockHeight / 1.2}px` : '300px' }}>
