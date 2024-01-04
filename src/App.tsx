@@ -21,9 +21,9 @@ export default function App() {
     projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     loggenInUserId: "fe",
     appEnvVariables: [{
-      name:"gwe",
-      value:"vew",
-      type:"APP_ENVIRONMENT"
+      name: "gwe",
+      value: "vew",
+      type: "APP_ENVIRONMENT"
     }],
     loggenInUserName: 'vew',
     headerParams: [{
@@ -33,7 +33,7 @@ export default function App() {
     }],
     queryParams: [{
       name: "jh",
-      type: "TIME",
+      type: "gwe",
       value: "vew"
     }],
     setResponse: {
@@ -64,8 +64,8 @@ export default function App() {
     viewMode: false,
     setResponseHeaders: { kingkong: "test" },
     monacoEditorURL: undefined as any,
-    responseBlockHeight: 550, 
-    
+    responseBlockHeight: 550,
+
   }
 
   return (

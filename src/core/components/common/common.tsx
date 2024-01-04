@@ -218,3 +218,13 @@ export function constructCommaSeparatedUniqueQueryValuesString(valueCollection: 
   const valueToSet = uniqueArray.join(',')
   return valueToSet
 }
+
+export function checkTypeForParameter(type: string): "SERVER" | "ENVIRONMENT" | "BASIC" {
+  const UITypes = ['boolean', 'date', 'date-time', 'double', 'float', 'int32', 'int64', 'string']
+  const ServerSideProperties = ['DATE', 'DATETIME', 'TIME', 'TIMESTAMP', 'USER_ID', 'USER_NAME']
+  let value: "SERVER" | "ENVIRONMENT" | "BASIC" = "BASIC"
+  if (UITypes.includes(type)) value = "BASIC"
+  else if (ServerSideProperties.includes(type)) value = "SERVER"
+  else value = "ENVIRONMENT"
+  return value
+}

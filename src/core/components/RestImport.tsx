@@ -8,7 +8,7 @@ import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled, tableHeaderStyle, tableRowStyle } from './Table'
 import {
     retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString,
-    findDuplicatesByComparison, retrieveQueryDetailsFromURL, constructCommaSeparatedUniqueQueryValuesString
+    findDuplicatesByComparison, retrieveQueryDetailsFromURL, constructCommaSeparatedUniqueQueryValuesString, checkTypeForParameter
 } from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import AddIcon from '@mui/icons-material/Add'
@@ -815,34 +815,54 @@ export default function RestImport({ language, restImportConfig }: { language: s
             const multipart = [...multipartParams]
             const paths = [...pathParams]
             if (params && params.length > 0) {
-                params?.forEach((param) => {
+                params.forEach((param) => {
                     if (param.in === 'header') {
-                        for (const key in headers) {
-                            if (param.name === headers[key].name) {
-                                const type = headerParams.find(param => param.name === headers[key].name)?.type
-                                param['format'] = type
-                                param.items.type = type
-                                if (headers[key].type === 'APP_ENVIRONMENT') {
-                                    param.items.type = "__APP_ENV__" + headers[key].name
-                                    param['format'] = "__APP_ENV__" + headers[key].name
-                                    param["x-WM-VARIABLE_KEY"] = headers[key].name
-                                    param["x-WM-VARIABLE_TYPE"] = headers[key].type
-                                    param["x-WM-EDITABLE"] = headers[key].type
+                        for (let i = 0; i < headers.length; i++) {
+                            const typeCheck = checkTypeForParameter(headers[i].type)
+                            if (param.name === headers[i].name) {
+                                if (typeCheck === 'SERVER') {
+                                    param.items.type = headers[i].type
+                                    param['x-WM-VARIABLE_KEY'] = headers[i].type
+                                    param["x-WM-VARIABLE_TYPE"] = "SERVER"
+                                    param['format'] = headers[i].type
                                 }
+                                else if (typeCheck === "ENVIRONMENT") {
+                                    param.items.type = "__APP_ENV__" + headers[i].type
+                                    param['x-WM-VARIABLE_KEY'] = headers[i].type
+                                    param["x-WM-VARIABLE_TYPE"] = "APP_ENVIRONMENT"
+                                    param['format'] = "__APP_ENV__" + headers[i].type
+                                }
+                                else if (typeCheck === "BASIC") {
+                                    param['x-WM-VARIABLE_KEY'] = ''
+                                    param["x-WM-VARIABLE_TYPE"] = "PROMPT"
+                                    param["x-WM-EDITABLE"] = false
+                                    param['format'] = headers[i].type
+                                }
+                                break
                             }
                         }
                     }
                     else if (param.in === 'query') {
-                        for (const key in query) {
-                            if (param.name === query[key].name) {
-                                const type = queryParams.find(param => param.name === query[key].name)?.type
-                                param['format'] = type
-                                if (queryParams[key].type === 'APP_ENVIRONMENT') {
-                                    param['format'] = "__APP_ENV__" + query[key].name
-                                    param["x-WM-VARIABLE_KEY"] = query[key].name
-                                    param["x-WM-VARIABLE_TYPE"] = query[key].type
-                                    param["x-WM-EDITABLE"] = query[key].type
+                        for (let i = 0; i < query.length; i++) {
+                            const typeCheck = checkTypeForParameter(query[i].type)
+                            if (param.name === query[i].name) {
+                                if (typeCheck === 'SERVER') {
+                                    param['x-WM-VARIABLE_KEY'] = query[i].type
+                                    param["x-WM-VARIABLE_TYPE"] = "SERVER"
+                                    param['format'] = query[i].type
                                 }
+                                else if (typeCheck === "ENVIRONMENT") {
+                                    param['x-WM-VARIABLE_KEY'] = query[i].type
+                                    param["x-WM-VARIABLE_TYPE"] = "APP_ENVIRONMENT"
+                                    param['format'] = "__APP_ENV__" + query[i].type
+                                }
+                                else if (typeCheck === "BASIC") {
+                                    param['x-WM-VARIABLE_KEY'] = ''
+                                    param["x-WM-VARIABLE_TYPE"] = "PROMPT"
+                                    param["x-WM-EDITABLE"] = false
+                                    param['format'] = query[i].type
+                                }
+                                break
                             }
                         }
                     }
@@ -850,10 +870,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         for (const key in multipart) {
                             if (param.name === multipart[key].name) {
                                 const type = multipartParams.find(param => param.name === multipart[key].name)?.type
-                                param['format'] = type
-                                param["x-WM-VARIABLE_KEY"] = multipart[key].name
-                                param["x-WM-VARIABLE_TYPE"] = multipart[key].type
-                                param["x-WM-EDITABLE"] = multipart[key].type
+                                param['format'] = type === 'file' ? 'array' : 'string'
+                                param["x-WM-VARIABLE_KEY"] = ''
+                                param["x-WM-VARIABLE_TYPE"] = 'PROMPT'
                                 if (param['type'] === 'array')
                                     param.items.type = type
                             }
@@ -864,10 +883,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
             if (paths.length > 0) {
                 paths.forEach(path => {
                     params.push({
-                        format: "string",
                         in: "path",
                         type: "string",
                         name: path.name,
+                        format: "string",
+                        required: true,
                         "x-WM-VARIABLE_KEY": "",
                         "x-WM-VARIABLE_TYPE": "PROMPT"
                     })

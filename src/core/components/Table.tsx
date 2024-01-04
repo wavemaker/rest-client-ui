@@ -66,7 +66,7 @@ export function HeaderAndQueryTable(
         }
 ) {
     const { t: translate } = useTranslation();
-    var selectTypes =
+    const selectTypes =
     {
         UITypes: [
             { value: 'boolean', label: translate('BOOLEAN') },
@@ -80,7 +80,7 @@ export function HeaderAndQueryTable(
         ],
         ServerSideProperties: [
             { value: 'DATE', label: translate('CURRENT') + " " + translate('DATE') },
-            { value: 'DATETIME', label: translate('CURRENT') + " " + translate('DATE') + translate('TIME') },
+            { value: 'DATE_TIME', label: translate('CURRENT') + " " + translate('DATE') + translate('TIME') },
             { value: 'TIME', label: translate('CURRENT') + " " + translate('TIME') },
             { value: 'TIMESTAMP', label: translate('CURRENT') + " " + translate('TIMESTAMP') },
             { value: 'USER_ID', label: translate('LOGGEDIN') + " " + translate('USERID') },

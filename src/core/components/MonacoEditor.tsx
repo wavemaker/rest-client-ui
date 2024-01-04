@@ -26,6 +26,7 @@ const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight, initia
                     minimap: {
                         enabled: false,
                     },
+                    scrollBeyondLastLine: false
                 });
                 editorRef.current = editorInstance;
             });
