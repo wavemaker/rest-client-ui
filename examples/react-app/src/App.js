@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
-import RestModel from "./components/RestModelDialog";
-import { Editor } from '@monaco-editor/react';
-
+import RestModel from "./components/RestModelDialog"; 
 function App() {
   const [open, setOpen] = useState(false);
   const [fullScreenView, setFullScreenView] = useState(false);

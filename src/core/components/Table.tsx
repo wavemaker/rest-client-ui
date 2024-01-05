@@ -80,7 +80,7 @@ export function HeaderAndQueryTable(
         ],
         ServerSideProperties: [
             { value: 'DATE', label: translate('CURRENT') + " " + translate('DATE') },
-            { value: 'DATE_TIME', label: translate('CURRENT') + " " + translate('DATE') + translate('TIME') },
+            { value: 'DATETIME', label: translate('CURRENT') + " " + translate('DATE') + translate('TIME') },
             { value: 'TIME', label: translate('CURRENT') + " " + translate('TIME') },
             { value: 'TIMESTAMP', label: translate('CURRENT') + " " + translate('TIMESTAMP') },
             { value: 'USER_ID', label: translate('LOGGEDIN') + " " + translate('USERID') },
@@ -483,7 +483,6 @@ export function MultipartTable(
                             <TableCell width={'32.5%'} style={tableRowStyle} align='left'>
                                 {data.type === 'file' ? <><TextField
                                     variant="outlined"
-                                    type="text"
                                     size='small'
                                     fullWidth={true}
                                     value={data.filename ?? ''}
@@ -491,6 +490,7 @@ export function MultipartTable(
                                     onClick={() => openFileSelectionWindow(index)}
                                     InputProps={{
                                         readOnly: true,
+                                        sx: { cursor: 'pointer' },
                                         endAdornment: (
                                             <IconButton component="label">
                                                 <FileUploadOutlined />

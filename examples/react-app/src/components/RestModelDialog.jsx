@@ -7,50 +7,72 @@ export default function RestModal({ handleOpen, handleClose, defaultData }) {
   const [monacoEditorValue, setmonacoEditorValue] = useState();
   const [hideMonacoEditor, sethideMonacoEditor] = useState(true);
   const restData = {
-    url: "https://jsonplaceholder.typicode.com/posts/{id}",
-    httpMethod: "POST",
-    useProxy: true,
-    httpAuth: "BASIC",
-    bodyParams: "{userName:password}",
-    userName: "userName",
-    userPassword: "userPassword",
-    contentType: "multipart/form-data",
     proxy_conf: {
-      base_path: "http://localhost:4000",
-      proxy_path: "/restimport",
-      list_provider: "/get-default-provider",
-      getprovider: "/getprovider",
-      addprovider: "/addprovider",
-      authorizationUrl: "/authorizationUrl",
+      base_path: "http://localhost:4000/",
+      proxy_path: "restimport",
+      list_provider: "get-default-provider",
+      settingsUpload: "settingUpload",
+      getprovider: "getprovider",
+      addprovider: "addprovider",
+      authorizationUrl: "authorizationUrl",
     },
-    state_val:
-      "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
-    default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
-    oAuthConfig: {
-      base_path: "https://www.wavemakeronline.com/studio/services",
-      project_id: "",
-      list_provider: "/oauth2/providers/default",
-      getprovider: "", // /projects/{projectID}/oauth2/providers
-      addprovider: "", // /projects/{projectID}/oauth2/providers
-      authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+    useProxy: true,
+    url: "https://jsonplaceholder.typicode.com/posts/3",
+    projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
+    loggenInUserId: "fe",
+    appEnvVariables: [
+      {
+        name: "gwe",
+        value: "vew",
+        type: "APP_ENVIRONMENT",
+      },
+    ],
+    loggenInUserName: "vew",
+    headerParams: [
+      {
+        name: "new",
+        type: "DATE",
+        value: "vew",
+      },
+    ],
+    queryParams: [
+      {
+        name: "jh",
+        type: "gwe",
+        value: "vew",
+      },
+    ],
+    setResponse: {
+      testing: false,
     },
+    multipartParams: [
+      {
+        name: "few",
+        type: "file",
+        value: "",
+      },
+    ],
     error: {
       errorFunction: (msg, response) => {
         alert(msg);
-        console.log(response);
       },
       errorMethod: "default",
-      errorMessageTimeout: 5000,
+      // errorMessageTimeout: 5000
     },
-    handleResponse: (response) => {
-      console.log(response?.data);
-      setmonacoEditorValue(JSON.stringify(response?.data, null, 2));
+    handleResponse: (request, settingsUploadData, response) => {
+      console.log(request, response, settingsUploadData);
     },
-    hideMonacoEditor: (value) => {
-      sethideMonacoEditor(value);
+    hideMonacoEditor: (value) => {},
+    getServiceName(value) {},
+    getUseProxy(value) {
+      console.log(value);
     },
+    setServiceName: "",
+    viewMode: false,
+    setResponseHeaders: { kingkong: "test" },
+    monacoEditorURL: undefined,
+    responseBlockHeight: 550,
   };
-
   useEffect(() => {
     setmonacoEditorValue("");
     if (handleOpen && !defaultData) {

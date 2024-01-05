@@ -818,50 +818,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 params.forEach((param) => {
                     if (param.in === 'header') {
                         for (let i = 0; i < headers.length; i++) {
-                            const typeCheck = checkTypeForParameter(headers[i].type)
                             if (param.name === headers[i].name) {
-                                if (typeCheck === 'SERVER') {
-                                    param.items.type = headers[i].type
-                                    param['x-WM-VARIABLE_KEY'] = headers[i].type
-                                    param["x-WM-VARIABLE_TYPE"] = "SERVER"
-                                    param['format'] = headers[i].type
-                                }
-                                else if (typeCheck === "ENVIRONMENT") {
-                                    param.items.type = "__APP_ENV__" + headers[i].type
-                                    param['x-WM-VARIABLE_KEY'] = headers[i].type
-                                    param["x-WM-VARIABLE_TYPE"] = "APP_ENVIRONMENT"
-                                    param['format'] = "__APP_ENV__" + headers[i].type
-                                }
-                                else if (typeCheck === "BASIC") {
-                                    param['x-WM-VARIABLE_KEY'] = ''
-                                    param["x-WM-VARIABLE_TYPE"] = "PROMPT"
-                                    param["x-WM-EDITABLE"] = false
-                                    param['format'] = headers[i].type
-                                }
+                                setSwaggerParameters(param, headers[i], "HEADER")
                                 break
                             }
                         }
                     }
                     else if (param.in === 'query') {
                         for (let i = 0; i < query.length; i++) {
-                            const typeCheck = checkTypeForParameter(query[i].type)
                             if (param.name === query[i].name) {
-                                if (typeCheck === 'SERVER') {
-                                    param['x-WM-VARIABLE_KEY'] = query[i].type
-                                    param["x-WM-VARIABLE_TYPE"] = "SERVER"
-                                    param['format'] = query[i].type
-                                }
-                                else if (typeCheck === "ENVIRONMENT") {
-                                    param['x-WM-VARIABLE_KEY'] = query[i].type
-                                    param["x-WM-VARIABLE_TYPE"] = "APP_ENVIRONMENT"
-                                    param['format'] = "__APP_ENV__" + query[i].type
-                                }
-                                else if (typeCheck === "BASIC") {
-                                    param['x-WM-VARIABLE_KEY'] = ''
-                                    param["x-WM-VARIABLE_TYPE"] = "PROMPT"
-                                    param["x-WM-EDITABLE"] = false
-                                    param['format'] = query[i].type
-                                }
+                                setSwaggerParameters(param, query[i], "QUERY")
                                 break
                             }
                         }
@@ -900,6 +866,28 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 withCredentials: withCredentials,
             };
             settingsUploadResponseData['serviceId'] = serviceName.trim() !== '' ? serviceName : settingsUploadResponseData['serviceId']
+            function setSwaggerParameters(obj: any, param: HeaderAndQueryI, from: "HEADER" | "QUERY") {
+                const typeCheck = checkTypeForParameter(param.type)
+                if (typeCheck === 'SERVER') {
+                    if (from === "HEADER")
+                        obj.items.type = param.type
+                    obj['x-WM-VARIABLE_KEY'] = param.type === 'DATETIME' ? "DATE_TIME" : param.type
+                    obj["x-WM-VARIABLE_TYPE"] = "SERVER"
+                    obj['format'] = param.type
+                }
+                else if (typeCheck === "ENVIRONMENT") {
+                    obj['x-WM-VARIABLE_KEY'] = param.type
+                    obj["x-WM-VARIABLE_TYPE"] = "APP_ENVIRONMENT"
+                    obj['format'] = "__APP_ENV__" + param.type
+                }
+                else if (typeCheck === "BASIC") {
+                    obj['x-WM-VARIABLE_KEY'] = ''
+                    obj["x-WM-VARIABLE_TYPE"] = "PROMPT"
+                    obj["x-WM-EDITABLE"] = false
+                    obj['format'] = param.type
+                }
+            }
+
             return settingsUploadResponseData
         }
         else
