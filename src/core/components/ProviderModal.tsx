@@ -23,7 +23,8 @@ export interface ProviderI {
     responseType?: string,
     oAuth2Pkce: oAuth2I | null,
     clientId?: string,
-    clientSecret?: string
+    clientSecret?: string,
+    oauth2Flow: string
 }
 interface oAuth2I {
     enabled: boolean,
@@ -41,8 +42,8 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
     const { t: translate } = useTranslation();
     const dispatch = useDispatch();
     const [openConfig, setopenConfig] = useState(false)
-    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null })
-    const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null }])
+    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow:'AUTHORIZATION_CODE' })
+    const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE' }])
     const [defaultProviderIds, setDefaultProviderId] = useState([])
     const providers = useSelector((store: any) => store.slice.providerList)
 

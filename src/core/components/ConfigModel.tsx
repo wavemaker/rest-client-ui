@@ -91,6 +91,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             });
         })
         setscopes(scope_value)
+        setFlow(providerConf?.oauth2Flow || "AUTHORIZATION_CODE")
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleOpen])
 
