@@ -1,4 +1,4 @@
-import React, { CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties, ReactNode, useEffect, useRef } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -19,7 +19,7 @@ import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import { INotifyMessage, PathParamsI, defaultContentTypes, restImportConfigI } from './RestImport';
 import { useTranslation } from 'react-i18next';
-import { AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios'; 
 
 export interface HeaderAndQueryI {
     name: string
@@ -65,6 +65,40 @@ export function HeaderAndQueryTable(
             pathParams: PathParamsI[], handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void, restImportConfig: restImportConfigI
         }
 ) {
+    const tableRef = useRef<HTMLTableElement | null>(null)
+    useEffect(() => {
+        const updateStickyRow = () => {
+            const table = tableRef.current;
+            if (table) {
+                const tbody = table.querySelector('tbody');
+                if (tbody) {
+                    const rows = tbody.getElementsByTagName('tr');
+                    const lastRow = rows[rows.length - 1];
+                    const tableRect = table.getBoundingClientRect();
+                    const lastRowRect = lastRow.getBoundingClientRect();
+                    if (lastRowRect.bottom < tableRect.bottom) {
+                        lastRow.style.position = 'sticky';
+                        lastRow.style.bottom = '0';
+                        lastRow.style.background = rows.length % 2 === 0 ? "#f3f3f3" : 'white'; // Adjust as needed 
+                    } else {
+                        lastRow.style.position = 'static';
+                        lastRow.style.bottom = 'auto';
+                        lastRow.style.background = rows.length % 2 === 0 ? 'white' : "#f3f3f3";;
+                    }
+                }
+            }
+        };
+        // Initial update
+        updateStickyRow();
+        // Listen for scroll events on the table
+        tableRef.current?.addEventListener('scroll', updateStickyRow);
+        // Cleanup event listener on component unmount
+        return () => {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            tableRef.current?.removeEventListener('scroll', updateStickyRow);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
     const { t: translate } = useTranslation();
     const selectTypes =
     {
@@ -281,8 +315,8 @@ export function HeaderAndQueryTable(
     }
 
     return (
-        <TableContainer component={Paper}>
-            <Table>
+        <TableContainer sx={{ maxHeight: '35vh' }} component={Paper}>
+            <Table ref={tableRef as React.RefObject<HTMLTableElement>}>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }} data-testid="subheaders">
                         <TableCell style={tableHeaderStyle} align='left'>{translate("NAME")}</TableCell>
@@ -291,7 +325,7 @@ export function HeaderAndQueryTable(
                         <TableCell style={tableHeaderStyle} align='left'>{translate("ACTIONS")}</TableCell>
                     </TableRow>
                 </TableHead>
-                <TableBody>
+                <TableBody sx={{ maxHeight: '35vh', overflowY: 'auto' }}>
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
                             <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
@@ -313,7 +347,6 @@ export function HeaderAndQueryTable(
                             </TableCell>
                             <TableCell style={tableRowStyle} width={"30%"} align='left'>
                                 <FormControl size='small' fullWidth={true}>
-                                    <InputLabel>{translate("SELECT") + " " + translate("TYPE")}</InputLabel>
                                     <Select
                                         MenuProps={{
                                             PaperProps: {
@@ -321,7 +354,7 @@ export function HeaderAndQueryTable(
                                                     height: '300px', // Set the maximum height of the dropdown menu
                                                 },
                                             },
-                                        }} name="wm-webservice-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
+                                        }} name="wm-webservice-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} data-testid="param-type">
                                         <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("UI_TYPES")}</ListSubheader>
                                         {selectTypes.UITypes.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
                                         <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("SERVER") + " " + translate("SIDE") + ' ' + translate('PROPERTIES')}</ListSubheader>
@@ -354,7 +387,8 @@ export function HeaderAndQueryTable(
                                     />}
                             </TableCell>
                             <TableCell style={tableRowStyle} width={"5%"} align='center'>
-                                {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon name="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
+                                {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} />
+                                    : <DeleteIcon name="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
                             </TableCell>
                         </TableRowStyled>
                     )}
@@ -370,7 +404,40 @@ export function MultipartTable(
             value: BodyParamsI[], setValue: (data: BodyParamsI[]) => void,
             handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void,
         }) {
+    const tableRef = useRef<HTMLTableElement | null>(null);
 
+    useEffect(() => {
+        const updateStickyRow = () => {
+            const table = tableRef.current;
+            if (table) {
+                const tbody = table.querySelector('tbody');
+                if (tbody) {
+                    const rows = tbody.getElementsByTagName('tr');
+                    const lastRow = rows[rows.length - 1];
+                    const tableRect = table.getBoundingClientRect();
+                    const lastRowRect = lastRow.getBoundingClientRect();
+                    if (lastRowRect.bottom < tableRect.bottom) {
+                        lastRow.style.position = 'sticky';
+                        lastRow.style.bottom = '0';
+                        lastRow.style.background = rows.length % 2 === 0 ? "#f3f3f3" : 'white'; // Adjust as needed 
+                    } else {
+                        lastRow.style.position = 'static';
+                        lastRow.style.bottom = 'auto';
+                        lastRow.style.background = rows.length % 2 === 0 ? 'white' : "#f3f3f3";;
+                    }
+                }
+            }
+        };
+        // Initial update
+        updateStickyRow();
+        // Listen for scroll events on the table
+        tableRef.current?.addEventListener('scroll', updateStickyRow);
+        // Cleanup event listener on component unmount
+        return () => {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            tableRef.current?.removeEventListener('scroll', updateStickyRow);
+        };
+    }, [value]);
     const { t: translate } = useTranslation();
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
@@ -451,8 +518,8 @@ export function MultipartTable(
     }
 
     return (
-        <TableContainer component={Paper}>
-            <Table data-testid="multipart-table">
+        <TableContainer sx={{ maxHeight: '35vh' }} component={Paper}>
+            <Table ref={tableRef as React.RefObject<HTMLTableElement>} data-testid="multipart-table">
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
                         <TableCell style={tableHeaderStyle} align='left'>{translate('NAME')}</TableCell>
@@ -461,7 +528,7 @@ export function MultipartTable(
                         <TableCell style={tableHeaderStyle} align='left'>{translate('ACTIONS')}</TableCell>
                     </TableRow>
                 </TableHead>
-                <TableBody>
+                <TableBody sx={{ maxHeight: '35vh', overflowY: 'auto' }}>
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
                             <TableCell width={'32.5%'} style={tableRowStyle} align='left'>
@@ -476,7 +543,7 @@ export function MultipartTable(
                                         <MenuItem title={translate("FILE")} value={'file'}>{translate("FILE")}</MenuItem>
                                         <MenuItem title={translate("TEXT")} value={'text'}>{translate("TEXT")}</MenuItem>
                                         <MenuItem title={translate("PLAINTEXT")} value={'plaintext'}>{translate("PLAINTEXT")}</MenuItem>
-                                        <MenuItem title={translate("APPLICATION/JSON")} value={'application/json'}>{translate("JSON") + "  (" + translate("APPLICATION/JSON") + ")"}</MenuItem>
+                                        <MenuItem title={translate("JSON") + "  (" + translate("APPLICATION/JSON") + ")"} value={'application/json'}>{translate("JSON") + "  (" + translate("APPLICATION/JSON") + ")"}</MenuItem>
                                     </Select>
                                 </FormControl>
                             </TableCell>

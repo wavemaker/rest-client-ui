@@ -2,7 +2,8 @@ import React, { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useRef, useSt
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table, TableBody, TableCell,
-    TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button, TextareaAutosize, Alert, createTheme, ThemeProvider
+    TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button, TextareaAutosize, Alert, createTheme, ThemeProvider,
+    useMediaQuery
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled, tableHeaderStyle, tableRowStyle } from './Table'
@@ -101,7 +102,7 @@ function CustomTabPanel(props: TabPanelProps) {
             role="tabpanel"
             hidden={value !== index}
             {...other}
-            style={{ margin: "20px" }}
+            style={{ margin: "10px" }}
         >
             {value === index && (
                 <Box>
@@ -171,6 +172,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             fontSize: 16, // Adjust the font size as needed
         },
     });
+    const matches = useMediaQuery('(min-width:1600px)');
     const state_val = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ=="
     const httpMethods = ["GET", "POST", "DELETE", "HEAD", "PATCH", "PUT"]
     const httpAuthTypes = ["NONE", 'BASIC', 'OAUTH2']
@@ -1099,7 +1101,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             </Grid>}
                         </Grid>
                     </Grid>
-                    <Grid sx={{ overflowY: 'auto' }} height={restImportConfig.responseBlockHeight ? `${restImportConfig.responseBlockHeight}px` : '300px'} item md={12}>
+                    <Grid sx={{ overflowY: 'auto', overflowX: "hidden" }} height={matches ? "85vh" : '80vh'} item md={12}>
                         <Box data-testid="request-config-block" sx={{ width: '100%' }}>
                             <Box sx={{ borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
                                 <Tabs sx={{ minHeight: "30px", height: "45px" }} value={requestTabValue} onChange={handleChangeHeaderTabs}>
@@ -1282,8 +1284,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 </Tabs>
                             </Box>
                         </Box>
-                        <div style={{ display: responseTabValue === 0 ? 'block' : 'none', width: '100%' }}>
-                            <MonacoEditor monacoEditorHeight={restImportConfig?.responseBlockHeight as number} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2)} initialLanguage={editorLanguage} />
+                        <div style={{ display: responseTabValue === 0 ? 'block' : 'none' }}>
+                            <MonacoEditor viewMode={restImportConfig.viewMode} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2)} initialLanguage={editorLanguage} />
                         </div>
                         {responseTabValue === 1 && <Stack overflow={'auto'} sx={{ backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
                             {response !== undefined && <TableContainer style={{ height: restImportConfig?.responseBlockHeight ? `${restImportConfig?.responseBlockHeight / 1.2}px` : '300px' }}>

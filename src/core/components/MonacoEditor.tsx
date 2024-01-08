@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 declare const window: any;
-const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight, initialLanguage }:
-    { editorRef: any, initialValue: string | undefined, url: string, monacoEditorHeight: number, initialLanguage: string }) => {
+const MonacoEditor = ({ editorRef, initialValue, url, initialLanguage, viewMode }:
+    { editorRef: any, initialValue: string | undefined, url: string, initialLanguage: string, viewMode: boolean }) => {
+    const matches = useMediaQuery('(min-width:1600px)');
 
     useEffect(() => {
         const loadMonaco = async () => {
@@ -38,7 +40,11 @@ const MonacoEditor = ({ editorRef, initialValue, url, monacoEditorHeight, initia
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    return <div ref={editorRef} style={{ height: monacoEditorHeight ? `${monacoEditorHeight / 0.8}px` : '200px', width: "100%" }} />;
+    return <>
+        <div style={{ height: matches ? "65vh" : viewMode ? "50vh" : '55vh', width: '99%' }}>
+            <div ref={editorRef} style={{ height: '100%' }} />
+        </div>
+    </>;
 };
 
 export default MonacoEditor;
