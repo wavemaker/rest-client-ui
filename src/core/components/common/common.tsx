@@ -179,16 +179,7 @@ export function findDuplicatesByComparison(concernedArray: any[], collection: an
 }
 
 export const isValidUrl = (urlString: string) => {
-  const urlPattern = new RegExp(
-    "^(https?:\\/\\/)?" + // validate protocol
-    "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // validate domain name
-    "((\\d{1,3}\\.){3}\\d{1,3}))" + // validate OR ip (v4) address
-    "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // validate port and path
-    "(\\?([;&a-z\\d%_.~+=-]*,?)+)?" + // validate query string
-    "(\\#[-a-z\\d_]*)?$",
-    "i"
-  ); // validate fragment locator'
-
+  const urlPattern = /^(https?|ftp):\/\/(-\.)?([^\s/?.#]+\.?)+(\/[^\s]*)?$/i
   return urlPattern.test(urlString);
 };
 
@@ -226,4 +217,14 @@ export function constructCommaSeparatedUniqueQueryValuesString(valueCollection: 
   const uniqueArray = valueCollection.filter((value, index) => value && valueCollection.indexOf(value) === index)
   const valueToSet = uniqueArray.join(',')
   return valueToSet
+}
+
+export function checkTypeForParameter(type: string): "SERVER" | "ENVIRONMENT" | "BASIC" {
+  const UITypes = ['boolean', 'date', 'date-time', 'double', 'float', 'int32', 'int64', 'string']
+  const ServerSideProperties = ['DATE', 'DATETIME', 'TIME', 'TIMESTAMP', 'USER_ID', 'USER_NAME']
+  let value: "SERVER" | "ENVIRONMENT" | "BASIC" = "BASIC"
+  if (UITypes.includes(type)) value = "BASIC"
+  else if (ServerSideProperties.includes(type)) value = "SERVER"
+  else value = "ENVIRONMENT"
+  return value
 }

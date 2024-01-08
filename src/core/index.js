@@ -95,8 +95,8 @@ export default function RestImport(opts) {
         language: constructorConfig.language,
         config : constructorConfig.config,
         configModal: constructorConfig.configModal,
-        providerConf: constructorConfig.providerConf
-
+        providerConf: constructorConfig.providerConf,
+        dom_id: constructorConfig.dom_id
       },
     }, constructorConfig.initialState)
   }

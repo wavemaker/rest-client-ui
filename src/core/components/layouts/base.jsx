@@ -31,11 +31,16 @@ export default class BaseLayout extends React.Component {
     const RestImport = getComponent("RestImport");
     const language = specSelectors.language();
     const config = specSelectors.config();
+    const domID = specSelectors.dom_id();
     return (
       <Provider store={appStore}>
         <div className="rest-import-ui">
           <div className="information-container">
-            <RestImport language={language} restImportConfig={config} />
+            <RestImport
+              domID={domID}
+              language={language}
+              restImportConfig={config}
+            />
           </div>
         </div>
       </Provider>

@@ -9,9 +9,10 @@ import React, { useEffect, useState } from 'react';
 import ConfigModel from './ConfigModel';
 import { useTranslation } from 'react-i18next';
 import Apicall, { getProviderList } from './common/apicall';
-import { restImportConfigI } from './RestImport'
+import { INotifyMessage, restImportConfigI } from './RestImport'
 import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
 import { useDispatch, useSelector } from 'react-redux';
+import { AxiosResponse } from 'axios';
 export interface ProviderI {
     providerId: string
     authorizationUrl: string
@@ -20,9 +21,10 @@ export interface ProviderI {
     accessTokenParamName: string
     scopes: ScopeI[],
     responseType?: string,
-    oAuth2Pkce?: oAuth2I
+    oAuth2Pkce: oAuth2I | null,
     clientId?: string,
-    clientSecret?: string
+    clientSecret?: string,
+    oauth2Flow: string
 }
 interface oAuth2I {
     enabled: boolean,
@@ -35,12 +37,13 @@ export interface ScopeI {
     checked?: boolean;
 }
 
-export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI }) {
+export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCustomErrorFunc, customFunction, handleSuccessCallback }:
+    { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void, handleSuccessCallback: (msg: INotifyMessage, response?: AxiosResponse) => void }) {
     const { t: translate } = useTranslation();
     const dispatch = useDispatch();
     const [openConfig, setopenConfig] = useState(false)
-    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] })
-    const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] }])
+    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow:'AUTHORIZATION_CODE' })
+    const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE' }])
     const [defaultProviderIds, setDefaultProviderId] = useState([])
     const providers = useSelector((store: any) => store.slice.providerList)
 
@@ -68,7 +71,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
     }, [currentProvider])
 
     const handleAuthorizationUrl = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", currentProvider?.providerId as string) : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.authorizationUrl.replace(":providerID", currentProvider?.providerId as string);
+        const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", currentProvider?.providerId as string)
         const configProvider = {
             url: url,
             method: "GET",
@@ -89,7 +92,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
         setopenConfig(false)
     }
     const handleProviderList = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.getprovider;
+        const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider
         try {
             const response = await getProviderList(url);
             const sortedProviders = response.data;
@@ -99,7 +102,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
         }
     }
     const handleDefaultProviderList = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.list_provider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.list_provider;
+        const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.list_provider
         const configProvider = {
             url: url,
             method: "GET",
@@ -144,7 +147,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
 
     return (
         <>
-            <Dialog className='rest-import-ui' maxWidth={'md'} data-testid='provider-modal' open={handleOpen} onClose={handleClose}>
+            <Dialog id='wm-rest-provider-model' className='rest-import-ui' maxWidth={'md'} data-testid='provider-modal' open={handleOpen} onClose={handleClose}>
                 <DialogTitle>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                         <Typography variant='h6' fontWeight={600}>{translate("SELECT") + " " + translate("OR") + " " + translate("ADD") + " " + translate("PROVIDER")}</Typography>
@@ -219,6 +222,9 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
                         handleParentModalClose={handleClose}
                         providerConf={currentProvider}
                         proxyObj={proxyObj}
+                        isCustomErrorFunc={isCustomErrorFunc}
+                        customFunction={customFunction}
+                        handleSuccessCallback={handleSuccessCallback}
                     />
                 )
             }

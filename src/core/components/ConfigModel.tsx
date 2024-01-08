@@ -6,23 +6,27 @@ import DialogTitle from '@mui/material/DialogTitle';
 import CloseIcon from '@mui/icons-material/Close';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { Alert, Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, SelectChangeEvent, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import {
+    Alert,
+    Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, SelectChangeEvent, Stack,
+    TextField, Tooltip, Typography
+} from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import clipboardCopy from 'clipboard-copy';
 import { ProviderI, ScopeI } from './ProviderModal';
 import Apicall, { getProviderList } from './common/apicall';
-import { AxiosRequestConfig } from 'axios';
-import toast from 'react-hot-toast'
-import { restImportConfigI } from './RestImport'
+import { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { INotifyMessage, restImportConfigI } from './RestImport'
 import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
 import { useDispatch, useSelector } from 'react-redux';
 import FallbackSpinner from './common/loader';
 import '../../i18n';
 
-export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj, configModel }: { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean }) {
+export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj, configModel, isCustomErrorFunc, customFunction, handleSuccessCallback }:
+    { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void, handleSuccessCallback: (msg: INotifyMessage, response?: AxiosResponse) => void }) {
     const dispatch = useDispatch();
     const { t: translate } = useTranslation();
-    const [Flow, setFlow] = useState('AUTHORIZATION_CODE')
+    const [flow, setFlow] = useState('AUTHORIZATION_CODE')
     const [sendTokenAs, setsendTokenAs] = useState('HEADER')
     const [PKCE, setPKCE] = useState(false)
     const [scopes, setscopes] = useState<ScopeI[]>([])
@@ -30,24 +34,32 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [scopeValue, setscopeValue] = useState('')
     const [codeMethod, setCodeMethod] = useState('S256')
     const [tooltipTitle, setTooltipTitle] = useState(translate("CLIPBOARD_TEXT"));
-    const [showErrorAlert, setShowErrorAlert] = useState(false);
     const [providerId, setProviderID] = useState('')
     const [authorizationUrl, setAuthorizationUrl] = useState('')
     const [accessTokenUrl, setAccessTokenUrl] = useState('')
     const [clientId, setClientId] = useState('')
     const [clientSecret, setClientSecret] = useState('')
-    const [alertMsg, setAlertMsg] = useState('')
     const [provider_auth_url, setProviderAuthURL] = useState('')
     const [loading, setloading] = useState(false)
     const [basePath, setBasePath] = useState('')
     const [callback_url, setCallbackUrl] = useState('')
-
-
+    const [responseType, setresponseType] = useState('')
+    const [showAlert, setShowAlert] = useState(false)
+    const [alertMsg, setAlertMsg] = useState<INotifyMessage>({ message: '', type: 'error' })
     const customProviderList = useSelector((store: any) => store.slice.providerList)
     useEffect(() => {
-        const base_path = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path : proxyObj?.oAuthConfig?.base_path
-        setBasePath(base_path)
+        setBasePath(proxyObj?.proxy_conf?.base_path)
     }, [proxyObj])
+
+    useEffect(() => {
+        let callbackurl = providerConf
+            ? basePath + `studio/services/oauth2/${providerConf.providerId}/callback`
+            : providerId
+                ? basePath + `studio/services/oauth2/${providerId}/callback`
+                : basePath + `studio/services/oauth2/{providerId}/callback`
+        if (PKCE || flow === 'IMPLICIT') callbackurl = basePath + 'studio/oAuthCallback.html'
+        setCallbackUrl(callbackurl)
+    }, [providerConf, providerId, PKCE, flow, basePath])
 
     useEffect(() => {
         dispatch(setProviderAuthorizationUrl(provider_auth_url))
@@ -58,17 +70,18 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         setsendTokenAs(providerConf ? providerConf.sendAccessTokenAs : 'HEADER' as string)
         setProviderID(providerConf?.providerId as string)
         setAuthorizationUrl(providerConf?.authorizationUrl as string)
-        setAccessTokenUrl(providerConf?.accessTokenUrl as string)
+        setAccessTokenUrl(providerConf?.accessTokenUrl || "")
         setPKCE(providerConf?.oAuth2Pkce?.enabled || false);
         setCodeMethod(providerConf?.oAuth2Pkce?.challengeMethod || "S256")
         setClientId(providerConf?.clientId || "")
         setClientSecret(providerConf?.clientSecret || "")
+        setresponseType(providerConf?.responseType || "token")
     }, [providerConf])
 
     useEffect(() => {
         setscopes([])
-        setAlertMsg('')
-        setShowErrorAlert(false);
+        setShowAlert(false)
+        setAlertMsg({ message: '', type: 'error' })
         const scope_value: ScopeI[] = []
         providerConf?.scopes.forEach((scope) => {
             return scope_value.push({
@@ -78,22 +91,32 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             });
         })
         setscopes(scope_value)
+        setFlow(providerConf?.oauth2Flow || "AUTHORIZATION_CODE")
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleOpen])
 
-    const handleChangePKCE = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setPKCE(event.target.checked)
+    function handleErrorMsg(error: INotifyMessage, response?: AxiosResponse) {
+        if (isCustomErrorFunc && error.type === 'error')
+            return customFunction(error.message, response)
+        else if (error.type === 'error') {
+            setShowAlert(true)
+            setAlertMsg(error)
+        }
     }
 
-    const handleChangeFlow = (event: SelectChangeEvent) => {
-        setFlow(event.target.value as string)
-    }
+    const handleChangePKCE = (event: ChangeEvent<HTMLInputElement>) => setPKCE(event.target.checked)
+    const handleChangesendTokenAs = (event: SelectChangeEvent) => setsendTokenAs(event.target.value)
+    const handleChangeresponseType = (event: SelectChangeEvent) => setresponseType(event.target.value)
+    const handleTooltipMouseLeave = () => setTooltipTitle(translate("CLIPBOARD_TEXT"));
+    const handleChangecodeMethod = (event: SelectChangeEvent) => setCodeMethod(event.target.value)
+    const handleProviderId = (event: ChangeEvent<HTMLInputElement>) => setProviderID(event.target.value)
+    const handleAuthorizationURL = (event: ChangeEvent<HTMLInputElement>) => setAuthorizationUrl(event.target.value)
+    const handleAccessTokenURL = (event: ChangeEvent<HTMLInputElement>) => setAccessTokenUrl(event.target.value)
+    const handleClientId = (event: ChangeEvent<HTMLInputElement>) => setClientId(event.target.value)
+    const handleClientSecret = (event: ChangeEvent<HTMLInputElement>) => setClientSecret(event.target.value)
+    const handleChangeFlow = (event: SelectChangeEvent) => setFlow(event.target.value)
 
-    const handleChangesendTokenAs = (event: SelectChangeEvent) => {
-        setsendTokenAs(event.target.value as string)
-    }
-
-    const handleScopeChange = (event: React.ChangeEvent<HTMLInputElement>, name: string) => {
+    const handleScopeChange = (event: ChangeEvent<HTMLInputElement>, name: string) => {
         const scopesCopy = [...scopes]
         scopesCopy.map((scope) => {
             if (scope.name === name) {
@@ -127,48 +150,23 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             });
     };
 
-    const handleTooltipMouseLeave = () => {
-        setTooltipTitle(translate("CLIPBOARD_TEXT"));
-    };
-
-    const handleChangecodeMethod = (event: SelectChangeEvent) => {
-        setCodeMethod(event.target.value as string)
-    }
-
-    const handleProviderId = (event: ChangeEvent<HTMLInputElement>) => {
-        setProviderID(event.target.value as string)
-    }
-    const handleAuthorizationURL = (event: ChangeEvent<HTMLInputElement>) => {
-        setAuthorizationUrl(event.target.value as string)
-    }
-    const handleAccessTokenURL = (event: ChangeEvent<HTMLInputElement>) => {
-        setAccessTokenUrl(event.target.value as string)
-    }
-    const handleClientId = (event: ChangeEvent<HTMLInputElement>) => {
-        setClientId(event.target.value as string)
-    }
-    const handleClientSecret = (event: ChangeEvent<HTMLInputElement>) => {
-        setClientSecret(event.target.value as string)
-    }
-
     const handleValidation = async () => {
         const providerExists = customProviderList.some((provider: { providerId: string; }) => provider.providerId === providerId);
-        setShowErrorAlert(true);
         if (!providerId) {
-            setAlertMsg(translate("PROVIDERID_ALERT"))
+            handleErrorMsg({ message: translate("PROVIDERID_ALERT"), type: 'error' })
         } else if (providerExists && !providerConf) {
-            setAlertMsg(translate('PROVIDER') + ` ("${providerId}") ` + translate('ALREADY_EXIST') + `!`)
+            handleErrorMsg({ message: translate('PROVIDER') + ` ("${providerId}") ` + translate('ALREADY_EXIST') + `!`, type: 'error' })
         } else if (!authorizationUrl) {
-            setAlertMsg(translate('AUTHORIZATIONURL_ALERT'))
-        } else if (!accessTokenUrl) {
-            setAlertMsg(translate('ACCESSTOKEN_ALERT'))
+            handleErrorMsg({ message: translate("AUTHORIZATIONURL_ALERT"), type: 'error' })
+        } else if (flow === 'AUTHORIZATION_CODE' && !accessTokenUrl) {
+            handleErrorMsg({ message: translate("ACCESSTOKEN_ALERT"), type: 'error' })
         } else if (!clientId) {
-            setAlertMsg(translate('CLIENTID_ALERT'))
-        } else if (!clientSecret && !PKCE) {
-            setAlertMsg(translate('CLIENTSECRET_ALERT'))
+            handleErrorMsg({ message: translate("CLIENTID_ALERT"), type: 'error' })
+        } else if (flow === 'AUTHORIZATION_CODE' && !clientSecret && !PKCE) {
+            handleErrorMsg({ message: translate("CLIENTSECRET_ALERT"), type: 'error' })
         } else {
+            setShowAlert(false)
             setloading(true)
-            setShowErrorAlert(false);
             const scopes_val: { name: string; value: string }[] = scopes.filter(item => item.checked).map(({ checked, ...rest }) => rest);
             const scope_map_obj: { [key: string]: boolean } = scopes.reduce((result, item) => {
                 result[item.name] = item.checked || false;
@@ -180,17 +178,17 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 authorizationUrl: authorizationUrl,
                 clientId: clientId,
                 clientSecret: clientSecret,
-                oauth2Flow: Flow,
+                oauth2Flow: flow,
                 providerId: providerId,
-                responseType: "token",
+                responseType: responseType,
                 scopeMap: scope_map_obj,
                 scopes: scopes_val,
                 sendAccessTokenAs: sendTokenAs,
-                ...(PKCE ? { oAuth2Pkce: { enabled: PKCE, challengeMethod: codeMethod } } : {})
+                ...(PKCE ? { oAuth2Pkce: { enabled: PKCE, challengeMethod: codeMethod } } : { oAuth2Pkce: null })
             }
             const filteredProviders = customProviderList.filter((provider: { providerId: string; }) => provider.providerId !== providerId);
             const newProviderList = [...filteredProviders, newProvider];
-            const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.addprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.addprovider;
+            const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.addprovider
             const configWProvider: AxiosRequestConfig = {
                 url: url,
                 data: newProviderList,
@@ -203,10 +201,6 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             const response: any = await Apicall(configWProvider)
             if (response.status === 200) {
                 setloading(false)
-                toast.success(translate('SUCCESS_MSG'), {
-                    position: 'top-right',
-                    duration: 5000
-                })
                 if (!configModel) {
                     handleProviderList()
                 }
@@ -214,14 +208,16 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 dispatch(setSelectedProvider(newProvider))
                 handleClose()
                 handleParentModalClose?.()
+                handleSuccessCallback({ message: translate('SUCCESS_MSG'), type: 'success' })
             } else {
+                handleErrorMsg({ message: translate("FAILED_TO_SAVE"), type: 'error' }, response)
                 setloading(false)
             }
         }
     }
 
     const handleProviderList = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.getprovider;
+        const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider
         try {
             const response = await getProviderList(url);
             const sortedProviders = response.data;
@@ -232,7 +228,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     }
 
     const handleAuthorizationUrl = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", providerId) : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.authorizationUrl.replace(":providerID", providerId);
+        const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", providerId)
         const configProvider = {
             url: url,
             method: "GET",
@@ -248,22 +244,14 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         }
     }
 
-    useEffect(() => {
-        let callbackurl = providerConf
-            ? basePath + `oauth2/${providerConf.providerId}/callback`
-            : providerId
-                ? basePath + `oauth2/${providerId}/callback`
-                : basePath + `oauth2/{providerId}/callback`
-        if (PKCE) {
-            callbackurl = basePath + 'oAuthCallback.html'
-        }
-        setCallbackUrl(callbackurl)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [providerConf, providerId, PKCE])
+    function handleCloseWConfigProvider() {
+        setFlow("AUTHORIZATION_CODE")
+        handleClose()
+    }
 
     return (
         <>
-            <Dialog className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose} >
+            <Dialog id='wm-rest-config-model' className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose} >
                 {loading && <FallbackSpinner />}
                 <DialogTitle sx={{ backgroundColor: 'lightgray' }}>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
@@ -274,14 +262,14 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     <HelpOutlineIcon />
                                 </IconButton>
                             </Tooltip>
-                            <Link sx={{ color: 'gray' }}>{translate("HELP")}</Link>
+                            <Link sx={{ color: 'gray', cursor: 'pointer' }}>{translate("HELP")}</Link>
                             <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleClose} />
                         </Stack>
                     </Stack>
                 </DialogTitle>
                 <DialogContent sx={{ mt: 2 }}>
-                    {showErrorAlert && (
-                        <Alert sx={{ py: 0 }} data-testid="config-alert" severity="error">{alertMsg} </Alert>
+                    {showAlert && (
+                        <Alert sx={{ py: 0 }} data-testid="config-alert" severity={alertMsg.type} onClose={() => setShowAlert(false)}>{alertMsg.message} </Alert>
                     )}
                     <Grid spacing={2} mt={0.3} className='cmnflx' sx={{ width: '100%' }} container>
                         <Grid item md={3}>
@@ -289,7 +277,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             </Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' onChange={handleProviderId}
+                            <TextField name="wm-webservice-provider-id-value" sx={{ width: "30em" }} size='small' onChange={handleProviderId}
                                 defaultValue={providerConf?.providerId} InputProps={{
                                     readOnly: !!providerConf,
                                 }}
@@ -306,6 +294,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     InputProps={{
                                         readOnly: !!providerConf,
                                     }}
+                                    name="wm-webservice-callback-url-value"
                                     helperText={translate('CALLBACK_iNFO')}
                                     fullWidth
                                     label={translate('CALLBACK') + ' ' + translate('URL')}
@@ -324,75 +313,105 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         <Grid item md={9}>
                             <FormControl sx={{ width: "30em" }} size='small' disabled={!!providerConf}>
                                 <Select
+                                    name="wm-webservice-flow-value"
                                     data-testid="flow"
-                                    value={Flow}
+                                    value={flow}
                                     onChange={handleChangeFlow}
                                 >
-                                    <MenuItem value={'AUTHORIZATION_CODE'}>{translate("AUTHORIZATION") + " " + translate("CODE")} </MenuItem>
-                                    <MenuItem value={'IMPLICIT'}> {translate("IMPLICIT")} ({translate("NOT_RECOMMENDED")}) </MenuItem>
+                                    <MenuItem title={translate("AUTHORIZATION") + " " + translate("CODE")} value={'AUTHORIZATION_CODE'}>{translate("AUTHORIZATION") + " " + translate("CODE")} </MenuItem>
+                                    <MenuItem title={translate("NOT_RECOMMENDED")} value={'IMPLICIT'}> {translate("IMPLICIT")} ({translate("NOT_RECOMMENDED")}) </MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item md={3}>
-                            <Typography>
-                                {translate("USE_PKCE")}?
-                            </Typography>
-                        </Grid>
-                        <Grid item md={PKCE ? 2 : 9}>
-                            <Checkbox data-testid='pkce-checkbox'
-                                checked={PKCE}
-                                onChange={handleChangePKCE}
-                            />
-                            <Tooltip title={translate("PKCE")}>
-                                <IconButton>
-                                    <HelpOutlineIcon />
-                                </IconButton>
-                            </Tooltip>
-                        </Grid>
-                        {PKCE && (
-                            <Grid item md={7} className='cmnflx' container>
-                                <Grid item md={5}>
-                                    <Typography>Code Challenge Method </Typography>
+                        {flow === 'AUTHORIZATION_CODE' &&
+                            <>
+                                <Grid item md={3}>
+                                    <Typography>
+                                        {translate("USE_PKCE")}?
+                                    </Typography>
                                 </Grid>
-                                <Grid item md={7}>
-                                    <FormControl size='small'>
-                                        <Select
-                                            data-testid="challenge-method"
-                                            value={codeMethod}
-                                            onChange={handleChangecodeMethod}
-                                        >
-                                            <MenuItem value={'S256'}>S256</MenuItem>
-                                            <MenuItem value={'plain'}>Basic</MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                <Grid item md={PKCE ? 2 : 9}>
+                                    <Checkbox
+                                        data-testid='pkce-checkbox'
+                                        checked={PKCE}
+                                        name="wm-webservice-pkce-value"
+                                        onChange={handleChangePKCE}
+                                    />
+                                    <Tooltip title={translate("PKCE")}>
+                                        <IconButton>
+                                            <HelpOutlineIcon />
+                                        </IconButton>
+                                    </Tooltip>
                                 </Grid>
-                            </Grid>
-                        )}
+                                {PKCE &&
+                                    <Grid item md={7} className='cmnflx' container>
+                                        <Grid item md={5}>
+                                            <Typography>Code Challenge Method</Typography>
+                                        </Grid>
+                                        <Grid item md={7}>
+                                            <FormControl size='small'>
+                                                <Select
+                                                    name="wm-webservice-code-challenge-method-value"
+                                                    data-testid="challenge-method"
+                                                    value={codeMethod}
+                                                    onChange={handleChangecodeMethod}
+                                                >
+                                                    <MenuItem value={'S256'}>S256</MenuItem>
+                                                    <MenuItem value={'plain'}>Basic</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+                                    </Grid>
+                                }
+                            </>
+                        }
                         <Grid item md={3}>
                             <Typography>{translate("AUTHORIZATION") + " " + translate("URL")}  <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' onChange={handleAuthorizationURL} defaultValue={providerConf?.authorizationUrl} placeholder={translate("AUTHORIZATION") + " " + translate("URL")} label={translate("AUTHORIZATION") + " " + translate("URL")} />
+                            <TextField
+                                name="wm-webservice-authorization-url-value"
+                                sx={{ width: "30em" }} size='small' onChange={handleAuthorizationURL}
+                                defaultValue={providerConf?.authorizationUrl}
+                                placeholder={translate("AUTHORIZATION") + " " + translate("URL")}
+                                label={translate("AUTHORIZATION") + " " + translate("URL")} />
                         </Grid>
-                        <Grid item md={3}>
-                            <Typography>{translate("ACCESS_TOKEN") + " " + translate("URL")} <span className='text-danger'>*</span></Typography>
-                        </Grid>
-                        <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' onChange={handleAccessTokenURL} defaultValue={providerConf?.accessTokenUrl} placeholder={translate("ACCESS_TOKEN") + " " + translate("URL")} label={translate("ACCESS_TOKEN") + " " + translate("URL")} />
-                        </Grid>
+                        {flow === 'AUTHORIZATION_CODE' &&
+                            <>
+                                <Grid item md={3}>
+                                    <Typography>{translate("ACCESS_TOKEN") + " " + translate("URL")} <span className='text-danger'>*</span></Typography>
+                                </Grid>
+                                <Grid item md={9}>
+                                    <TextField
+                                        name="wm-webservice-access-token-value"
+                                        sx={{ width: "30em" }} size='small' onChange={handleAccessTokenURL}
+                                        defaultValue={providerConf?.accessTokenUrl}
+                                        placeholder={translate("ACCESS_TOKEN") + " " + translate("URL")}
+                                        label={translate("ACCESS_TOKEN") + " " + translate("URL")} />
+                                </Grid>
+                            </>
+                        }
                         <Grid item md={3}>
                             <Typography>{translate("CLIENT") + " " + translate("ID")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <TextField sx={{ width: "30em" }} size='small' defaultValue={providerConf?.clientId} onChange={handleClientId} placeholder={translate("CLIENT") + " " + translate("ID")} label={translate("CLIENT") + " " + translate("ID")} />
+                            <TextField
+                                name="wm-webservice-client-id-value"
+                                sx={{ width: "30em" }} size='small' defaultValue={providerConf?.clientId}
+                                onChange={handleClientId} placeholder={translate("CLIENT") + " " + translate("ID")}
+                                label={translate("CLIENT") + " " + translate("ID")} />
                         </Grid>
-                        {!PKCE && (
+                        {!PKCE && flow === 'AUTHORIZATION_CODE' && (
                             <Grid item md={12} container className='cmnflx' spacing={2}>
                                 <Grid item md={3} >
                                     <Typography>{translate("CLIENT") + " " + translate("SECRET")} <span className='text-danger'>*</span></Typography>
                                 </Grid>
                                 <Grid item md={9}>
-                                    <TextField sx={{ width: "30em" }} defaultValue={providerConf?.clientSecret} size='small' onChange={handleClientSecret} placeholder={translate("CLIENT") + " " + translate("SECRET")} label={translate("CLIENT") + " " + translate("SECRET")} />
+                                    <TextField
+                                        name="wm-webservice-client-secret-value"
+                                        sx={{ width: "30em" }} defaultValue={providerConf?.clientSecret} size='small'
+                                        onChange={handleClientSecret} placeholder={translate("CLIENT") + " " + translate("SECRET")}
+                                        label={translate("CLIENT") + " " + translate("SECRET")} />
                                 </Grid>
                             </Grid>
                         )}
@@ -402,15 +421,36 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         <Grid item md={9}>
                             <FormControl sx={{ width: "30em" }} size='small'>
                                 <Select
+                                    name="wm-webservice-send-accesstoken-value"
                                     data-testid="send-accesstoken"
                                     value={sendTokenAs}
                                     onChange={handleChangesendTokenAs}
                                 >
-                                    <MenuItem value={'HEADER'}>{translate("HEADER")}</MenuItem>
-                                    <MenuItem value={'QUERY'}>{translate("QUERY")}</MenuItem>
+                                    <MenuItem title='header' value={'HEADER'}>{translate("HEADER")}</MenuItem>
+                                    <MenuItem title='query' value={'QUERY'}>{translate("QUERY")}</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
+                        {flow === 'IMPLICIT' &&
+                            <>
+                                <Grid item md={3}>
+                                    <Typography>{translate("RESPONSE_TYPE")} <span className='text-danger'>*</span></Typography>
+                                </Grid>
+                                <Grid item md={9}>
+                                    <FormControl sx={{ width: "30em" }} size='small'>
+                                        <Select
+                                            name="wm-webservice-response-type-value"
+                                            defaultValue='token'
+                                            value={responseType}
+                                            onChange={handleChangeresponseType}
+                                        >
+                                            <MenuItem title='token' value={'token'}>{translate("TOKEN")}</MenuItem>
+                                            <MenuItem title='id token' value={'id_token'}>{translate("ID_TOKEN")}</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                            </>
+                        }
                         <Grid item md={3}>
                             <Typography>{translate("SCOPE")}</Typography>
                         </Grid>
@@ -418,7 +458,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             <Grid className='cmnflx' spacing={1} container>
                                 <Grid item md={12}>
                                     <Stack>
-                                        {scopes.map(scope => <FormControlLabel key={scope.name} control={<Checkbox data-testid={scope.name} checked={scope.checked} onChange={(e) => handleScopeChange(e, scope.name)} />} label={scope.name} />)}
+                                        {scopes.map(scope => <FormControlLabel key={scope.name} control={<Checkbox title={scope.name} data-testid={scope.name} checked={scope.checked} onChange={(e) => handleScopeChange(e, scope.name)} />} label={scope.name} />)}
                                     </Stack>
                                 </Grid>
                                 <Grid item md={4}>
@@ -433,13 +473,23 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     <hr />
                                 </Grid>
                                 <Grid item md={4}>
-                                    <TextField size='small' value={scopeKey} onChange={(e) => setscopeKey(e.target.value)} placeholder={translate("SCOPE") + " " + translate("KEY")} label={translate("SCOPE") + " " + translate("KEY")} />
+                                    <TextField
+                                        name="wm-webservice-scope-key-value"
+                                        size='small' value={scopeKey} onChange={(e) => setscopeKey(e.target.value)}
+                                        placeholder={translate("SCOPE") + " " + translate("KEY")}
+                                        label={translate("SCOPE") + " " + translate("KEY")} />
                                 </Grid>
                                 <Grid item md={4}>
-                                    <TextField size='small' value={scopeValue} onChange={(e) => setscopeValue(e.target.value)} placeholder={translate("SCOPE") + " " + translate("VALUE")} label={translate("SCOPE") + " " + translate("VALUE")} />
+                                    <TextField size='small'
+                                        name="wm-webservice-scope-value-value"
+                                        value={scopeValue} onChange={(e) => setscopeValue(e.target.value)}
+                                        placeholder={translate("SCOPE") + " " + translate("VALUE")}
+                                        label={translate("SCOPE") + " " + translate("VALUE")} />
                                 </Grid>
                                 <Grid className='cmnflx' item md={4}>
-                                    <Button onClick={handleAddScope} variant='contained'>{translate("ADD")}</Button>
+                                    <Button
+                                        name="wm-webservice-add-new-scope"
+                                        onClick={handleAddScope} variant='contained'>{translate("ADD")}</Button>
                                 </Grid>
                             </Grid>
                         </Grid>
@@ -447,7 +497,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 </DialogContent>
                 <hr />
                 <DialogActions sx={{ p: 2 }}>
-                    <Button variant='contained' color='warning' onClick={handleClose}>
+                    <Button variant='contained' color='warning' onClick={handleCloseWConfigProvider}>
                         {translate("CLOSE")}
                     </Button>
                     <Button variant='contained' onClick={handleValidation}>

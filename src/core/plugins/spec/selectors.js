@@ -28,6 +28,8 @@ export const value = createSelector(state, (spec) => spec.get("value"));
 
 export const language = createSelector(state, (spec) => spec.get("language"));
 
+export const dom_id = createSelector(state, (spec) => spec.get("dom_id"));
+
 export const config = createSelector(state, (spec) => {
   return spec.get("config").toJS();
 });

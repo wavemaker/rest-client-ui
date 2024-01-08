@@ -25,6 +25,7 @@ type options = httpMethods | authMethods | contentTypes | multipartFileTypes
 type dropdownIDs = "http-auth" | "http-method" | "select-content-type" | "multipart-type" | "param-type"
 type tabs = "AUTHORIZATION" | "HEADER PARAMS" | "BODY PARAMS" | "QUERY PARAMS" | "PATH PARAMS" | "RESPONSE BODY" | "RESPONSE HEADER" | "RESPONSE STATUS"
 
+declare const window: any;
 
 describe("Web Service Modal", () => {
   it("Renders correctly", () => {
@@ -46,7 +47,6 @@ describe("Web Service Modal", () => {
       expect(tab).toHaveTextContent(new RegExp(RESPONSE_TABS[index], 'i'))
     })
   }, 80000);
-
   it("Able to type in the URL field", async () => {
     user.setup()
     renderComponent(mockEmptyProps)
@@ -82,6 +82,7 @@ describe("Web Service Modal", () => {
     await user.type(urlTextField, endPoints.getUsers)
     await clickTestBtn()
     const response: ResponseI = await getResponse()
+    console.log(response)
     expect(response.data).toEqual(testData.userList)
   }, 80000)
 
@@ -344,7 +345,7 @@ describe("Web Service Modal", () => {
     await clickTestBtn()
     const requestConfig = constructObjToMatchWithProxyConfig(endPoints.getUsers)
     const configFromResponse = await getResponse()
-    expect(configFromResponse).toEqual(requestConfig.data)
+    expect(JSON.parse(configFromResponse)).toEqual(requestConfig.data)
   }, 80000)
 
   it("Checking error response of incorrect url via the proxy server", async () => {
@@ -907,12 +908,12 @@ describe("Web Service Modal", () => {
 
   it("Test OAuth 2.0 [Google Implicit Flow - Error]", async () => {
     sessionData.clear()
-    const props = getCustomizedProps(undefined, undefined, "getprovider_error") 
+    const props = getCustomizedProps(undefined, undefined, "getprovider_error")
     user.setup();
     renderComponent(props);
     await selectOptionFromDropdown("http-auth", "OAuth 2.0");
     await user.click(await screen.findByTestId("select-provider"));
-    await user.click(await screen.findByText(/google/i, {}, { timeout: 5000 })); 
+    await user.click(await screen.findByText(/google/i, {}, { timeout: 5000 }));
     expect(within(await screen.findByTestId("provider-name", {}, { timeout: 2000 })).getByRole("textbox", { hidden: true, })).toHaveValue("google");
     const urlTextField = await screen.findByRole("textbox", { name: /url/i }, { timeout: 5000 });
     await user.type(urlTextField, endPoints.googleUserInfo);
@@ -1042,7 +1043,11 @@ async function getResponse() {
     { timeout: 10000 }
   )
   const responseTextField = await within(view).findByRole("textbox", {}, { timeout: 5000 });
-  return JSON.parse(responseTextField.getAttribute("value")!);
+  try {
+    return JSON.parse(responseTextField.getAttribute("value")!);
+  } catch (error) {
+    return responseTextField.getAttribute("value")
+  }
 }
 
 function retrieveQueryParamsFromURL(url: string) {
@@ -1184,7 +1189,6 @@ async function verifyPathLabelsAndEnterValues(pathParamsArray: PathParamI[]) {
 
 async function isErrorMsgDisplayed(errorMethod: string, msgToCheck: string) {
   let errorMsgDisplayed = false;
-
   switch (errorMethod) {
     case "default": {
       const errorField = await screen.findByTestId("default-error");
@@ -1194,13 +1198,10 @@ async function isErrorMsgDisplayed(errorMethod: string, msgToCheck: string) {
       break;
     }
     case "toast": {
-      const toasts = await screen.findAllByRole("status");
-      toasts.forEach((toast) => {
-        if (toast.textContent === msgToCheck) {
-          errorMsgDisplayed = true;
-          return;
-        }
-      });
+      const alertElement = screen.getByRole('alert');
+      const alertTextContent = alertElement.childNodes[1].textContent;
+      if (msgToCheck === alertTextContent)
+        errorMsgDisplayed = true;
       break;
     }
   }

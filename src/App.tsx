@@ -11,59 +11,89 @@ export default function App() {
       base_path: "http://localhost:4000/",
       proxy_path: "restimport",
       list_provider: "get-default-provider",
+      settingsUpload: "settingUpload",
       getprovider: "getprovider",
       addprovider: "addprovider",
       authorizationUrl: "authorizationUrl",
     },
     useProxy: true,
-    url: "https://www.googleapis.com/oauth2/v1/userinfo",
+    url: "https://jsonplaceholder.typicode.com/posts/3",
     projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     loggenInUserId: "fe",
-    appEnvVariables: [{ key: 'we', value: 'ew' }],
+    appEnvVariables: [{
+      name: "gwe",
+      value: "vew",
+      type: "APP_ENVIRONMENT"
+    }],
     loggenInUserName: 'vew',
-    httpAuth: {
-      type: 'OAUTH2',
-      providerId: "google"
-    },
     headerParams: [{
       name: "new",
       type: "DATE",
       value: "vew"
-    }],
+    }, {
+      name: "ewf",
+      type: "DATE",
+      value: "vew"
+    }, {
+      name: "nefewwew",
+      type: "DATE",
+      value: "vew"
+    }, {
+      name: "newfwewe",
+      type: "DATE",
+      value: "vew"
+    }, {
+      name: "nfweew",
+      type: "DATE",
+      value: "vew"
+    }, {
+      name: "nfewew",
+      type: "DATE",
+      value: "vew"
+    }, {
+      name: "nfewww",
+      type: "DATE",
+      value: "vew"
+    }, {
+      name: "nefeww",
+      type: "DATE",
+      value: "vew"
+    },],
     queryParams: [{
       name: "jh",
-      type: "TIME",
+      type: "gwe",
       value: "vew"
     }],
-    state_val: "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
-    default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
-    oAuthConfig: {
-      base_path: "https://www.wavemakeronline.com/studio/services",
-      project_id: "",
-      proxy_path: '', // /projects/{projectID}/restservices/invoke?optimizeResponse=true
-      list_provider: "oauth2/providers/default",
-      getprovider: "", // /projects/{projectID}/oauth2/providers
-      addprovider: "", // /projects/{projectID}/oauth2/providers
-      authorizationUrl: "studio/services/projects/WMPRJ2c9180868bb704a7018bb82b602a00cd/oauth2/:providerID/authorizationUrl", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
-    },
     setResponse: {
       testing: false,
     },
+    multipartParams: [{
+      name: 'few',
+      type: 'file',
+      value: ''
+    }],
     error: {
       errorFunction: (msg: string, response?: AxiosResponse) => {
         alert(msg)
       },
-      errorMethod: "toast",
-      errorMessageTimeout: 5000
+      errorMethod: "default",
+      // errorMessageTimeout: 5000
     },
-    handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse) => {
-      console.log(request, response)
+    handleResponse: (request: AxiosRequestConfig, settingsUploadData: any, response?: AxiosResponse) => {
+      console.log(request, response, settingsUploadData)
     },
-    hideMonacoEditor: (value: boolean) => { },
+    hideMonacoEditor: (value: boolean) => {
+    },
     getServiceName(value: string) { },
+    getUseProxy(value) {
+      console.log(value)
+    },
     setServiceName: '',
     viewMode: false,
     setResponseHeaders: { kingkong: "test" },
+    monacoEditorURL: undefined as any,
+    responseBlockHeight: 550,
+
   }
 
   return (

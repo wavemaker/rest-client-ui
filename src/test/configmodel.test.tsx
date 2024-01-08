@@ -13,7 +13,10 @@ interface mockPropsI {
     handleClose: () => void,
     handleParentModalClose?: () => void,
     providerConf?: ProviderI | null,
-    proxyObj: restImportConfigI
+    proxyObj: restImportConfigI,
+    isCustomErrorFunc: boolean,
+    customFunction: () => void,
+    handleSuccessCallback: () => void
 }
 
 const providerObj = {
@@ -28,6 +31,7 @@ const providerObj = {
     scopes: [{ name: "Basic Profile", value: "profile" }],
     oauth2Flow: "AUTHORIZATION_CODE",
     responseType: "token",
+    oAuth2Pkce: null 
 }
 
 
@@ -37,7 +41,10 @@ let mockProps: mockPropsI = {
     handleOpen: true,
     handleParentModalClose: jest.fn(() => console.log("Parent Modal Closed")),
     handleClose: jest.fn(() => console.log("closed")),
-    proxyObj: emptyConfig
+    proxyObj: emptyConfig,
+    isCustomErrorFunc: false,
+    customFunction: jest.fn(() => console.log("Toast Error")),
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg"))
 }
 
 function renderComponent(type: string) {
@@ -51,8 +58,6 @@ function renderComponent(type: string) {
     } else if (type === 'ProviderConfigWithPKCEBasic') {
         copymockProps['providerConf'] = providerObj
         copymockProps.providerConf['oAuth2Pkce'] = { enabled: true, challengeMethod: "plain" }
-    } else if (type === 'withOAuthConfig') {
-        copymockProps.proxyObj['default_proxy_state'] = 'OFF'
     } else if (type === 'withAddProviderAPIError') {
         copymockProps.proxyObj.proxy_conf['addprovider'] = 'addErrorproviders'
     } else if (type === 'withListAPIError') {

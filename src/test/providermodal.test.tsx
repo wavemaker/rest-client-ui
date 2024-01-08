@@ -13,30 +13,24 @@ interface mockPropsI {
     handleClose: () => void,
     handleParentModalClose?: () => void,
     providerConf?: ProviderI | null,
-    proxyObj: restImportConfigI
+    proxyObj: restImportConfigI,
+    isCustomErrorFunc: boolean,
+    customFunction: () => void,
+    handleSuccessCallback: () => void
 }
 
 export const ProxyOFFConfig: restImportConfigI = {
     proxy_conf: {
         base_path: "http://localhost:4000",
         proxy_path: "/restimport",
+        settingsUpload: "",
         list_provider: "/get-default-provider",
         getprovider: "/getprovider",
         addprovider: "/addprovider",
         authorizationUrl: "/authorizationUrl",
     },
-    state_val: "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
-    default_proxy_state: "OFF", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
+    appEnvVariables: [],
     projectId: "",
-    oAuthConfig: {
-        base_path: "https://www.wavemakeronline.com/studio/services",
-        proxy_path: "/proxy_path",
-        project_id: "",
-        list_provider: "/oauth2/providers/default",
-        getprovider: "/projects/oauth2/providers", // /projects/{projectID}/oauth2/providers
-        addprovider: "/projects/oauth2/addprovider", // /projects/{projectID}/oauth2/providers
-        authorizationUrl: "/projects/oauth2/authorizationUrl", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
-    },
     error: {
         errorFunction: (msg: string) => {
             alert(msg);
@@ -48,15 +42,22 @@ export const ProxyOFFConfig: restImportConfigI = {
     },
     hideMonacoEditor: (value: boolean) => { },
     getServiceName(value: string) { },
+    getUseProxy(value) {
+        return value
+    },
     setServiceName: '',
     viewMode: false,
     setResponseHeaders: { namespace: "test" },
+    monacoEditorURL: ""
 }
 
 const mockProxyOFFProps: mockPropsI = {
     handleOpen: true,
     handleClose: jest.fn(() => console.log("closed")),
-    proxyObj: ProxyOFFConfig
+    proxyObj: ProxyOFFConfig,
+    isCustomErrorFunc: false,
+    customFunction: jest.fn(() => console.log("Toast Error")),
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg"))
 }
 
 const proxyObjConfig = emptyConfig
@@ -64,7 +65,10 @@ const proxyObjConfig = emptyConfig
 let mockProps: mockPropsI = {
     handleOpen: true,
     handleClose: jest.fn(() => console.log("closed")),
-    proxyObj: proxyObjConfig
+    proxyObj: proxyObjConfig,
+    isCustomErrorFunc: false,
+    customFunction: jest.fn(() => console.log("Toast Error")),
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg"))
 }
 
 function renderComponent(type?: string) {
