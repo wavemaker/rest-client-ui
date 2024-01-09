@@ -19,7 +19,7 @@ import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
 import { INotifyMessage, PathParamsI, defaultContentTypes, restImportConfigI } from './RestImport';
 import { useTranslation } from 'react-i18next';
-import { AxiosResponse } from 'axios'; 
+import { AxiosResponse } from 'axios';
 
 export interface HeaderAndQueryI {
     name: string
@@ -543,7 +543,7 @@ export function MultipartTable(
                                         <MenuItem title={translate("FILE")} value={'file'}>{translate("FILE")}</MenuItem>
                                         <MenuItem title={translate("TEXT")} value={'text'}>{translate("TEXT")}</MenuItem>
                                         <MenuItem title={translate("PLAINTEXT")} value={'plaintext'}>{translate("PLAINTEXT")}</MenuItem>
-                                        <MenuItem title={translate("JSON") + "  (" + translate("APPLICATION/JSON") + ")"} value={'application/json'}>{translate("JSON") + "  (" + translate("APPLICATION/JSON") + ")"}</MenuItem>
+                                        <MenuItem title={translate("JSON") + " (" + translate("APPLICATION/JSON") + ")"} value={'application/json'}>{translate("JSON") + "  (" + translate("APPLICATION/JSON") + ")"}</MenuItem>
                                     </Select>
                                 </FormControl>
                             </TableCell>
@@ -552,12 +552,16 @@ export function MultipartTable(
                                     variant="outlined"
                                     size='small'
                                     fullWidth={true}
+                                    sx={{
+                                        '& .MuiInputBase-input:hover': {
+                                            cursor: 'pointer !important',
+                                        },
+                                    }}
                                     value={data.filename ?? ''}
                                     data-testid="test-value"
                                     onClick={() => openFileSelectionWindow(index)}
                                     InputProps={{
                                         readOnly: true,
-                                        sx: { cursor: 'pointer' },
                                         endAdornment: (
                                             <IconButton component="label">
                                                 <FileUploadOutlined />
