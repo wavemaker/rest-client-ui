@@ -487,6 +487,24 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 throw new Error(`parameter "${queryName}" already exists`)
         }
     }
+
+    function constructCommonURL(flow: 'implicit' | 'pkce', scope: any) {
+        const redirectUri = restImportConfig?.proxy_conf?.base_path + 'studio/oAuthCallback.html'
+        const state = { providerId: selectedProvider.providerId, suffix: '.access_token', requestSourceType: "WEB", flow };
+        let authUrlArr = selectedProvider.authorizationUrl.split('?'), connector;
+        if (authUrlArr.length === 1) {
+            //query params don't exist
+            connector = '?';
+        } else if (authUrlArr.length > 1 && authUrlArr[1] !== '') {
+            //query params exist. Append & instead of ?.
+            connector = '&';
+        } else {
+            //nothing exists after '?'. client_id can be directly appended;
+            connector = '';
+        }
+        const commonUrl = selectedProvider.authorizationUrl + connector + 'client_id=' + selectedProvider.clientId + '&redirect_uri=' + redirectUri + '&state=' + encodeURIComponent(JSON.stringify(state)) +'&scope='+ encodeURIComponent(scope) + `&response_type=${flow === 'implicit' ? 'token' : 'code'}`;
+        return commonUrl
+    }
     const handleTestClick = async () => {
         try {
             if (apiURL.length > 0) {
@@ -558,34 +576,22 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         client.requestAccessToken();
                                     }
                                 } else {
-                                    redirectUri = restImportConfig?.proxy_conf?.base_path + 'studio/oAuthCallback.html'
                                     const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
                                     codeVerifier = generateRandomCodeVerifier();
                                     const data = Uint8Array.from(codeVerifier.split("").map(x => x.charCodeAt(0)))
                                     window.crypto.subtle.digest("SHA-256", data)
                                         .then((hashBuffer: ArrayBuffer) => {
                                             const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                            const pkce_state = { providerId: selectedProvider.providerId, suffix: '.access_token', requestSourceType: "web", flow: 'pkce' };
-                                            let authUrlArr = selectedProvider.authorizationUrl.split('?'), connector;
-                                            if (authUrlArr.length === 1) {
-                                                //query params don't exist
-                                                connector = '?';
-                                            } else if (authUrlArr.length > 1 && authUrlArr[1] !== '') {
-                                                //query params exist. Append & instead of ?.
-                                                connector = '&';
-                                            } else {
-                                                //nothing exists after '?'. client_id can be directly appended;
-                                                connector = '';
-                                            }
-                                            const commonUrl = selectedProvider.authorizationUrl + connector + 'client_id=' + clientId + '&redirect_uri=' + redirectUri + '&state=' + encodeURIComponent(JSON.stringify(pkce_state)) + '&scope=' + encodeURIComponent(scope);
-                                            const implicitUri = commonUrl + '&response_type=code&code_challenge=' + codeChallenge + '&code_challenge_method=' + challengeMethod;
-                                            authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${pkce_state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
+                                            const implicitUri = constructCommonURL('pkce',scope) + '&code_challenge=' + codeChallenge + '&code_challenge_method=' + challengeMethod;
+                                            // authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${pkce_state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
                                             childWindow = window.open(implicitUri, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                                         })
                                         .catch((error: any) => {
                                             console.error("Error calculating code challenge:", error);
                                         });
                                 }
+                            } else if (selectedProvider.oauth2Flow === 'IMPLICIT') {
+                                childWindow = window.open(constructCommonURL('implicit', scope), "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             } else {
                                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                 authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
@@ -610,7 +616,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                     ]
                                                 }
                                             }, config: undefined as any, headers: { 'Content-Type': 'application/json' }, status: 401, statusText: "",
-                                        })
+                                        }, { url: "" })
                                     }
                                 }, 1000);
                                 const messageHandler = async (event: { origin: string; data: { tokenData: any; code: string; error: any } }) => {
