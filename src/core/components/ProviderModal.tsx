@@ -42,7 +42,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
     const { t: translate } = useTranslation();
     const dispatch = useDispatch();
     const [openConfig, setopenConfig] = useState(false)
-    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow:'AUTHORIZATION_CODE' })
+    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE' })
     const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE' }])
     const [defaultProviderIds, setDefaultProviderId] = useState([])
     const providers = useSelector((store: any) => store.slice.providerList)
@@ -58,6 +58,9 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
 
 
     const handleOpenConfig = (provider: ProviderI | null) => {
+        if (currentProvider?.providerId === provider?.providerId) {
+            handleClose()
+        }
         setcurrentProvider(provider)
         setopenConfig(true)
     }
