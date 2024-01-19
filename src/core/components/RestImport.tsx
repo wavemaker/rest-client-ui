@@ -1174,9 +1174,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     <Typography>{translate('USE_PROXY')}</Typography>
                                     <Switch name="wm-webservice-use-proxy" data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
                                     <Tooltip title={useProxyTooltip()}>
-                                        <IconButton>
-                                            <HelpOutlineIcon sx={{fontSize:21}}/>
-                                        </IconButton>
+                                        <i className='wms wms-help'></i>
                                     </Tooltip>
                                 </Stack>
                             </Grid>
