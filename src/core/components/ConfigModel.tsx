@@ -251,23 +251,21 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     return (
         <>
-            <Dialog id='wm-rest-config-model' className='rest-import-ui' maxWidth={'md'} open={handleOpen} onClose={handleClose} >
+            <Dialog id='wm-rest-config-model' className='rest-import-ui config_model_dialog' maxWidth={'md'} open={handleOpen} onClose={handleClose} >
                 {loading && <FallbackSpinner />}
-                <DialogTitle sx={{ backgroundColor: 'lightgray' }}>
+                <DialogTitle sx={{ backgroundColor: 'lightgray' }} className='provider_dialog_title'>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                         <Typography variant='h6' fontWeight={600}>{translate("OAUTH") + " " + translate("PROVIDER") + " " + translate("CONFIGURATION")} </Typography>
                         <Stack spacing={1} className='cmnflx' direction={'row'}>
                             <Tooltip title={translate("oAuth")}>
-                                <IconButton>
-                                    <HelpOutlineIcon />
-                                </IconButton>
+                            <i className="wms wms-help"></i>
                             </Tooltip>
                             <Link sx={{ color: 'gray', cursor: 'pointer' }}>{translate("HELP")}</Link>
                             <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleClose} />
                         </Stack>
                     </Stack>
                 </DialogTitle>
-                <DialogContent sx={{ mt: 2 }}>
+                <DialogContent sx={{ mt: 2 }} className='config_dialog_title'>
                     {showAlert && (
                         <Alert sx={{ py: 0 }} data-testid="config-alert" severity={alertMsg.type} onClose={() => setShowAlert(false)}>{alertMsg.message} </Alert>
                     )}
@@ -338,9 +336,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                         onChange={handleChangePKCE}
                                     />
                                     <Tooltip title={translate("PKCE")}>
-                                        <IconButton>
-                                            <HelpOutlineIcon />
-                                        </IconButton>
+                                    <i className="wms wms-help"></i>
                                     </Tooltip>
                                 </Grid>
                                 {PKCE &&
@@ -497,10 +493,10 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                 </DialogContent>
                 <hr />
                 <DialogActions sx={{ p: 2 }}>
-                    <Button variant='contained' color='warning' onClick={handleCloseWConfigProvider}>
+                    <Button className="button_close" variant='contained' color='warning' onClick={handleCloseWConfigProvider}>
                         {translate("CLOSE")}
                     </Button>
-                    <Button variant='contained' onClick={handleValidation}>
+                    <Button className="button_save" variant='contained' onClick={handleValidation}>
                         {translate("SAVE")}
                     </Button>
                 </DialogActions>

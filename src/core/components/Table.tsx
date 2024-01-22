@@ -388,7 +388,7 @@ export function HeaderAndQueryTable(
                             </TableCell>
                             <TableCell style={tableRowStyle} width={"5%"} align='center'>
                                 {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} />
-                                    : <DeleteIcon name="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
+                                    :<i className="wms wms-delete" aria-label="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} style={{ cursor: 'pointer' }}></i>}
                             </TableCell>
                         </TableRowStyled>
                     )}
@@ -572,7 +572,7 @@ export function MultipartTable(
                                     <TextField name={"wm-webservice-param-value"} fullWidth size='small' onChange={(e) => handleChangeTestValue(e.target.value, index)} value={data.value} />}
                             </TableCell>
                             <TableCell width={'5%'} style={tableRowStyle} align='center'>
-                                {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon name="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
+                                {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <i className="wms wms-delete" aria-label="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} style={{ cursor: 'pointer' }}></i>}
                             </TableCell>
                         </TableRowStyled>
                     )}
