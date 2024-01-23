@@ -169,8 +169,92 @@ const withCredentialsTooltip = () => {
 export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const theme = createTheme({
         typography: {
-            fontSize: 16, // Adjust the font size as needed
-        },
+            fontSize: 13, // Adjust the font size as needed
+            fontFamily: 'roboto',
+        },components:{
+            MuiTextField:{
+                styleOverrides:{
+                    root: {
+                        '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                                borderColor: 'rgba(0, 0, 0, 0.23)', // Replace 'hover-color' with your color for hover state
+                            },
+                            '&.Mui-focused fieldset': {
+                                borderColor: '#1794ef', // Replace 'focus-color' with your color for focused state
+                                borderWidth: '1px'
+                            },
+                        },
+                      }
+                }
+                
+            },
+            MuiOutlinedInput: {
+                styleOverrides: {
+                    root: {
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(0, 0, 0, 0.23)', // Hover border color
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#1794ef', // Replace 'focus-color' with your color for focused state
+                            borderWidth: '1px'
+                        },
+                        fontSize: '12px',
+                    },
+                },
+            },
+            MuiMenuItem: {
+                styleOverrides: {
+                  root: {
+                    '&.Mui-selected, &.Mui-selected:hover': {
+                      backgroundColor: '#f5f5f5', // Change to your desired active item color
+                      // Add other styles as needed, such as color, etc.
+                    },
+                    '&.Mui-selected, &.Mui-selected:focus': {
+                        backgroundColor: '#1794ef', // Change to your desired active item color
+                        color: '#ffffff'
+                      },
+                      fontSize: '12px',
+                  },
+                },
+              },
+              MuiTypography:{
+                styleOverrides: {
+                    root: {
+                        fontSize: '12px',
+                    },
+                  },
+
+              },
+              MuiTableContainer:{
+                // styleOverrides: {
+                //     root: {
+                //         boxShadow:'none',
+
+                //     },
+                //   },
+
+              },
+              MuiTableCell: {
+                styleOverrides: {
+                  head: {
+                    color: '#333', // Set your desired font color for th here
+                    fontSize:'12px',
+                    padding: '5px'
+                  },
+                },
+              },
+              MuiTableRow:{
+                styleOverrides: {
+                    root: {
+                      fontSize:'13px',
+                      padding: '5px'
+                    },
+                  },
+              }
+            
+        
+
+        }
     });
     const matches = useMediaQuery('(min-width:1600px)');
     const state_val = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ=="
@@ -1033,19 +1117,20 @@ export default function RestImport({ language, restImportConfig }: { language: s
         <ThemeProvider theme={theme}>
             <Stack sx={{ height: "97vh" }} className='rest-import-ui'>
                 {loading && <FallbackSpinner />}
-                <Grid gap={1} className='cmnflx' container>
+                <Grid className='cmnflx' container>
                     <Grid item md={12}>
                         {alertMsg && (
                             <Alert sx={{ py: 0 }} severity={errorMessage?.type} data-testid="default-error" onClose={() => setAlertMsg(false)}>{errorMessage.message}</Alert>
                         )}
                     </Grid>
-                    <Grid sx={{ border: restImportConfig.viewMode ? '2px solid #ccc' : 'none', padding: restImportConfig.viewMode ? 3 : 0, backgroundColor: '#faf8f9' }} item md={12}>
+                    <Grid sx={{ border: restImportConfig.viewMode ? '2px solid #ccc' : 'none', padding: restImportConfig.viewMode ? 3 : 0}} item md={12} className='rest-header'>
                         <Stack spacing={5} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                             <FormControl
                                 disabled={restImportConfig.viewMode}
                                 sx={{ minWidth: 120, color: "red" }} size='small'>
                                 <Select
-                                    name="wm-webservice-http-method"
+                                   className='form-control'
+                                   name="wm-webservice-http-method"
                                     data-testid="http-method"
                                     value={httpMethod}
                                     sx={{
@@ -1062,14 +1147,15 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             <TextField onBlur={() => {
                                 getPathParams()
                                 handleQueryChange()
-                            }} name='wm-webservice-sample-url' autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
-                            <Button name="wm-webservice-sample-test" onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
+                            }} className='url-input' name='wm-webservice-sample-url' autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
+                            <Button className='test-btn' name="wm-webservice-sample-test" onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
                         <Grid mt={2} container>
                             <Grid item md={6}>
                                 <Stack sx={{ cursor: "pointer" }} spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('SERVICE_NAME')}</Typography>
                                     <TextField value={serviceName}
+                                        className='url-input service-input'
                                         name="wm-webservice-service-name"
                                         sx={{
                                             backgroundColor: restImportConfig.viewMode ? '#eeeced' : 'none',
@@ -1088,9 +1174,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     <Typography>{translate('USE_PROXY')}</Typography>
                                     <Switch name="wm-webservice-use-proxy" data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
                                     <Tooltip title={useProxyTooltip()}>
-                                        <IconButton>
-                                            <HelpOutlineIcon />
-                                        </IconButton>
+                                        <i className='wms wms-help'></i>
                                     </Tooltip>
                                 </Stack>
                             </Grid>
@@ -1107,10 +1191,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             </Grid>}
                         </Grid>
                     </Grid>
-                    <Grid sx={{ overflowY: 'auto', overflowX: "hidden" }} height={matches ? "85vh" : '80vh'} item md={12}>
+                    <Grid sx={{ overflowY: 'auto', overflowX: "hidden" }} height={matches ? "85vh" : '80vh'} item md={12} className='rest-content'>
                         <Box data-testid="request-config-block" sx={{ width: '100%' }}>
                             <Box sx={{ borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
-                                <Tabs sx={{ minHeight: "30px", height: "45px" }} value={requestTabValue} onChange={handleChangeHeaderTabs}>
+                                <Tabs className="rest-tabs" sx={{ minHeight: "30px", height: "45px"}} value={requestTabValue} onChange={handleChangeHeaderTabs}>
                                     <Tab title="wm-rest-authorization-params-header" label={translate("AUTHORIZATION")} />
                                     <Tab title="wm-rest-headers-params-header" label={translate("HEADER") + " " + translate("PARAMS")} />
                                     <Tab title="wm-rest-body-params-header" label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
@@ -1120,12 +1204,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             </Box>
                             <Box sx={{ border: '1px solid #ccc' }}>
                                 <CustomTabPanel value={requestTabValue} index={0}>
-                                    <Grid spacing={2} className='cmnflx' container>
-                                        <Grid item md={3}>
-                                            <Typography>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
+                                    <Grid spacing={2} container>
+                                        <Grid item md={2}>
+                                            <Typography sx={{margin:'10px'}}>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
                                         </Grid>
                                         <Grid item md={9}>
-                                            <FormControl size='small' >
+                                            <FormControl size='small'>
                                                 <Select
                                                     name="wm-rest-http-auth"
                                                     data-testid="http-auth"
