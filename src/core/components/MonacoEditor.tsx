@@ -41,8 +41,8 @@ const MonacoEditor = ({ editorRef, initialValue, url, initialLanguage, viewMode 
     }, []);
 
     return <>
-        <div style={{ height: matches ? "65vh" : viewMode ? "50vh" : '55vh', width: '99%' }}>
-            <div ref={editorRef} style={{ height: '100%' }} />
+        <div  className="monaco_editor" style={{ height: matches ? "65vh" : viewMode ? "50vh" : '55vh', width: '99%' }}>
+            <div className="monaco_editor_content" ref={editorRef} style={{ height: '100%' }} />
         </div>
     </>;
 };
