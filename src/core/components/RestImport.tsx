@@ -171,9 +171,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
         typography: {
             fontSize: 13, // Adjust the font size as needed
             fontFamily: 'roboto',
-        },components:{
-            MuiTextField:{
-                styleOverrides:{
+        }, components: {
+            MuiTextField: {
+                styleOverrides: {
                     root: {
                         '& .MuiOutlinedInput-root': {
                             '&:hover fieldset': {
@@ -184,9 +184,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 borderWidth: '1px'
                             },
                         },
-                      }
+                    }
                 }
-                
             },
             MuiOutlinedInput: {
                 styleOverrides: {
@@ -204,56 +203,43 @@ export default function RestImport({ language, restImportConfig }: { language: s
             },
             MuiMenuItem: {
                 styleOverrides: {
-                  root: {
-                    '&.Mui-selected, &.Mui-selected:hover': {
-                      backgroundColor: '#f5f5f5', // Change to your desired active item color
-                      // Add other styles as needed, such as color, etc.
+                    root: {
+                        '&.Mui-selected, &.Mui-selected:hover': {
+                            backgroundColor: '#f5f5f5', // Change to your desired active item color
+                            // Add other styles as needed, such as color, etc.
+                        },
+                        '&.Mui-selected, &.Mui-selected:focus': {
+                            backgroundColor: '#1794ef', // Change to your desired active item color
+                            color: '#ffffff'
+                        },
+                        fontSize: '12px',
                     },
-                    '&.Mui-selected, &.Mui-selected:focus': {
-                        backgroundColor: '#1794ef', // Change to your desired active item color
-                        color: '#ffffff'
-                      },
-                      fontSize: '12px',
-                  },
                 },
-              },
-              MuiTypography:{
+            },
+            MuiTypography: {
                 styleOverrides: {
                     root: {
                         fontSize: '12px',
                     },
-                  },
-
-              },
-              MuiTableContainer:{
-                // styleOverrides: {
-                //     root: {
-                //         boxShadow:'none',
-
-                //     },
-                //   },
-
-              },
-              MuiTableCell: {
-                styleOverrides: {
-                  head: {
-                    color: '#333', // Set your desired font color for th here
-                    fontSize:'12px',
-                    padding: '5px'
-                  },
                 },
-              },
-              MuiTableRow:{
+            },
+            MuiTableCell: {
+                styleOverrides: {
+                    head: {
+                        color: '#333', // Set your desired font color for th here
+                        fontSize: '12px',
+                        padding: '5px'
+                    },
+                },
+            },
+            MuiTableRow: {
                 styleOverrides: {
                     root: {
-                      fontSize:'13px',
-                      padding: '5px'
+                        fontSize: '13px',
+                        padding: '5px'
                     },
-                  },
-              }
-            
-        
-
+                },
+            }
         }
     });
     const matches = useMediaQuery('(min-width:1600px)');
@@ -586,7 +572,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             //nothing exists after '?'. client_id can be directly appended;
             connector = '';
         }
-        const commonUrl = selectedProvider.authorizationUrl + connector + 'client_id=' + selectedProvider.clientId + '&redirect_uri=' + redirectUri + '&state=' + encodeURIComponent(JSON.stringify(state)) +'&scope='+ encodeURIComponent(scope) + `&response_type=${flow === 'implicit' ? 'token' : 'code'}`;
+        const commonUrl = selectedProvider.authorizationUrl + connector + 'client_id=' + selectedProvider.clientId + '&redirect_uri=' + redirectUri + '&state=' + encodeURIComponent(JSON.stringify(state)) + '&scope=' + encodeURIComponent(scope) + `&response_type=${flow === 'implicit' ? 'token' : 'code'}`;
         return commonUrl
     }
     const handleTestClick = async () => {
@@ -666,7 +652,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     window.crypto.subtle.digest("SHA-256", data)
                                         .then((hashBuffer: ArrayBuffer) => {
                                             const codeChallenge = challengeMethod === "S256" ? base64URLEncode(hashBuffer) : codeVerifier;
-                                            const implicitUri = constructCommonURL('pkce',scope) + '&code_challenge=' + codeChallenge + '&code_challenge_method=' + challengeMethod;
+                                            const implicitUri = constructCommonURL('pkce', scope) + '&code_challenge=' + codeChallenge + '&code_challenge_method=' + challengeMethod;
                                             // authUrl = selectedProvider.authorizationUrl + `?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${pkce_state}&scope=${scope}&&code_challenge=${codeChallenge}&code_challenge_method=${challengeMethod}`;
                                             childWindow = window.open(implicitUri, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                                         })
@@ -1123,14 +1109,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             <Alert sx={{ py: 0 }} severity={errorMessage?.type} data-testid="default-error" onClose={() => setAlertMsg(false)}>{errorMessage.message}</Alert>
                         )}
                     </Grid>
-                    <Grid sx={{ border: restImportConfig.viewMode ? '2px solid #ccc' : 'none', padding: restImportConfig.viewMode ? 3 : 0}} item md={12} className='rest-header'>
+                    <Grid sx={{ border: restImportConfig.viewMode ? '2px solid #ccc' : 'none', padding: restImportConfig.viewMode ? 3 : 0 }} item md={12} className='rest-header'>
                         <Stack spacing={5} direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                             <FormControl
                                 disabled={restImportConfig.viewMode}
                                 sx={{ minWidth: 120, color: "red" }} size='small'>
                                 <Select
-                                   className='form-control'
-                                   name="wm-webservice-http-method"
+                                    className='form-control'
+                                    name="wm-webservice-http-method"
                                     data-testid="http-method"
                                     value={httpMethod}
                                     sx={{
@@ -1194,7 +1180,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     <Grid sx={{ overflowY: 'auto', overflowX: "hidden" }} height={matches ? "85vh" : '80vh'} item md={12} className='rest-content'>
                         <Box data-testid="request-config-block" sx={{ width: '100%' }}>
                             <Box sx={{ borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
-                                <Tabs className="rest-tabs" sx={{ minHeight: "30px", height: "45px"}} value={requestTabValue} onChange={handleChangeHeaderTabs}>
+                                <Tabs className="rest-tabs" sx={{ minHeight: "30px", height: "45px" }} value={requestTabValue} onChange={handleChangeHeaderTabs}>
                                     <Tab title="wm-rest-authorization-params-header" label={translate("AUTHORIZATION")} />
                                     <Tab title="wm-rest-headers-params-header" label={translate("HEADER") + " " + translate("PARAMS")} />
                                     <Tab title="wm-rest-body-params-header" label={translate("BODY") + " " + translate("PARAMS")} disabled={httpMethod === "GET" ? true : false} />
@@ -1206,7 +1192,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 <CustomTabPanel value={requestTabValue} index={0}>
                                     <Grid spacing={2} container>
                                         <Grid item md={2}>
-                                            <Typography sx={{margin:'10px'}}>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
+                                            <Typography sx={{ margin: '10px' }}>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
                                         </Grid>
                                         <Grid item md={9}>
                                             <FormControl size='small'>
@@ -1271,7 +1257,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     </Grid>
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={1}>
-                                    <HeaderAndQueryTable restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                    <HeaderAndQueryTable multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={2}>
                                     <Stack spacing={1}>
@@ -1315,13 +1301,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                     </Tooltip>}
                                             </Stack>
                                         </Stack>
-                                        {contentType === 'multipart/form-data' ? <MultipartTable handleToastError={handleToastError} value={multipartParams} setValue={handlemultipartParams} /> :
+                                        {contentType === 'multipart/form-data' ? <MultipartTable setAlertMsg={setAlertMsg} headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} handleToastError={handleToastError} value={multipartParams} setValue={handlemultipartParams} /> :
                                             <TextareaAutosize name="wm-webservice-body-type" style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
                                         }
                                     </Stack>
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={3}>
-                                    <HeaderAndQueryTable restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                    <HeaderAndQueryTable multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={4}>
                                     {pathParams.length > 0 ? <TableContainer component={Paper}>
