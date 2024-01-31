@@ -1194,12 +1194,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             <Box className="rest-tabs-content" sx={{ border: '1px solid #ccc' }}>
                                 <CustomTabPanel value={requestTabValue} index={0}>
                                     <Grid spacing={2} container>
-                                        <Grid item md={2}>
+                                        <Grid item md={3} className="input_label">
                                             <Typography sx={{ margin: '10px' }}>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
                                         </Grid>
                                         <Grid item md={9}>
                                             <FormControl size='small'>
                                                 <Select
+                                                    className='form-control-select'
                                                     name="wm-rest-http-auth"
                                                     data-testid="http-auth"
                                                     value={httpAuth}
@@ -1210,23 +1211,23 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </FormControl>
                                         </Grid>
                                         {httpAuth === "BASIC" && <>
-                                            <Grid item md={2}>
+                                            <Grid item md={3} className="input_label">
                                                 <Typography sx={{ margin: '10px' }}>{translate("USER_NAME")}</Typography>
                                             </Grid>
                                             <Grid item md={9} className='select_basic_user'>
                                                 <Stack direction={'row'}>
-                                                    <TextField name="wm-webservice-advanced-username" value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
+                                                    <TextField sx={{ fontSize: '11px' , width: '20em'}} name="wm-webservice-advanced-username" value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
                                                     <Tooltip title={translate("USER_NAME")}>
                                                         <i className="wms wms-help"></i>
                                                     </Tooltip>
                                                 </Stack>
                                             </Grid>
-                                            <Grid item md={2}>
+                                            <Grid item md={3} className="input_label">
                                                 <Typography sx={{ margin: '10px' }}>{translate("PASSWORD")}</Typography>
                                             </Grid>
                                             <Grid item md={9} className='select_basic_pw'>
                                                 <Stack direction={'row'}>
-                                                    <TextField name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
+                                                    <TextField sx={{ fontSize: '11px' , width: '20em'}} name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
                                                     <Tooltip title={translate("PASSWORD")}>
                                                         <i className="wms wms-help"></i>
                                                     </Tooltip>
@@ -1234,7 +1235,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </Grid>
                                         </>}
                                         {httpAuth === "OAUTH2" && <>
-                                            <Grid item md={2}>
+                                            <Grid item md={3} className="input_label">
                                                 <Typography sx={{ margin: '10px' }}>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
                                             </Grid>
                                             <Grid item md={9} className='select_basic_provider'>
