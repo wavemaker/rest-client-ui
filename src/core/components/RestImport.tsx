@@ -186,7 +186,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         },
                     }
                 }
-
             },
             MuiOutlinedInput: {
                 styleOverrides: {
@@ -223,7 +222,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         fontSize: '12px',
                     },
                 },
-
             },
             MuiTableCell: {
                 styleOverrides: {
@@ -242,9 +240,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     },
                 },
             }
-
-
-
         }
     });
     const matches = useMediaQuery('(min-width:1600px)');
@@ -1257,7 +1252,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     </Grid>
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={1}>
-                                    <HeaderAndQueryTable restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                    <HeaderAndQueryTable multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={2}>
                                     <Stack spacing={1}>
@@ -1299,13 +1294,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                     </Tooltip>}
                                             </Stack>
                                         </Stack>
-                                        {contentType === 'multipart/form-data' ? <MultipartTable handleToastError={handleToastError} value={multipartParams} setValue={handlemultipartParams} /> :
+                                        {contentType === 'multipart/form-data' ? <MultipartTable setAlertMsg={setAlertMsg} headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} handleToastError={handleToastError} value={multipartParams} setValue={handlemultipartParams} /> :
                                             <TextareaAutosize name="wm-webservice-body-type" style={{ padding: 2 }} value={bodyParams} onChange={(e) => setbodyParams(e.target.value)} minRows={8} placeholder={translate('REQUEST') + " " + translate('BODY') + ":" + translate('REQUEST_BODY_PLACEHOLDER')} />
                                         }
                                     </Stack>
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={3}>
-                                    <HeaderAndQueryTable restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                    <HeaderAndQueryTable multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={4}>
                                     {pathParams.length > 0 ? <TableContainer component={Paper}>

@@ -57,12 +57,14 @@ export const tableRowStyle: CSSProperties = {
 
 export function HeaderAndQueryTable(
     {
-        value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams, handleToastError, restImportConfig
+        value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams, handleToastError, restImportConfig, setAlertMsg,
+        multipartParams
     }:
         {
-            value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string,
+            value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string, setAlertMsg: (value: boolean) => void,
             apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
-            pathParams: PathParamsI[], handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void, restImportConfig: restImportConfigI
+            pathParams: PathParamsI[], handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void, restImportConfig: restImportConfigI,
+            multipartParams: BodyParamsI[]
         }
 ) {
     const tableRef = useRef<HTMLTableElement | null>(null)
@@ -203,16 +205,17 @@ export function HeaderAndQueryTable(
     }
 
     function handleAddRow() {
+        setAlertMsg(false)
         const lastRow = value[value.length - 1]
         const valueClone = [...value]
         const duplicates = findDuplicateObjectsWithinArray(valueClone, "name")
         const allDuplicates = (): HeaderAndQueryI[] => {
             let returnDuplicates: HeaderAndQueryI[] = []
             if (from === 'header') {
-                returnDuplicates = findDuplicatesByComparison([lastRow], [...queryParams, ...pathParams], "name")
+                returnDuplicates = findDuplicatesByComparison([lastRow], [...queryParams, ...multipartParams, ...pathParams], "name")
             }
             else {
-                returnDuplicates = findDuplicatesByComparison([lastRow], [...headerParams, ...pathParams], "name")
+                returnDuplicates = findDuplicatesByComparison([lastRow], [...headerParams, ...multipartParams, ...pathParams], "name")
             }
             return returnDuplicates
         }
@@ -400,10 +403,10 @@ export function HeaderAndQueryTable(
 }
 
 export function MultipartTable(
-    { value, setValue, handleToastError }:
+    { value, setValue, handleToastError, headerParams, queryParams, pathParams, setAlertMsg }:
         {
-            value: BodyParamsI[], setValue: (data: BodyParamsI[]) => void,
-            handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void,
+            value: BodyParamsI[], setValue: (data: BodyParamsI[]) => void, handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void,
+            headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[], pathParams: PathParamsI[], setAlertMsg: (value: boolean) => void
         }) {
     const tableRef = useRef<HTMLTableElement | null>(null);
 
@@ -496,9 +499,20 @@ export function MultipartTable(
     }
 
     function handleAddRow() {
+        setAlertMsg(false)
         const lastRow = value[value.length - 1]
         const valueClone = [...value]
+        const duplicates = findDuplicateObjectsWithinArray(valueClone, "name")
+        const allDuplicates = (): HeaderAndQueryI[] => {
+            let returnDuplicates: HeaderAndQueryI[] = []
+            returnDuplicates = findDuplicatesByComparison([lastRow], [...headerParams, ...queryParams, ...pathParams], "name")
+            return returnDuplicates
+        }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
+            if (duplicates.length > 0)
+                return handleToastError({ message: `parameter "${duplicates[0].name}" already exists`, type: 'error' })
+            if (allDuplicates().length > 0)
+                return handleToastError({ message: `parameter "${allDuplicates()[0].name}" already exists`, type: 'error' })
             valueClone.push({
                 name: '', value: "", type: 'file', filename: ''
             })
