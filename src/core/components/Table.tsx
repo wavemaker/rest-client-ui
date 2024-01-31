@@ -332,6 +332,7 @@ export function HeaderAndQueryTable(
                                 {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <Autocomplete
                                     fullWidth={true}
                                     size='small'
+                                    sx={{ fontSize: '11px'}}
                                     disabled={index !== value.length - 1}
                                     inputValue={data.name}
                                     onInputChange={(event, newValue: string) => {
