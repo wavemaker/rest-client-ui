@@ -8,8 +8,7 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import {
     Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, TextField, Typography
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+} from '@mui/material'; 
 import AddIcon from '@mui/icons-material/Add';
 import {
     constructCommaSeparatedUniqueQueryValuesString, constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison,

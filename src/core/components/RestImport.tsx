@@ -1,5 +1,4 @@
-import React, { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useRef, useState } from 'react'
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useRef, useState } from 'react'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table, TableBody, TableCell,
     TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button, TextareaAutosize, Alert, createTheme, ThemeProvider,
@@ -1211,7 +1210,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </Grid>
                                             <Grid item md={9} className='select_basic_user'>
                                                 <Stack direction={'row'}>
-                                                    <TextField sx={{ fontSize: '11px' , width: '20em'}} name="wm-webservice-advanced-username" value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
+                                                    <TextField sx={{ fontSize: '11px', width: '20em' }} name="wm-webservice-advanced-username" value={userName} onChange={(e) => setuserName(e.target.value)} size='small' />
                                                     <Tooltip title={translate("USER_NAME")}>
                                                         <i className="wms wms-help"></i>
                                                     </Tooltip>
@@ -1222,7 +1221,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </Grid>
                                             <Grid item md={9} className='select_basic_pw'>
                                                 <Stack direction={'row'}>
-                                                    <TextField sx={{ fontSize: '11px' , width: '20em'}} name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
+                                                    <TextField sx={{ fontSize: '11px', width: '20em' }} name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' />
                                                     <Tooltip title={translate("PASSWORD")}>
                                                         <i className="wms wms-help"></i>
                                                     </Tooltip>
@@ -1235,7 +1234,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </Grid>
                                             <Grid item md={9} className='select_basic_provider'>
                                                 <Stack spacing={2} direction={'row'}>
-                                                    <TextField disabled={!providerId ? true : false} sx={{ backgroundColor: providerId ? 'lightgray' : 'white', fontSize:'11px' }} size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
+                                                    <TextField disabled={!providerId ? true : false} sx={{ backgroundColor: providerId ? 'lightgray' : 'white', fontSize: '11px' }} size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
                                                     {
                                                         providerId && (
                                                             <Tooltip title={translate("Edit Provider")}>
