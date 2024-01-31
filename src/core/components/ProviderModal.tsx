@@ -3,9 +3,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import CloseIcon from '@mui/icons-material/Close';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import { Card, CardContent, CardMedia, Grid, IconButton, Link, Stack, Tooltip, Typography } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardMedia, Grid, Link, Stack, Tooltip, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
 import ConfigModel from './ConfigModel';
 import { useTranslation } from 'react-i18next';
 import Apicall, { getProviderList } from './common/apicall';
@@ -150,22 +149,20 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
 
     return (
         <>
-            <Dialog id='wm-rest-provider-model' className='rest-import-ui' maxWidth={'md'} data-testid='provider-modal' open={handleOpen} onClose={handleClose}>
-                <DialogTitle>
+            <Dialog id='wm-rest-provider-model' className='rest-import-ui provider_model_dialog' maxWidth={'md'} data-testid='provider-modal' open={handleOpen} onClose={handleClose}>
+                <DialogTitle className='provider_dialog_title'>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                        <Typography variant='h6' fontWeight={600}>{translate("SELECT") + " " + translate("OR") + " " + translate("ADD") + " " + translate("PROVIDER")}</Typography>
+                        <Typography variant='h4' fontWeight={600}>{translate("SELECT") + " " + translate("OR") + " " + translate("ADD") + " " + translate("PROVIDER")}</Typography>
                         <Stack spacing={1} className='cmnflx' direction={'row'}>
                             <Tooltip title={translate("oAuth")}>
-                                <IconButton>
-                                    <HelpOutlineIcon />
-                                </IconButton>
+                            <i className="wms wms-help"></i>
                             </Tooltip>
                             <Link sx={{ color: 'gray' }}>{translate("HELP")}</Link>
                             <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleClose} />
                         </Stack>
                     </Stack>
                 </DialogTitle>
-                <DialogContent sx={{ backgroundColor: 'lightgray' }}>
+                <DialogContent className='provider_dialog_content' sx={{ backgroundColor: 'lightgray' }}>
                     <Grid spacing={5} sx={{ width: '100%', ml: 0, mt: 0, mb: 2 }} container>
                         <Grid item md={3}>
                             <Card onClick={() => handleOpenConfig(null)} data-testid="add-provider" sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>

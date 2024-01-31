@@ -98,5 +98,7 @@
   "RESPONSE_TYPE": "Response Type",
   "FAILED_TO_SAVE": "Failed to save",
   "PLAINTEXT": "Text (text/plain)",
-  "JSON": "JSON"
+  "JSON": "JSON",
+  "PKCE_USE": "PKCE is a technique for clients to mitigate the threat of having the authorization code intercepted. If your oAuth provider supports PKCE, you can enable it here.",
+  "CODE_CHALLENGE":"Code Challenge method which your oAuth provider supports for PKCE."
 }

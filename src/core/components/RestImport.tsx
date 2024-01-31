@@ -1,5 +1,4 @@
-import React, { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useRef, useState } from 'react'
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useRef, useState } from 'react'
 import {
     Box, FormControl, FormLabel, Grid, IconButton, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table, TableBody, TableCell,
     TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button, TextareaAutosize, Alert, createTheme, ThemeProvider,
@@ -1115,7 +1114,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 disabled={restImportConfig.viewMode}
                                 sx={{ minWidth: 120, color: "red" }} size='small'>
                                 <Select
-                                    className='form-control'
+                                    className='form-control-select'
                                     name="wm-webservice-http-method"
                                     data-testid="http-method"
                                     value={httpMethod}
@@ -1160,7 +1159,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     <Typography>{translate('USE_PROXY')}</Typography>
                                     <Switch name="wm-webservice-use-proxy" data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
                                     <Tooltip title={useProxyTooltip()}>
-                                        <i className='wms wms-help'></i>
+                                        <i className="wms wms-help"></i>
                                     </Tooltip>
                                 </Stack>
                             </Grid>
@@ -1169,9 +1168,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     <Typography>{translate('WITH_CREDENTIALS')}</Typography>
                                     <Switch name="wm-webservice-with-credentials" data-testid="with-credentials" checked={withCredentials} onChange={handleChangeWithCredentials} />
                                     <Tooltip title={withCredentialsTooltip()}>
-                                        <IconButton>
-                                            <HelpOutlineIcon />
-                                        </IconButton>
+                                        <i className="wms wms-help"></i>
                                     </Tooltip>
                                 </Stack>
                             </Grid>}
@@ -1188,15 +1185,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     <Tab title="wm-rest-path-params-header" label={translate("PATH") + " " + translate("PARAMS")} />
                                 </Tabs>
                             </Box>
-                            <Box sx={{ border: '1px solid #ccc' }}>
+                            <Box className="rest-tabs-content" sx={{ border: '1px solid #ccc' }}>
                                 <CustomTabPanel value={requestTabValue} index={0}>
                                     <Grid spacing={2} container>
-                                        <Grid item md={2}>
+                                        <Grid item md={3} className="input_label">
                                             <Typography sx={{ margin: '10px' }}>{translate('HTTP') + " " + translate("AUTHENTICATION")}</Typography>
                                         </Grid>
                                         <Grid item md={9}>
                                             <FormControl size='small'>
                                                 <Select
+                                                    className='form-control-select'
                                                     name="wm-rest-http-auth"
                                                     data-testid="http-auth"
                                                     value={httpAuth}
@@ -1207,40 +1205,36 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </FormControl>
                                         </Grid>
                                         {httpAuth === "BASIC" && <>
-                                            <Grid item md={3}>
-                                                <Typography>{translate("USER_NAME")}</Typography>
+                                            <Grid item md={3} className="input_label">
+                                                <Typography sx={{ margin: '10px' }}>{translate("USER_NAME")}</Typography>
                                             </Grid>
-                                            <Grid item md={9}>
+                                            <Grid item md={9} className='select_basic_user'>
                                                 <Stack direction={'row'}>
-                                                    <TextField name="wm-webservice-advanced-username" value={userName} onChange={(e) => setuserName(e.target.value)} size='small' label={translate("USER_NAME")} placeholder={translate("USER_NAME")} />
+                                                    <TextField sx={{ fontSize: '11px', width: '20em' }} name="wm-webservice-advanced-username" value={userName} onChange={(e) => setuserName(e.target.value)} size='small' />
                                                     <Tooltip title={translate("USER_NAME")}>
-                                                        <IconButton>
-                                                            <HelpOutlineIcon />
-                                                        </IconButton>
+                                                        <i className="wms wms-help"></i>
                                                     </Tooltip>
                                                 </Stack>
                                             </Grid>
-                                            <Grid item md={3}>
-                                                <Typography>{translate("PASSWORD")}</Typography>
+                                            <Grid item md={3} className="input_label">
+                                                <Typography sx={{ margin: '10px' }}>{translate("PASSWORD")}</Typography>
                                             </Grid>
-                                            <Grid item md={9}>
+                                            <Grid item md={9} className='select_basic_pw'>
                                                 <Stack direction={'row'}>
-                                                    <TextField name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' label={translate("PASSWORD")} placeholder={translate("PASSWORD")} />
+                                                    <TextField sx={{ fontSize: '11px', width: '20em' }} name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' />
                                                     <Tooltip title={translate("PASSWORD")}>
-                                                        <IconButton>
-                                                            <HelpOutlineIcon />
-                                                        </IconButton>
+                                                        <i className="wms wms-help"></i>
                                                     </Tooltip>
                                                 </Stack>
                                             </Grid>
                                         </>}
                                         {httpAuth === "OAUTH2" && <>
-                                            <Grid item md={3}>
-                                                <Typography>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
+                                            <Grid item md={3} className="input_label">
+                                                <Typography sx={{ margin: '10px' }}>{translate("OAuth") + " " + translate("PROVIDER")}</Typography>
                                             </Grid>
-                                            <Grid item md={9}>
+                                            <Grid item md={9} className='select_basic_provider'>
                                                 <Stack spacing={2} direction={'row'}>
-                                                    <TextField disabled={!providerId ? true : false} sx={{ backgroundColor: providerId ? 'lightgray' : 'white' }} size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
+                                                    <TextField disabled={!providerId ? true : false} sx={{ backgroundColor: providerId ? 'lightgray' : 'white', fontSize: '11px' }} size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
                                                     {
                                                         providerId && (
                                                             <Tooltip title={translate("Edit Provider")}>
@@ -1250,7 +1244,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                             </Tooltip>
                                                         )
                                                     }
-                                                    <Button name='wm-webservice-select-provider' onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
+                                                    <Button className='select_provider_btn' name='wm-webservice-select-provider' onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
                                                 </Stack>
                                             </Grid>
                                         </>}
@@ -1277,9 +1271,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                     </Select>
                                                 </FormControl>
                                                 <Tooltip title={translate("Choose appropriate content type")}>
-                                                    <IconButton>
-                                                        <HelpOutlineIcon />
-                                                    </IconButton>
+                                                    <i className="wms wms-help"></i>
                                                 </Tooltip>
                                                 {addCustomType ? <Stack direction={'row'}>
                                                     <TextField name="wm-webservice-new-content-type" value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
@@ -1354,7 +1346,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         </Box>
                         <Box data-testid="response-block" sx={{ width: '100%' }}>
                             <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#f3f5f6' }}>
-                                <Tabs value={responseTabValue} onChange={handleChangeResponseTabs}>
+                                <Tabs className="response_tabs" sx={{ fontSize: '13px' }} value={responseTabValue} onChange={handleChangeResponseTabs}>
                                     <Tab label={translate("RESPONSE") + " " + translate("BODY")} />
                                     <Tab label={translate("RESPONSE") + " " + translate("HEADER")} />
                                 </Tabs>

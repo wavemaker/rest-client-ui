@@ -72,7 +72,7 @@
       font-size:13px;
     }
   }
-  .form-control, .url-input div{
+  .form-control-select, .url-input div{
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
     -ms-border-radius: 2px;
@@ -84,8 +84,6 @@
     color: #212121;
     border-color: #d3d3d3;
   }
-  .url-input label{
-    font-size:12px;
-  }
+
 
 }
