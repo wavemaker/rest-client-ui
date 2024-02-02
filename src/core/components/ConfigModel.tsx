@@ -4,11 +4,8 @@ import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import CloseIcon from '@mui/icons-material/Close';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import {
-    Alert,
-    Checkbox, DialogActions, FormControl, FormControlLabel, Grid, IconButton, Link, MenuItem, Select, SelectChangeEvent, Stack,
-    TextField, Tooltip, Typography
+    Alert, Checkbox, DialogActions, FormControl, FormControlLabel, Grid, Link, MenuItem, Select, SelectChangeEvent, Stack, TextField, Typography
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import clipboardCopy from 'clipboard-copy';
@@ -256,9 +253,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
                         <Typography variant='h6' fontWeight={600}>{translate("OAUTH") + " " + translate("PROVIDER") + " " + translate("CONFIGURATION")} </Typography>
                         <Stack spacing={1} className='cmnflx' direction={'row'}>
-                            <Tooltip title={translate("oAuth")}>
-                                <i className="wms wms-help"></i>
-                            </Tooltip>
+                            <i title={translate("oAuth")} className="wms wms-help"></i>
                             <Link sx={{ color: 'gray', cursor: 'pointer' }}>{translate("HELP")}</Link>
                             <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleClose} />
                         </Stack>
@@ -295,11 +290,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     helperText={translate('CALLBACK_iNFO')}
                                     fullWidth
                                 />
-                                <Tooltip onMouseLeave={handleTooltipMouseLeave} data-testid="callback-copy" onClick={() => handleCopyClick(callback_url)} sx={{ ":hover": { backgroundColor: 'transparent' } }} title={tooltipTitle}>
-                                    <IconButton>
-                                        <ContentCopyIcon />
-                                    </IconButton>
-                                </Tooltip>
+                                <i onMouseLeave={handleTooltipMouseLeave} data-testid="callback-copy" onClick={() => handleCopyClick(callback_url)} title={tooltipTitle} className='wm-icon fa fa-copy'></i>
                             </Stack>
                         </Grid>
                         <Grid item md={3}>
@@ -325,23 +316,20 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                         {translate("USE_PKCE")}?
                                     </Typography>
                                 </Grid>
-                                <Grid item md={PKCE ? 0.8 : 9}>
+                                <Grid item md={PKCE ? 1 : 9}>
                                     <Checkbox
                                         data-testid='pkce-checkbox'
                                         checked={PKCE}
                                         name="wm-webservice-pkce-value"
                                         onChange={handleChangePKCE}
+                                        sx={{ paddingRight: 3 }}
                                     />
-                                    <Tooltip title={translate("PKCE_USE")}>
-                                        <i className="wms wms-help"></i>
-                                    </Tooltip>
+                                    <i title={translate("PKCE_USE")} className="wms wms-help"></i>
                                 </Grid>
                                 {PKCE &&
-                                    <Grid item md={8.2} className='cmnflx' container>
-                                        <Grid item md={6}>
-                                            <Typography>Code Challenge Method</Typography>
-                                        </Grid>
-                                        <Grid item md={6}>
+                                    <Grid item md={8}>
+                                        <Stack spacing={3} display={'flex'} alignItems={'center'} sx={{ width: "60%" }} direction={'row'}>
+                                            <Typography>Code Challenge Method<span className='text-danger'>*</span></Typography>
                                             <FormControl size='small'>
                                                 <Select
                                                     name="wm-webservice-code-challenge-method-value"
@@ -353,10 +341,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                                     <MenuItem value={'plain'}>Basic</MenuItem>
                                                 </Select>
                                             </FormControl>
-                                            <Tooltip title={translate("PKCE")}>
-                                                <i className="wms wms-help"></i>
-                                            </Tooltip>
-                                        </Grid>
+                                            <i title={translate("PKCE")} className="wms wms-help"></i>
+                                        </Stack>
                                     </Grid>
                                 }
                             </>

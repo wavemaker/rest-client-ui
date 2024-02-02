@@ -8,7 +8,7 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import {
     Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, TextField, Typography
-} from '@mui/material'; 
+} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import {
     constructCommaSeparatedUniqueQueryValuesString, constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison,
@@ -334,7 +334,6 @@ export function HeaderAndQueryTable(
                                 {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <Autocomplete
                                     fullWidth={true}
                                     size='small'
-                                    sx={{ fontSize: '11px'}}
                                     disabled={index !== value.length - 1}
                                     inputValue={data.name}
                                     onInputChange={(event, newValue: string) => {
@@ -391,7 +390,7 @@ export function HeaderAndQueryTable(
                             </TableCell>
                             <TableCell style={tableRowStyle} width={"5%"} align='center'>
                                 {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} />
-                                    :<i className="wms wms-delete" aria-label="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} style={{ cursor: 'pointer' }}></i>}
+                                    : <i className="wms wms-delete" aria-label="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} style={{ cursor: 'pointer' }}></i>}
                             </TableCell>
                         </TableRowStyled>
                     )}

@@ -1,7 +1,7 @@
-import { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useRef, useState } from 'react'
+import React, { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useRef, useState } from 'react'
 import {
-    Box, FormControl, FormLabel, Grid, IconButton, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table, TableBody, TableCell,
-    TableContainer, TableHead, TableRow, Tabs, TextField, Tooltip, Typography, Button, TextareaAutosize, Alert, createTheme, ThemeProvider,
+    Box, FormControl, FormLabel, Grid, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table, TableBody, TableCell,
+    TableContainer, TableHead, TableRow, Tabs, TextField, Typography, Button, TextareaAutosize, Alert, createTheme, ThemeProvider,
     useMediaQuery
 } from '@mui/material'
 import ProviderModal from './ProviderModal'
@@ -11,15 +11,11 @@ import {
     findDuplicatesByComparison, retrieveQueryDetailsFromURL, constructCommaSeparatedUniqueQueryValuesString, checkTypeForParameter
 } from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
-import AddIcon from '@mui/icons-material/Add'
-import CloseIcon from '@mui/icons-material/Close';
-import DoneIcon from '@mui/icons-material/Done'
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
 import Apicall from './common/apicall'
 import { encode } from 'js-base64';
 import FallbackSpinner from './common/loader'
 import { useTranslation } from 'react-i18next';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ConfigModel from './ConfigModel'
 import { useSelector } from 'react-redux'
 import '../../i18n';
@@ -146,40 +142,28 @@ declare global {
     }
 }
 
-const useProxyTooltip = () => {
-    return (
-        <div>
-            <p style={{ fontSize: 16 }}>
-                Disable the Use Proxy to make a direct call to the target API for bypassing the proxy server.
-                There may be issues if the API does not allow Cross Origin Resource Sharing.<br /><br />
-                <u>Note</u>: Use Proxy should be enabled if you want to configure a Header or Query param as a Server Side Property. A server side param is sent from the proxy server and is hidden from the UI.
-            </p>
-        </div>
-    )
-}
-const withCredentialsTooltip = () => {
-    return (
-        <div>
-            <p style={{ fontSize: 16 }}>Check this if the cookies from the endpoint API should be set and honored by the browser.</p>
-        </div>
-    )
-}
-
 export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const theme = createTheme({
         typography: {
-            fontSize: 13, // Adjust the font size as needed
+            fontSize: 13,
             fontFamily: 'roboto',
         }, components: {
+            MuiAutocomplete: {
+                styleOverrides: {
+                    listbox: {
+                        fontSize: '11px',
+                    },
+                },
+            },
             MuiTextField: {
                 styleOverrides: {
                     root: {
                         '& .MuiOutlinedInput-root': {
                             '&:hover fieldset': {
-                                borderColor: 'rgba(0, 0, 0, 0.23)', // Replace 'hover-color' with your color for hover state
+                                borderColor: 'rgba(0, 0, 0, 0.23)',
                             },
                             '&.Mui-focused fieldset': {
-                                borderColor: '#1794ef', // Replace 'focus-color' with your color for focused state
+                                borderColor: '#1794ef',
                                 borderWidth: '1px'
                             },
                         },
@@ -190,10 +174,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 styleOverrides: {
                     root: {
                         '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(0, 0, 0, 0.23)', // Hover border color
+                            borderColor: 'rgba(0, 0, 0, 0.23)',
                         },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#1794ef', // Replace 'focus-color' with your color for focused state
+                            borderColor: '#1794ef',
                             borderWidth: '1px'
                         },
                         fontSize: '12px',
@@ -204,11 +188,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 styleOverrides: {
                     root: {
                         '&.Mui-selected, &.Mui-selected:hover': {
-                            backgroundColor: '#f5f5f5', // Change to your desired active item color
-                            // Add other styles as needed, such as color, etc.
+                            backgroundColor: '#f5f5f5',
                         },
                         '&.Mui-selected, &.Mui-selected:focus': {
-                            backgroundColor: '#1794ef', // Change to your desired active item color
+                            backgroundColor: '#1794ef',
                             color: '#ffffff'
                         },
                         fontSize: '12px',
@@ -225,7 +208,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             MuiTableCell: {
                 styleOverrides: {
                     head: {
-                        color: '#333', // Set your desired font color for th here
+                        color: '#333',
                         fontSize: '12px',
                         padding: '5px'
                     },
@@ -238,9 +221,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         padding: '5px'
                     },
                 },
-            }
+            },
+            MuiInputLabel: {
+                styleOverrides: {
+                    root: {
+                        fontSize: '11px',
+                    },
+                },
+            },
         }
-    });
+    })
     const matches = useMediaQuery('(min-width:1600px)');
     const state_val = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ=="
     const httpMethods = ["GET", "POST", "DELETE", "HEAD", "PATCH", "PUT"]
@@ -1132,7 +1122,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             <TextField onBlur={() => {
                                 getPathParams()
                                 handleQueryChange()
-                            }} className='url-input' name='wm-webservice-sample-url' autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth label={translate('URL')} placeholder={translate('URL')} />
+                            }} className='url-input' name='wm-webservice-sample-url' autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth />
                             <Button className='test-btn' name="wm-webservice-sample-test" onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
                         <Grid mt={2} container>
@@ -1158,20 +1148,18 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('USE_PROXY')}</Typography>
                                     <Switch name="wm-webservice-use-proxy" data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
-                                    <Tooltip title={useProxyTooltip()}>
-                                        <i className="wms wms-help"></i>
-                                    </Tooltip>
+                                    <i title={translate("USEPROXY_TOOLTIP")} className="wms wms-help"></i>
                                 </Stack>
                             </Grid>
-                            {!useProxy && <Grid item md={3}>
-                                <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
-                                    <Typography>{translate('WITH_CREDENTIALS')}</Typography>
-                                    <Switch name="wm-webservice-with-credentials" data-testid="with-credentials" checked={withCredentials} onChange={handleChangeWithCredentials} />
-                                    <Tooltip title={withCredentialsTooltip()}>
-                                        <i className="wms wms-help"></i>
-                                    </Tooltip>
-                                </Stack>
-                            </Grid>}
+                            {!useProxy &&
+                                <Grid item md={3}>
+                                    <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                                        <Typography>{translate('WITH_CREDENTIALS')}</Typography>
+                                        <Switch name="wm-webservice-with-credentials" data-testid="with-credentials" checked={withCredentials} onChange={handleChangeWithCredentials} />
+                                        <i title={'Check this if the cookies from the endpoint API should be set and honored by the browser.'} className="wms wms-help"></i>
+                                    </Stack>
+                                </Grid>
+                            }
                         </Grid>
                     </Grid>
                     <Grid sx={{ overflowY: 'auto', overflowX: "hidden" }} height={matches ? "85vh" : '80vh'} item md={12} className='rest-content'>
@@ -1211,9 +1199,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             <Grid item md={9} className='select_basic_user'>
                                                 <Stack direction={'row'}>
                                                     <TextField sx={{ fontSize: '11px', width: '20em' }} name="wm-webservice-advanced-username" value={userName} onChange={(e) => setuserName(e.target.value)} size='small' />
-                                                    <Tooltip title={translate("USER_NAME")}>
-                                                        <i className="wms wms-help"></i>
-                                                    </Tooltip>
+                                                    <i title={translate("USER_NAME")} className="wms wms-help"></i>
                                                 </Stack>
                                             </Grid>
                                             <Grid item md={3} className="input_label">
@@ -1222,9 +1208,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             <Grid item md={9} className='select_basic_pw'>
                                                 <Stack direction={'row'}>
                                                     <TextField sx={{ fontSize: '11px', width: '20em' }} name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' />
-                                                    <Tooltip title={translate("PASSWORD")}>
-                                                        <i className="wms wms-help"></i>
-                                                    </Tooltip>
+                                                    <i title={translate("PASSWORD")} className="wms wms-help"></i>
                                                 </Stack>
                                             </Grid>
                                         </>}
@@ -1237,11 +1221,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                     <TextField disabled={!providerId ? true : false} sx={{ backgroundColor: providerId ? 'lightgray' : 'white', fontSize: '11px' }} size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
                                                     {
                                                         providerId && (
-                                                            <Tooltip title={translate("Edit Provider")}>
-                                                                <IconButton name='wm-webservice-edit-provider' onClick={() => setConfigOpen(true)} data-testid='edit-provider'>
-                                                                    <EditOutlinedIcon />
-                                                                </IconButton>
-                                                            </Tooltip>
+                                                            <i onClick={() => setConfigOpen(true)} title={translate("Edit Provider")} className='wms wms-edit'></i>
                                                         )
                                                     }
                                                     <Button className='select_provider_btn' name='wm-webservice-select-provider' onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
@@ -1270,27 +1250,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                         </MenuItem>)}
                                                     </Select>
                                                 </FormControl>
-                                                <Tooltip title={translate("Choose appropriate content type")}>
-                                                    <i className="wms wms-help"></i>
-                                                </Tooltip>
+                                                <i title={translate("Choose appropriate content type")} className="wms wms-help"></i>
                                                 {addCustomType ? <Stack direction={'row'}>
-                                                    <TextField name="wm-webservice-new-content-type" value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
-                                                    <Tooltip title={translate("CLOSE")}>
-                                                        <IconButton onClick={() => { setnewContentType(''); setaddCustomType(false) }}>
-                                                            <CloseIcon name="wm-webservice-close-new-content-type" sx={{ cursor: 'pointer', color: 'black' }} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title={translate("ADD")}>
-                                                        <IconButton onClick={() => handleAddCustomContentType()}>
-                                                            <DoneIcon name="wm-webservice-add-content-type" sx={{ cursor: 'pointer', color: 'black' }} />
-                                                        </IconButton>
-                                                    </Tooltip>
+                                                    <TextField name="wm-webservice-new-content-type" value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />+3
+                                                    <i onClick={() => { setnewContentType(''); setaddCustomType(false) }} title={translate("CLOSE")} className='wms wms-close'></i>
+                                                    <i onClick={() => handleAddCustomContentType()} title={translate("ADD")} className='wms wms-done'></i>
                                                 </Stack> :
-                                                    <Tooltip title={translate("CUSTOM_CONTENT_TYPE")}>
-                                                        <IconButton onClick={() => setaddCustomType(true)}>
-                                                            <AddIcon name="wm-webservice-add-new-content-type" sx={{ cursor: 'pointer', color: 'black' }} />
-                                                        </IconButton>
-                                                    </Tooltip>}
+                                                    <i onClick={() => setaddCustomType(true)} title={translate("CUSTOM_CONTENT_TYPE")} className='wms wms-plus'></i>
+                                                }
                                             </Stack>
                                         </Stack>
                                         {contentType === 'multipart/form-data' ? <MultipartTable setAlertMsg={setAlertMsg} headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} handleToastError={handleToastError} value={multipartParams} setValue={handlemultipartParams} /> :
@@ -1337,7 +1304,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                 </Typography>
                                                 <Typography>
                                                     {`e.g. For URL "http:wavemaker.com/projects/{pid}/?mode=json", "pid" is the path param.`}
-                                                    (<a href='https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/'>{translate("MORE_INFO")}</a>)
+                                                    (<a target='_blank' rel="noreferrer" href='https://docs.wavemaker.com/learn/app-development/services/web-services/rest-services/'>{translate("MORE_INFO")}</a>)
                                                 </Typography>
                                             </Stack>
                                         </Stack>}
@@ -1357,7 +1324,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         </div>
                         {responseTabValue === 1 && <Stack overflow={'auto'} sx={{ backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
                             {response !== undefined && <TableContainer style={{ height: restImportConfig?.responseBlockHeight ? `${restImportConfig?.responseBlockHeight / 1.2}px` : '300px' }}>
-                                <Table>
+                                <Table className='rest-client-response-header'>
                                     <TableBody sx={{ padding: 40 }}>
                                         {Object.keys(response.headers as any).map((key) => {
                                             return <TableRow key={key}>
