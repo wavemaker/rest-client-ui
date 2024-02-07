@@ -1,11 +1,8 @@
-import React, { useState } from "react";
-import { Dialog, DialogContent, CircularProgress } from "@mui/material";
+import React from "react";
+import { Dialog, DialogContent } from "@mui/material";
 import { useEffect } from "react";
-import { Editor as ModalEditor } from "@monaco-editor/react";
 
-export default function RestModal({ handleOpen, handleClose, defaultData }) {
-  const [monacoEditorValue, setmonacoEditorValue] = useState();
-  const [hideMonacoEditor, sethideMonacoEditor] = useState(true);
+export default function RestModal({ handleOpen, handleClose, defaultData }) { 
   const restData = {
     proxy_conf: {
       base_path: "http://localhost:4000/",
@@ -73,8 +70,7 @@ export default function RestModal({ handleOpen, handleClose, defaultData }) {
     monacoEditorURL: undefined,
     responseBlockHeight: 550,
   };
-  useEffect(() => {
-    setmonacoEditorValue("");
+  useEffect(() => { 
     if (handleOpen && !defaultData) {
       setTimeout(() => {
         window.RestImport({

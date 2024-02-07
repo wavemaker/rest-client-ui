@@ -3,10 +3,8 @@ import '@testing-library/jest-dom';
 import user from '@testing-library/user-event'
 import ConfigModel from '../core/components/ConfigModel'
 import { ProviderI } from '../core/components/ProviderModal';
-import { restImportConfigI } from '../core/components/RestImport';
-import { ERROR_MESSAGES, SEND_ACCESSTOKEN, emptyConfig } from './testdata';
-import { Provider } from 'react-redux'
-import appStore from '../core/components/appStore/Store';
+import { IProviderConfig, restImportConfigI } from '../core/components/RestImport';
+import { ERROR_MESSAGES, SEND_ACCESSTOKEN, emptyConfig } from './testdata'; 
 
 interface mockPropsI {
     handleOpen: boolean,
@@ -16,7 +14,10 @@ interface mockPropsI {
     proxyObj: restImportConfigI,
     isCustomErrorFunc: boolean,
     customFunction: () => void,
-    handleSuccessCallback: () => void
+    handleSuccessCallback: () => void,
+    currentProviderConfig: ProviderI | null,
+    providerConfig: IProviderConfig,
+    updateProviderConfig: (key: string, value: any) => void
 }
 
 const providerObj = {
@@ -31,7 +32,7 @@ const providerObj = {
     scopes: [{ name: "Basic Profile", value: "profile" }],
     oauth2Flow: "AUTHORIZATION_CODE",
     responseType: "token",
-    oAuth2Pkce: null 
+    oAuth2Pkce: null
 }
 
 
@@ -44,7 +45,10 @@ let mockProps: mockPropsI = {
     proxyObj: emptyConfig,
     isCustomErrorFunc: false,
     customFunction: jest.fn(() => console.log("Toast Error")),
-    handleSuccessCallback: jest.fn(() => console.log("Success Msg"))
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg")),
+    currentProviderConfig: null,
+    providerConfig: null as any,
+    updateProviderConfig: jest.fn()
 }
 
 function renderComponent(type: string) {
@@ -66,7 +70,7 @@ function renderComponent(type: string) {
     }
 
 
-    render(<Provider store={appStore}><ConfigModel {...copymockProps} /></Provider >)
+    render(<ConfigModel {...copymockProps} />)
 
 }
 async function isErrorMsgDisplayed(msgToCheck: string) {
