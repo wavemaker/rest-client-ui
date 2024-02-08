@@ -4,7 +4,7 @@ import user from '@testing-library/user-event'
 import ConfigModel from '../core/components/ConfigModel'
 import { ProviderI } from '../core/components/ProviderModal';
 import { IProviderConfig, restImportConfigI } from '../core/components/RestImport';
-import { ERROR_MESSAGES, SEND_ACCESSTOKEN, emptyConfig } from './testdata'; 
+import { ERROR_MESSAGES, SEND_ACCESSTOKEN, emptyConfig } from './testdata';
 
 interface mockPropsI {
     handleOpen: boolean,
@@ -17,7 +17,8 @@ interface mockPropsI {
     handleSuccessCallback: () => void,
     currentProviderConfig: ProviderI | null,
     providerConfig: IProviderConfig,
-    updateProviderConfig: (key: string, value: any) => void
+    updateProviderConfig: (key: string, value: any) => void,
+    isConfigured: boolean
 }
 
 const providerObj = {
@@ -48,12 +49,13 @@ let mockProps: mockPropsI = {
     handleSuccessCallback: jest.fn(() => console.log("Success Msg")),
     currentProviderConfig: null,
     providerConfig: null as any,
-    updateProviderConfig: jest.fn()
+    updateProviderConfig: jest.fn(),
+    isConfigured: false
 }
 
 function renderComponent(type: string) {
 
-    const copymockProps = { ...mockProps }
+    const copymockProps: any = { ...mockProps }
     if (type === 'ProviderConfigWithoutPKCE') {
         copymockProps['providerConf'] = providerObj
     } else if (type === 'ProviderConfigWithPKCES256') {

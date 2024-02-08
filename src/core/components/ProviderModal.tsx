@@ -21,7 +21,8 @@ export interface ProviderI {
     oAuth2Pkce: oAuth2I | null,
     clientId?: string,
     clientSecret?: string,
-    oauth2Flow: string
+    oauth2Flow: string,
+    isConfigured: boolean
 }
 interface oAuth2I {
     enabled: boolean,
@@ -43,8 +44,8 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
     }) {
     const { t: translate } = useTranslation();
     const [openConfig, setopenConfig] = useState(false)
-    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE' })
-    const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE' }])
+    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false })
+    const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false }])
     const [defaultProviderIds, setDefaultProviderId] = useState<string[]>([])
     const providers = providerConfig.providerList
 
@@ -57,26 +58,37 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
         }
     }, [allProvider, proxyObj])
 
-    const handleOpenConfig = (provider: ProviderI | null) => {
-        if (currentProvider?.providerId === provider?.providerId) {
-            return handleClose()
-        }
-        if (!defaultProviderIds.includes(provider?.providerId as string)) {
-            setcurrentProvider(provider)
-            return handleClose()
-        }
-        setcurrentProvider(provider)
-        setopenConfig(true)
-    }
     useEffect(() => {
-        if (currentProvider?.accessTokenParamName) {
+        handleProviderList()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
+    useEffect(() => {
+        handleDefaultProviderList()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [providers])
+    
+    useEffect(() => {
+        if (currentProvider?.isConfigured) {
             handleClose()
             updateProviderConfig("selectedProvider", currentProvider)
             handleAuthorizationUrl()
+        } else if (!currentProvider?.isConfigured && currentProvider?.providerId) {
+            setopenConfig(true)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentProvider])
 
+    const handleOpenConfig = (provider: ProviderI | null) => {
+        if (!provider) {
+            setopenConfig(true)
+            setcurrentProvider(provider)
+            return
+        } else if (currentProvider?.providerId === provider?.providerId) {
+            return handleClose()
+        }
+        setcurrentProvider(provider)
+    }
     const handleAuthorizationUrl = async () => {
         const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", currentProvider?.providerId as string)
         const configProvider = {
@@ -103,7 +115,10 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
         const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider
         try {
             const response = await getProviderList(url);
-            const sortedProviders = response.data;
+            const sortedProviders = response.data.map((provider: { isConfigured: boolean; providerId: any; }) => {
+                provider.isConfigured = true;
+                return provider;
+            }) || [];
             updateProviderConfig("providerList", sortedProviders)
         } catch (error) {
             console.error('Error fetching provider list:', error);
@@ -142,16 +157,6 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
             console.log("Received an unexpected response:", response);
         }
     }
-
-    useEffect(() => {
-        handleProviderList()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-
-    useEffect(() => {
-        handleDefaultProviderList()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [providers])
 
     return (
         <>

@@ -274,7 +274,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [handleToastOpen, sethandleToastOpen] = useState(false)
     const [editorLanguage, seteditorLanguage] = useState('json')
     const [providerConfig, setProviderConfig] = useState<IProviderConfig>({
-        selectedProvider: { providerId: '', clientId: "", authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null || { enabled: true, challengeMethod: '' }, oauth2Flow: 'AUTHORIZATION_CODE' },
+        selectedProvider: { providerId: '', clientId: "", authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null || { enabled: true, challengeMethod: '' }, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false },
         providerAuthURL: "",
         providerList: [],
         configOpen: false,
@@ -1225,7 +1225,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </Grid>
                                             <Grid item md={9} className='select_basic_pw'>
                                                 <Stack direction={'row'}>
-                                                    <TextField sx={{ fontSize: '11px', width: '20em' }} name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' />
+                                                    <TextField type='password' sx={{ fontSize: '11px', width: '20em' }} name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' />
                                                     <i title={translate("PASSWORD")} className="wms wms-help"></i>
                                                 </Stack>
                                             </Grid>
