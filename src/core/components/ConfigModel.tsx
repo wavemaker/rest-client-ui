@@ -12,7 +12,7 @@ import clipboardCopy from 'clipboard-copy';
 import { ProviderI, ScopeI } from './ProviderModal';
 import Apicall, { getProviderList } from './common/apicall';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { INotifyMessage, restImportConfigI } from './RestImport' 
+import { INotifyMessage, IProviderConfig, restImportConfigI } from './RestImport'
 import FallbackSpinner from './common/loader';
 import '../../i18n';
 
@@ -20,7 +20,7 @@ export default function ConfigModel(
     { handleOpen, handleClose, handleParentModalClose, providerConfig, proxyObj, configModel, isCustomErrorFunc, currentProviderConfig,
         customFunction, handleSuccessCallback, updateProviderConfig }:
         {
-            handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConfig: any, proxyObj: restImportConfigI,
+            handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConfig: IProviderConfig, proxyObj: restImportConfigI,
             configModel?: boolean, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void,
             handleSuccessCallback: (msg: INotifyMessage, response?: AxiosResponse) => void, currentProviderConfig: ProviderI | null,
             updateProviderConfig: (key: string, value: any) => void
@@ -53,15 +53,14 @@ export default function ConfigModel(
     }, [proxyObj])
 
     useEffect(() => {
-        let callbackurl = providerConfig
+        let callbackurl = currentProviderConfig?.providerId
             ? basePath + `studio/services/oauth2/${currentProviderConfig?.providerId}/callback`
             : providerId
                 ? basePath + `studio/services/oauth2/${providerId}/callback`
                 : basePath + `studio/services/oauth2/{providerId}/callback`
         if (PKCE || flow === 'IMPLICIT') callbackurl = basePath + 'studio/oAuthCallback.html'
         setCallbackUrl(callbackurl)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentProviderConfig, providerId, PKCE, flow, basePath])
+    }, [currentProviderConfig, providerId, PKCE, flow, basePath, providerConfig.selectedProvider.providerId])
 
     useEffect(() => {
         // dispatch(setProviderAuthorizationUrl(provider_auth_url))
@@ -251,6 +250,7 @@ export default function ConfigModel(
 
     function handleCloseWConfigProvider() {
         setFlow("AUTHORIZATION_CODE")
+        setProviderID('')
         handleClose()
     }
 
