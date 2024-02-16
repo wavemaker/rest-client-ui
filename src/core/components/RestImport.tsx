@@ -4,7 +4,7 @@ import {
     TableContainer, TableHead, TableRow, Tabs, TextField, Typography, Button, TextareaAutosize, Alert, createTheme, ThemeProvider,
     useMediaQuery
 } from '@mui/material'
-import ProviderModal from './ProviderModal'
+import ProviderModal, { ProviderI } from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled, tableHeaderStyle, tableRowStyle } from './Table'
 import {
     retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString,
@@ -17,7 +17,6 @@ import { encode } from 'js-base64';
 import FallbackSpinner from './common/loader'
 import { useTranslation } from 'react-i18next';
 import ConfigModel from './ConfigModel'
-import { useSelector } from 'react-redux'
 import '../../i18n';
 import MonacoEditor from './MonacoEditor'
 import Snackbar from '@mui/material/Snackbar';
@@ -30,6 +29,13 @@ interface TabPanelProps {
 export interface PathParamsI {
     name: string
     value: string
+}
+export interface IProviderConfig {
+    selectedProvider: ProviderI
+    providerAuthURL: ""
+    providerList: []
+    configOpen: boolean
+    providerOpen: boolean
 }
 export interface restImportConfigI {
     url?: string
@@ -261,14 +267,19 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [providerId, setProviderId] = useState(restImportConfig.httpAuth?.providerId)
     const [configOpen, setConfigOpen] = useState(false)
     const [alertMsg, setAlertMsg] = useState<boolean>(false)
-    const selectedProvider = useSelector((store: any) => store.slice.selectedProvider)
     const [serviceName, setserviceName] = useState(restImportConfig.setServiceName || "")
     const [serviceNameEnabled, setserviceNameEnabled] = useState(true)
-    const providerAuthURL = useSelector((store: any) => store.slice.providerAuthURL)
     const editorRef: any = useRef(null)
     const [errorMessage, seterrorMessage] = useState<INotifyMessage>({ type: 'error', message: '' })
     const [handleToastOpen, sethandleToastOpen] = useState(false)
     const [editorLanguage, seteditorLanguage] = useState('json')
+    const [providerConfig, setProviderConfig] = useState<IProviderConfig>({
+        selectedProvider: { providerId: '', clientId: "", authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null || { enabled: true, challengeMethod: '' }, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false },
+        providerAuthURL: "",
+        providerList: [],
+        configOpen: false,
+        providerOpen: false
+    })
     var multiParamInfoList: any[] = []
     var oAuthRetry = true
 
@@ -297,14 +308,21 @@ export default function RestImport({ language, restImportConfig }: { language: s
     }, [])
 
     useEffect(() => {
-        setProviderId(selectedProvider.providerId)
-    }, [selectedProvider])
+        setProviderId(providerConfig.selectedProvider.providerId)
+    }, [providerConfig.selectedProvider])
 
     useEffect(() => {
         i18n.changeLanguage(language);
         handleChangeResponseTabs(null, responseTabValue)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
+
+    const updateProviderConfig = (key: string, value: any) => {
+        setProviderConfig((prevState) => ({
+            ...prevState,
+            [key]: value,
+        }));
+    };
 
     const handleToastClose = (_event?: SyntheticEvent | Event, reason?: string) => {
         if (reason === 'clickaway')
@@ -549,8 +567,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
 
     function constructCommonURL(flow: 'implicit' | 'pkce', scope: any) {
         const redirectUri = restImportConfig?.proxy_conf?.base_path + 'studio/oAuthCallback.html'
-        const state = { providerId: selectedProvider.providerId, suffix: '.access_token', requestSourceType: "WEB", flow };
-        let authUrlArr = selectedProvider.authorizationUrl.split('?'), connector;
+        const state = { providerId: providerConfig.selectedProvider.providerId, suffix: '.access_token', requestSourceType: "WEB", flow };
+        let authUrlArr = providerConfig.selectedProvider.authorizationUrl.split('?'), connector;
         if (authUrlArr.length === 1) {
             //query params don't exist
             connector = '?';
@@ -561,7 +579,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             //nothing exists after '?'. client_id can be directly appended;
             connector = '';
         }
-        const commonUrl = selectedProvider.authorizationUrl + connector + 'client_id=' + selectedProvider.clientId + '&redirect_uri=' + redirectUri + '&state=' + encodeURIComponent(JSON.stringify(state)) + '&scope=' + encodeURIComponent(scope) + `&response_type=${flow === 'implicit' ? 'token' : 'code'}`;
+        const commonUrl = providerConfig.selectedProvider.authorizationUrl + connector + 'client_id=' + providerConfig.selectedProvider.clientId + '&redirect_uri=' + redirectUri + '&state=' + encodeURIComponent(JSON.stringify(state)) + '&scope=' + encodeURIComponent(scope) + `&response_type=${flow === 'implicit' ? 'token' : 'code'}`;
         return commonUrl
     }
     const handleTestClick = async () => {
@@ -595,23 +613,23 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         header["Authorization"] = 'Basic ' + encode(userName + ':' + userPassword)
                     }
                     if (httpAuth === "OAUTH2") {
-                        if (selectedProvider.providerId === '') {
+                        if (providerConfig.selectedProvider.providerId === '') {
                             return handleToastError({ message: "Please select a provider", type: "error" })
                         }
                         let codeVerifier: string;
-                        const clientId = selectedProvider.clientId;
-                        let redirectUri = restImportConfig?.proxy_conf?.base_path + `oauth2/${selectedProvider.providerId}/callback`;
+                        const clientId = providerConfig.selectedProvider.clientId;
+                        let redirectUri = restImportConfig?.proxy_conf?.base_path + `oauth2/${providerConfig.selectedProvider.providerId}/callback`;
                         const responseType = "code";
                         const state = state_val
-                        const scope = selectedProvider.scopes.length > 0 ? selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
+                        const scope = providerConfig.selectedProvider.scopes.length > 0 ? providerConfig.selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
                         let childWindow: any;
                         var authUrl: string
                         const isToken = window.localStorage.getItem(`${providerId}.access_token`);
                         if (isToken) {
                             header['Authorization'] = `Bearer ${isToken}`
                         } else {
-                            if (selectedProvider.oAuth2Pkce && selectedProvider?.oAuth2Pkce?.enabled) {
-                                if (selectedProvider.providerId === "google") {
+                            if (providerConfig.selectedProvider.oAuth2Pkce && providerConfig.selectedProvider?.oAuth2Pkce?.enabled) {
+                                if (providerConfig.selectedProvider.providerId === "google") {
                                     if (window && window?.google) {
                                         const client = window?.google?.accounts.oauth2.initTokenClient({
                                             client_id: clientId,
@@ -635,7 +653,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         client.requestAccessToken();
                                     }
                                 } else {
-                                    const challengeMethod = selectedProvider.oAuth2Pkce.challengeMethod
+                                    const challengeMethod = providerConfig.selectedProvider.oAuth2Pkce.challengeMethod
                                     codeVerifier = generateRandomCodeVerifier();
                                     const data = Uint8Array.from(codeVerifier.split("").map(x => x.charCodeAt(0)))
                                     window.crypto.subtle.digest("SHA-256", data)
@@ -649,15 +667,15 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             console.error("Error calculating code challenge:", error);
                                         });
                                 }
-                            } else if (selectedProvider.oauth2Flow === 'IMPLICIT') {
+                            } else if (providerConfig.selectedProvider.oauth2Flow === 'IMPLICIT') {
                                 childWindow = window.open(constructCommonURL('implicit', scope), "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             } else {
                                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                                authUrl = selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
-                                childWindow = window.open(providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
+                                authUrl = providerConfig.selectedProvider.authorizationUrl + `?client_id=${clientId}&redirect_uri=${(redirectUri)}&response_type=${responseType}&state=${state}&scope=${(scope)}`;
+                                childWindow = window.open(providerConfig.providerAuthURL, "_blank", "toolbar=yes,scrollbars=yes,resizable=yes,top=0,left=0,width=400,height=600");
                             }
                             // providerAuthURL
-                            if ((selectedProvider.providerId === 'google' && !selectedProvider.oAuth2Pkce) || selectedProvider.providerId !== 'google') {
+                            if ((providerConfig.selectedProvider.providerId === 'google' && !providerConfig.selectedProvider.oAuth2Pkce) || providerConfig.selectedProvider.providerId !== 'google') {
                                 const interval = setInterval(() => {
                                     if (childWindow?.closed) {
                                         clearInterval(interval);
@@ -682,7 +700,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     const access_token = window.localStorage.getItem(`${providerId}.access_token`) || null
                                     // const tokenData = JSON.parse(event?.data?.tokenData)?.access_token  //for local testing 
                                     if (access_token) {
-                                        if (selectedProvider?.oAuth2Pkce?.enabled) {
+                                        if (providerConfig.selectedProvider?.oAuth2Pkce?.enabled) {
                                             getAccessToken(access_token as string, codeVerifier)
                                             setloading(false)
                                         } else {
@@ -1056,12 +1074,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const reqParams = {
             grant_type: 'authorization_code',
             code: code,
-            client_id: selectedProvider.clientId,
+            client_id: providerConfig.selectedProvider.clientId,
             code_verifier: codeVerifier,
             redirect_uri: restImportConfig?.proxy_conf?.base_path + 'studio/oAuthCallback.html',
         }
         const configToken: AxiosRequestConfig = {
-            url: selectedProvider.accessTokenUrl,
+            url: providerConfig.selectedProvider.accessTokenUrl,
             "headers": {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
@@ -1076,11 +1094,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const response: any = await Apicall(configToken)
         if (response.status === 200) {
             header['Authorization'] = `Bearer ` + response.data.access_token
-            window.localStorage.setItem(selectedProvider.providerId + ".access_token", response.data.access_token);
+            window.localStorage.setItem(providerConfig.selectedProvider.providerId + ".access_token", response.data.access_token);
             // const currentTimestamp = Math.floor(Date.now() / 1000);
             // const expiresIn = response.data.expires_in
             // const expirationTimestamp = currentTimestamp + expiresIn;
-            // window.sessionStorage.setItem(selectedProvider.providerId + "expires_in", expirationTimestamp);
+            // window.sessionStorage.setItem(providerConfig.selectedProvider.providerId + "expires_in", expirationTimestamp);
             handleRestAPI(header)
         } else {
             header['Authorization'] = `Bearer ` + null
@@ -1207,7 +1225,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             </Grid>
                                             <Grid item md={9} className='select_basic_pw'>
                                                 <Stack direction={'row'}>
-                                                    <TextField sx={{ fontSize: '11px', width: '20em' }} name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' />
+                                                    <TextField type='password' sx={{ fontSize: '11px', width: '20em' }} name="wm-webservice-advanced-password" value={userPassword} onChange={(e) => setuserPassword(e.target.value)} size='small' />
                                                     <i title={translate("PASSWORD")} className="wms wms-help"></i>
                                                 </Stack>
                                             </Grid>
@@ -1344,6 +1362,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 </Grid>
                 <ProviderModal
                     handleOpen={providerOpen}
+                    providerConfig={providerConfig}
+                    updateProviderConfig={updateProviderConfig}
                     handleClose={handleCloseProvider}
                     proxyObj={restImportConfig}
                     isCustomErrorFunc={restImportConfig.error.errorMethod === 'customFunction' ? true : false}
@@ -1351,10 +1371,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     handleSuccessCallback={handleToastError}
                 />
                 <ConfigModel
+                    currentProviderConfig={providerConfig.selectedProvider}
                     handleOpen={configOpen}
+                    updateProviderConfig={updateProviderConfig}
                     handleClose={handleCloseConfig}
                     handleParentModalClose={handleCloseProvider}
-                    providerConf={selectedProvider}
+                    providerConfig={providerConfig}
                     proxyObj={restImportConfig}
                     isCustomErrorFunc={restImportConfig.error.errorMethod === 'customFunction' ? true : false}
                     customFunction={restImportConfig.error.errorFunction}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
-import RestModel from "./components/RestModelDialog"; 
+import RestModel from "./components/RestModelDialog";
 function App() {
   const [open, setOpen] = useState(false);
   const [fullScreenView, setFullScreenView] = useState(false);
@@ -9,7 +9,7 @@ function App() {
   const restDataW = {
     url: "https://jsonplaceholder.typicode.com/posts/{id}",
     httpMethod: "POST",
-    useProxy: true, 
+    useProxy: true,
     httpAuth: "BASIC",
     bodyParams: "{userName:password}",
     userName: "userName",
@@ -99,6 +99,7 @@ function App() {
         config: restDataW,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fullScreenView]);
 
   const handleClose = () => {

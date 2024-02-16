@@ -12,15 +12,19 @@ import clipboardCopy from 'clipboard-copy';
 import { ProviderI, ScopeI } from './ProviderModal';
 import Apicall, { getProviderList } from './common/apicall';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { INotifyMessage, restImportConfigI } from './RestImport'
-import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
-import { useDispatch, useSelector } from 'react-redux';
+import { INotifyMessage, IProviderConfig, restImportConfigI } from './RestImport'
 import FallbackSpinner from './common/loader';
 import '../../i18n';
 
-export default function ConfigModel({ handleOpen, handleClose, handleParentModalClose, providerConf, proxyObj, configModel, isCustomErrorFunc, customFunction, handleSuccessCallback }:
-    { handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConf?: ProviderI | null, proxyObj: restImportConfigI, configModel?: boolean, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void, handleSuccessCallback: (msg: INotifyMessage, response?: AxiosResponse) => void }) {
-    const dispatch = useDispatch();
+export default function ConfigModel(
+    { handleOpen, handleClose, handleParentModalClose, providerConfig, proxyObj, configModel, isCustomErrorFunc, currentProviderConfig,
+        customFunction, handleSuccessCallback, updateProviderConfig }:
+        {
+            handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConfig: IProviderConfig, proxyObj: restImportConfigI,
+            configModel?: boolean, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void,
+            handleSuccessCallback: (msg: INotifyMessage, response?: AxiosResponse) => void, currentProviderConfig: ProviderI | null,
+            updateProviderConfig: (key: string, value: any) => void
+        }) {
     const { t: translate } = useTranslation();
     const [flow, setFlow] = useState('AUTHORIZATION_CODE')
     const [sendTokenAs, setsendTokenAs] = useState('HEADER')
@@ -42,44 +46,46 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
     const [responseType, setresponseType] = useState('')
     const [showAlert, setShowAlert] = useState(false)
     const [alertMsg, setAlertMsg] = useState<INotifyMessage>({ message: '', type: 'error' })
-    const customProviderList = useSelector((store: any) => store.slice.providerList)
+    const customProviderList = providerConfig.providerList
+
     useEffect(() => {
         setBasePath(proxyObj?.proxy_conf?.base_path)
     }, [proxyObj])
 
     useEffect(() => {
-        let callbackurl = providerConf
-            ? basePath + `studio/services/oauth2/${providerConf.providerId}/callback`
+        let callbackurl = currentProviderConfig?.providerId
+            ? basePath + `studio/services/oauth2/${currentProviderConfig?.providerId}/callback`
             : providerId
                 ? basePath + `studio/services/oauth2/${providerId}/callback`
                 : basePath + `studio/services/oauth2/{providerId}/callback`
         if (PKCE || flow === 'IMPLICIT') callbackurl = basePath + 'studio/oAuthCallback.html'
         setCallbackUrl(callbackurl)
-    }, [providerConf, providerId, PKCE, flow, basePath])
+    }, [currentProviderConfig, providerId, PKCE, flow, basePath, providerConfig.selectedProvider.providerId])
 
     useEffect(() => {
-        dispatch(setProviderAuthorizationUrl(provider_auth_url))
+        // dispatch(setProviderAuthorizationUrl(provider_auth_url))
+        updateProviderConfig("providerAuthURL", provider_auth_url)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [provider_auth_url])
 
     useEffect(() => {
-        setsendTokenAs(providerConf ? providerConf.sendAccessTokenAs : 'HEADER' as string)
-        setProviderID(providerConf?.providerId as string)
-        setAuthorizationUrl(providerConf?.authorizationUrl as string)
-        setAccessTokenUrl(providerConf?.accessTokenUrl || "")
-        setPKCE(providerConf?.oAuth2Pkce?.enabled || false);
-        setCodeMethod(providerConf?.oAuth2Pkce?.challengeMethod || "S256")
-        setClientId(providerConf?.clientId || "")
-        setClientSecret(providerConf?.clientSecret || "")
-        setresponseType(providerConf?.responseType || "token")
-    }, [providerConf])
+        setsendTokenAs(currentProviderConfig ? currentProviderConfig.sendAccessTokenAs : 'HEADER' as string)
+        setProviderID(currentProviderConfig?.providerId as string)
+        setAuthorizationUrl(currentProviderConfig?.authorizationUrl as string)
+        setAccessTokenUrl(currentProviderConfig?.accessTokenUrl || "")
+        setPKCE(currentProviderConfig?.oAuth2Pkce?.enabled || false);
+        setCodeMethod(currentProviderConfig?.oAuth2Pkce?.challengeMethod || "S256")
+        setClientId(currentProviderConfig?.clientId || "")
+        setClientSecret(currentProviderConfig?.clientSecret || "")
+        setresponseType(currentProviderConfig?.responseType || "token")
+    }, [currentProviderConfig])
 
     useEffect(() => {
         setscopes([])
         setShowAlert(false)
         setAlertMsg({ message: '', type: 'error' })
         const scope_value: ScopeI[] = []
-        providerConf?.scopes.forEach((scope) => {
+        currentProviderConfig?.scopes.forEach((scope) => {
             return scope_value.push({
                 checked: true,
                 value: scope.value,
@@ -87,7 +93,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
             });
         })
         setscopes(scope_value)
-        setFlow(providerConf?.oauth2Flow || "AUTHORIZATION_CODE")
+        setFlow(currentProviderConfig?.oauth2Flow || "AUTHORIZATION_CODE")
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleOpen])
 
@@ -150,7 +156,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         const providerExists = customProviderList.some((provider: { providerId: string; }) => provider.providerId === providerId);
         if (!providerId) {
             handleErrorMsg({ message: translate("PROVIDERID_ALERT"), type: 'error' })
-        } else if (providerExists && !providerConf) {
+        } else if (providerExists && !currentProviderConfig) {
             handleErrorMsg({ message: translate('PROVIDER') + ` ("${providerId}") ` + translate('ALREADY_EXIST') + `!`, type: 'error' })
         } else if (!authorizationUrl) {
             handleErrorMsg({ message: translate("AUTHORIZATIONURL_ALERT"), type: 'error' })
@@ -201,7 +207,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                     handleProviderList()
                 }
                 handleAuthorizationUrl()
-                dispatch(setSelectedProvider(newProvider))
+                // dispatch(setSelectedProvider(newProvider))
+                updateProviderConfig("selectedProvider", newProvider)
                 handleClose()
                 handleParentModalClose?.()
                 handleSuccessCallback({ message: translate('SUCCESS_MSG'), type: 'success' })
@@ -217,7 +224,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
         try {
             const response = await getProviderList(url);
             const sortedProviders = response.data;
-            dispatch(setproviderList(sortedProviders))
+            updateProviderConfig("providerList", sortedProviders)
+            // dispatch(setproviderList(sortedProviders))
         } catch (error) {
             console.error('Error fetching provider list:', error);
         }
@@ -242,6 +250,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
 
     function handleCloseWConfigProvider() {
         setFlow("AUTHORIZATION_CODE")
+        setProviderID('')
         handleClose()
     }
 
@@ -270,8 +279,8 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         </Grid>
                         <Grid item md={9}>
                             <TextField name="wm-webservice-provider-id-value" sx={{ width: "30em" }} size='small' onChange={handleProviderId}
-                                defaultValue={providerConf?.providerId} InputProps={{
-                                    readOnly: !!providerConf,
+                                defaultValue={currentProviderConfig?.providerId} InputProps={{
+                                    readOnly: !!currentProviderConfig,
                                 }}
                                 fullWidth />
                         </Grid>
@@ -284,7 +293,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     sx={{ width: '30em' }}
                                     value={callback_url}
                                     InputProps={{
-                                        readOnly: !!providerConf,
+                                        readOnly: !!currentProviderConfig,
                                     }}
                                     name="wm-webservice-callback-url-value"
                                     helperText={translate('CALLBACK_iNFO')}
@@ -297,7 +306,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             <Typography>{translate("FLOW")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <FormControl sx={{ width: "30em" }} size='small' disabled={!!providerConf}>
+                            <FormControl sx={{ width: "30em" }} size='small' disabled={!!currentProviderConfig}>
                                 <Select
                                     name="wm-webservice-flow-value"
                                     data-testid="flow"
@@ -354,7 +363,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                             <TextField
                                 name="wm-webservice-authorization-url-value"
                                 sx={{ width: "30em" }} size='small' onChange={handleAuthorizationURL}
-                                defaultValue={providerConf?.authorizationUrl} />
+                                defaultValue={currentProviderConfig?.authorizationUrl} />
                         </Grid>
                         {flow === 'AUTHORIZATION_CODE' &&
                             <>
@@ -365,7 +374,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                     <TextField
                                         name="wm-webservice-access-token-value"
                                         sx={{ width: "30em" }} size='small' onChange={handleAccessTokenURL}
-                                        defaultValue={providerConf?.accessTokenUrl} />
+                                        defaultValue={currentProviderConfig?.accessTokenUrl} />
                                 </Grid>
                             </>
                         }
@@ -375,7 +384,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                         <Grid item md={9}>
                             <TextField
                                 name="wm-webservice-client-id-value"
-                                sx={{ width: "30em" }} size='small' defaultValue={providerConf?.clientId}
+                                sx={{ width: "30em" }} size='small' defaultValue={currentProviderConfig?.clientId}
                                 onChange={handleClientId} />
                         </Grid>
                         {!PKCE && flow === 'AUTHORIZATION_CODE' && (
@@ -386,7 +395,7 @@ export default function ConfigModel({ handleOpen, handleClose, handleParentModal
                                 <Grid item md={9}>
                                     <TextField
                                         name="wm-webservice-client-secret-value"
-                                        sx={{ width: "30em" }} defaultValue={providerConf?.clientSecret} size='small'
+                                        sx={{ width: "30em" }} defaultValue={currentProviderConfig?.clientSecret} size='small'
                                         onChange={handleClientSecret} />
                                 </Grid>
                             </Grid>

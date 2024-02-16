@@ -9,8 +9,6 @@ import testData, {
   preLoadedProps, getCustomizedProps, responseHeaders, HeaderParamI, eventMessage, getPKCEeventMsg, amazonUserInfoResponse,
   githubOrGoogleUserInfoResponse,
 } from './testdata'
-import { Provider } from 'react-redux'
-import appStore from '../core/components/appStore/Store';
 import { ResponseI } from './mocks/handlers';
 import { AxiosRequestConfig } from 'axios';
 import { httpStatusCodes } from '../core/components/common/common';
@@ -959,9 +957,7 @@ describe("Web Service Modal", () => {
 
 function renderComponent(mockProps: mockPropsI) {
   render(
-    <Provider store={appStore}>
-      <RestImport {...mockProps} />
-    </Provider>
+    <RestImport {...mockProps} />
   );
 }
 

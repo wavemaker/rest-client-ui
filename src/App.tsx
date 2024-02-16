@@ -1,8 +1,6 @@
 import { Stack } from '@mui/material'
 import RestImport from './core/components/RestImport'
 import { restImportConfigI } from './core/components/RestImport'
-import { Provider } from 'react-redux'
-import appStore from './core/components/appStore/Store';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export default function App() {
@@ -66,7 +64,7 @@ export default function App() {
     }],
     setResponse: {
       testing: false,
-    },
+    }, 
     multipartParams: [{
       name: 'few',
       type: 'file',
@@ -97,10 +95,8 @@ export default function App() {
   }
 
   return (
-    <Provider store={appStore}>
-      <Stack className='rest-import-ui'>
-        <RestImport restImportConfig={config} language='en' />
-      </Stack>
-    </Provider>
+    <Stack className='rest-import-ui'>
+      <RestImport restImportConfig={config} language='en' />
+    </Stack>
   )
 }

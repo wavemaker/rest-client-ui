@@ -24,7 +24,7 @@ export function getCurrentDateTime(
   const minute = date.getMinutes();
   const second = date.getSeconds();
   const valueWOTime = `${year}-${month}-${day}`;
-  const valueWTime = `${year}-${month.toString().length === 1 ? "0" + month : month}-${day}T${hour}:${minute}:${second}`;
+  const valueWTime = `${year}-${month.toString().length === 1 ? "0" + month : month}-${day.toString().length === 1 ? "0" + day : day}T${hour.toString().length === 1 ? "0" + hour : hour}:${minute.toString().length === 1 ? "0" + minute : minute}:${second.toString().length === 1 ? "0" + second : second}`;
   const time = `${hour}:${minute}:${second}`;
   let returnValue = "";
 

@@ -5,8 +5,6 @@ import ProviderModal from '../core/components/ProviderModal'
 import { ProviderI } from '../core/components/ProviderModal';
 import { restImportConfigI } from '../core/components/RestImport';
 import { ERROR_MESSAGES, emptyConfig } from './testdata';
-import { Provider } from 'react-redux'
-import appStore from '../core/components/appStore/Store';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 interface mockPropsI {
     handleOpen: boolean,
@@ -16,7 +14,9 @@ interface mockPropsI {
     proxyObj: restImportConfigI,
     isCustomErrorFunc: boolean,
     customFunction: () => void,
-    handleSuccessCallback: () => void
+    handleSuccessCallback: () => void,
+    providerConfig: [],
+    updateProviderConfig: (key: string, value: any) => void
 }
 
 export const ProxyOFFConfig: restImportConfigI = {
@@ -57,7 +57,9 @@ const mockProxyOFFProps: mockPropsI = {
     proxyObj: ProxyOFFConfig,
     isCustomErrorFunc: false,
     customFunction: jest.fn(() => console.log("Toast Error")),
-    handleSuccessCallback: jest.fn(() => console.log("Success Msg"))
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg")),
+    providerConfig: [],
+    updateProviderConfig: jest.fn(() => console.log("Provider Config")),
 }
 
 const proxyObjConfig = emptyConfig
@@ -68,7 +70,9 @@ let mockProps: mockPropsI = {
     proxyObj: proxyObjConfig,
     isCustomErrorFunc: false,
     customFunction: jest.fn(() => console.log("Toast Error")),
-    handleSuccessCallback: jest.fn(() => console.log("Success Msg"))
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg")),
+    providerConfig: [],
+    updateProviderConfig: jest.fn(() => console.log("Provider Config")),
 }
 
 function renderComponent(type?: string) {
@@ -79,7 +83,7 @@ function renderComponent(type?: string) {
     } else if (type === 'withErrorAPIAfterSelectProvider') {
         copymockProps.proxyObj.proxy_conf['authorizationUrl'] = '/authorizationUrlError'
     }
-    render(<Provider store={appStore}><ProviderModal {...copymockProps} /></Provider >)
+    render(<ProviderModal {...copymockProps} />)
 }
 
 
@@ -170,7 +174,7 @@ describe("Provider Modal", () => {
     }, 80000);
 
     it("Default Provider List Proxy OFF", async () => {
-        render(<Provider store={appStore}><ProviderModal {...mockProxyOFFProps} /></Provider >)
+        render(<ProviderModal {...mockProxyOFFProps} />)
         const select_provider = await screen.findByText(/google/i, {}, { timeout: 1000 })
         expect(select_provider).toBeInTheDocument();
         await user.click(select_provider);
