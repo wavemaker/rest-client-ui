@@ -2,7 +2,8 @@ import React, { ChangeEvent, ReactNode, SyntheticEvent, useEffect, useRef, useSt
 import {
     Box, FormControl, FormLabel, Grid, MenuItem, Paper, Select, SelectChangeEvent, Stack, Switch, Tab, Table, TableBody, TableCell,
     TableContainer, TableHead, TableRow, Tabs, TextField, Typography, Button, TextareaAutosize, Alert, createTheme, ThemeProvider,
-    useMediaQuery
+    useMediaQuery,
+    Tooltip
 } from '@mui/material'
 import ProviderModal, { ProviderI } from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled, tableHeaderStyle, tableRowStyle } from './Table'
@@ -1166,7 +1167,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('USE_PROXY')}</Typography>
                                     <Switch name="wm-webservice-use-proxy" data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
-                                    <i title={translate("USEPROXY_TOOLTIP")} className="wms wms-help"></i>
+                                    <Tooltip
+                                        title={
+                                            <span dangerouslySetInnerHTML={{ __html: translate("USEPROXY_TOOLTIP") }} style={{ fontSize: "13px" }}></span>
+                                        }
+                                    >
+                                        <i className="wms wms-help"></i>
+                                    </Tooltip>
                                 </Stack>
                             </Grid>
                             {!useProxy &&
