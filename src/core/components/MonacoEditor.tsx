@@ -28,7 +28,8 @@ const MonacoEditor = ({ editorRef, initialValue, url, initialLanguage, viewMode 
                     minimap: {
                         enabled: false,
                     },
-                    scrollBeyondLastLine: false
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on',
                 });
                 editorRef.current = editorInstance;
             });

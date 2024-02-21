@@ -820,7 +820,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 }
             else
                 responseValue = {
-                    data: JSON.stringify(response?.data?.errors?.error[0]?.parameters[0], undefined, 2) ||
+                    data: JSON.stringify(response?.response?.data?.errors?.error[0]?.parameters[0], undefined, 2) ||
                         response?.response?.data.status + " " + httpStatusCodes.get(response?.response?.data.status),
                     status: response?.response?.data.status, headers: response?.response?.headers
                 }

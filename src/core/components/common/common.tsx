@@ -177,12 +177,10 @@ export function removeDuplicatesByComparison(
 export function findDuplicatesByComparison(concernedArray: any[], collection: any[], key: string) {
   return concernedArray.filter(obj => collection.some(objFromCollection => objFromCollection[key] === obj[key]))
 }
-
-export const isValidUrl = (urlString: string) => {
-  const urlPattern = /^(https?|ftp):\/\/(-\.)?([^\s/?.#]+\.?)+(\/[^\s]*)?$/i
-  return urlPattern.test(urlString);
-};
-
+export function isValidUrl(url: string) {
+  const regex = /^(https?:\/\/(www\.)?|www\.)([^\s/?.#]+\.?)+(\/[^\s]*)?$/i;
+  return regex.test(url);
+}
 export function retrieveQueryDetailsFromURL(url: string) {
   const query = url?.split('?')[1]
   const queries = query?.split('&')
