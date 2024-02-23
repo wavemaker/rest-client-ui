@@ -31,6 +31,7 @@ export interface BodyParamsI {
     type: string
     value: string | File
     filename?: string
+    contentType: string
 }
 
 
@@ -464,9 +465,10 @@ export function MultipartTable(
         const valueClone = [...value]
         valueClone.forEach((data, index) => {
             if (index === currentIndex) {
-                data.type = event.target.value
+                data.type = event.target.value === 'file' ? 'file' : 'string'
                 data.value = ''
                 data.filename = ''
+                data.contentType = event.target.value
             }
         })
         setValue(valueClone)
@@ -490,6 +492,7 @@ export function MultipartTable(
                 if (dataIndex === currentIndex) {
                     data.filename = files[0].name;
                     data.value = files[0];
+                    data.contentType = 'file'
                 }
             });
             setValue(valueClone);
@@ -512,7 +515,7 @@ export function MultipartTable(
             if (allDuplicates().length > 0)
                 return handleToastError({ message: `parameter "${allDuplicates()[0].name}" already exists`, type: 'error' })
             valueClone.push({
-                name: '', value: "", type: 'file', filename: ''
+                name: '', value: "", type: 'file', filename: '', contentType: 'file'
             })
             setValue(valueClone)
         } else {
@@ -551,11 +554,11 @@ export function MultipartTable(
                                 <FormControl size='small' fullWidth={true}>
                                     <InputLabel>{translate('SELECT') + " " + translate('TYPE')}</InputLabel>
                                     <Select name="wm-webservice-param-type" sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }}
-                                        onChange={(e) => handleChangeType(e, index)} value={data.type}
+                                        onChange={(e) => handleChangeType(e, index)} value={data.contentType}
                                         label={translate('SELECT') + " " + translate('TYPE')} data-testid="multipart-type">
                                         <MenuItem title={translate("FILE")} value={'file'}>{translate("FILE")}</MenuItem>
                                         <MenuItem title={translate("TEXT")} value={'text'}>{translate("TEXT")}</MenuItem>
-                                        <MenuItem title={translate("PLAINTEXT")} value={'plaintext'}>{translate("PLAINTEXT")}</MenuItem>
+                                        <MenuItem title={translate("PLAINTEXT")} value={"text/plain"}>{translate("PLAINTEXT")}</MenuItem>
                                         <MenuItem title={translate("JSON") + " (" + translate("APPLICATION/JSON") + ")"} value={'application/json'}>{translate("JSON") + "  (" + translate("APPLICATION/JSON") + ")"}</MenuItem>
                                     </Select>
                                 </FormControl>

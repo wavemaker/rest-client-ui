@@ -321,13 +321,6 @@ const configWithData: restImportConfigI = {
       value: "Bearer ibYkjnuIBNkbhk782b",
     },
   ],
-  multipartParams: [
-    {
-      name: "post",
-      type: "file",
-      value: "fe",
-    },
-  ],
   contentType: "multipart/form-data",
   proxy_conf: {
     base_path: "http://localhost:4000/",

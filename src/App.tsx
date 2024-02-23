@@ -15,9 +15,11 @@ export default function App() {
       authorizationUrl: "authorizationUrl",
     },
     useProxy: true,
-    url: "https://jsonplaceholder.typicode.com/posts/3",
+    httpMethod: 'POST',
+    url: "https://ap16.salesforce.com/services/oauth2/token",
     projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
     loggenInUserId: "fe",
+    contentType: 'multipart/form-data',
     appEnvVariables: [{
       name: "gwe",
       value: "vew",
@@ -57,18 +59,42 @@ export default function App() {
       type: "DATE",
       value: "vew"
     },],
+    multipartParams: [
+      {
+        name: 'username',
+        value: "sowmya.vootukuri@wavemaker.com",
+        type: 'string',
+        contentType: "text",
+      },
+      {
+        name: 'password',
+        value: "salesforce1PZOViGiUsNE75YWZkzYd6xMRu",
+        type: 'string',
+        contentType: "text/plain",
+      },
+      {
+        name: 'client_secret',
+        value: "E829FBA5784C5591E1105A75ABCB2CD1624B60B443150FB98D3650D37E96AC44",
+        type: 'string',
+        contentType: "text",
+      },
+      {
+        name: 'client_id',
+        value: "3MVG9n_HvETGhr3D3gNFyPk0_DyOexJx0TYjZxuPpJrOql2YS3ReaYYtboe34HhKqkfm8hhoEqmNhqlwLF8s4",
+        type: 'string',
+        contentType: "text",
+      },
+      {
+        name: 'grant_type',
+        value: "password",
+        type: 'string',
+        contentType: "text",
+      },
+    ],
     queryParams: [{
       name: "jh",
       type: "gwe",
       value: "vew"
-    }],
-    setResponse: {
-      testing: false,
-    }, 
-    multipartParams: [{
-      name: 'few',
-      type: 'file',
-      value: ''
     }],
     error: {
       errorFunction: (msg: string, response?: AxiosResponse) => {
@@ -88,10 +114,8 @@ export default function App() {
     },
     setServiceName: '',
     viewMode: false,
-    setResponseHeaders: { kingkong: "test" },
     monacoEditorURL: undefined as any,
     responseBlockHeight: 550,
-
   }
 
   return (

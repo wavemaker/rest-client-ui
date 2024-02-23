@@ -255,7 +255,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [headerParams, setheaderParams] = useState<HeaderAndQueryI[]>(restImportConfig?.headerParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
     const [queryParams, setqueryParams] = useState<HeaderAndQueryI[]>(restImportConfig?.queryParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
     const [bodyParams, setbodyParams] = useState(restImportConfig?.bodyParams || '')
-    const [multipartParams, setmultipartParams] = useState<BodyParamsI[]>(restImportConfig?.multipartParams?.concat({ name: '', value: '', type: 'file', filename: '' }) || [{ name: '', value: '', type: 'file', filename: '' }])
+    const [multipartParams, setmultipartParams] = useState<BodyParamsI[]>(restImportConfig?.multipartParams?.concat({ name: '', value: '', type: 'file', filename: '', contentType: 'file' }) || [{ name: '', value: '', type: 'file', filename: '', contentType: 'file' }])
     const [pathParams, setpathParams] = useState<PathParamsI[]>([])
     const [contentType, setcontentType] = useState(restImportConfig?.contentType || 'application/json')
     const [addCustomType, setaddCustomType] = useState(false)
@@ -737,15 +737,15 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             multipartParams.forEach((data, index) => {
                                 if (data.name && data.value) {
                                     if (data.type === 'file') {
-                                        formDataOject.append(data.name, data.value)
+                                        formDataOject.append(data.name, new Blob([data.value], { type: 'application/json' }))
                                         multiParamInfoList.push({ name: data.name, type: data.type, list: true })
                                     } else {
-                                        formDataOject.append(data.name, new Blob([data.value], { type: 'application/json' }))
-                                        multiParamInfoList.push({ name: data.name, type: 'string', list: false, testValue: data.value, contentType: data.type })
+                                        formDataOject.append(data.name, data.contentType === 'text' ? data.value : new Blob([data.value], { type: 'application/json' }))
+                                        multiParamInfoList.push({ name: data.name, type: data.type, list: false, testValue: data.value, contentType: ['string', 'file'].includes(data.type) ? undefined : data.contentType })
                                     }
                                 }
                                 if (index === multipartParams.length - 1 && data.name.trim() !== '' && data.value) {
-                                    setmultipartParams([...multipartParams, { name: '', value: '', type: 'file' }])
+                                    setmultipartParams([...multipartParams, { name: '', value: '', type: 'file', contentType: 'file' }])
                                 }
                             })
                             jsonObject['multiParamInfoList'] = multiParamInfoList
@@ -973,7 +973,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     obj['format'] = param.type
                 }
             }
-
             return settingsUploadResponseData
         }
         else
