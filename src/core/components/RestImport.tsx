@@ -740,8 +740,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         formDataOject.append(data.name, new Blob([data.value], { type: 'application/json' }))
                                         multiParamInfoList.push({ name: data.name, type: data.type, list: true })
                                     } else {
-                                        formDataOject.append(data.name, data.contentType === 'text' ? data.value : new Blob([data.value], { type: 'application/json' }))
-                                        multiParamInfoList.push({ name: data.name, type: data.type, list: false, testValue: data.value, contentType: ['string', 'file'].includes(data.type) ? undefined : data.contentType })
+                                        formDataOject.append(data.name, data.contentType === 'text' ? data.value : new Blob([data.value], { type: data.contentType }))
+                                        multiParamInfoList.push({ name: data.name, type: data.type, list: false, testValue: data.value, contentType: data.contentType === 'text' ? undefined : data.contentType })
                                     }
                                 }
                                 if (index === multipartParams.length - 1 && data.name.trim() !== '' && data.value) {
@@ -750,8 +750,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             })
                             jsonObject['multiParamInfoList'] = multiParamInfoList
                         }
-                        const blob = new Blob([JSON.stringify(jsonObject)], { type: 'application/json' });
-                        formDataOject.append('wm_httpRequestDetails', blob)
+                        // const blob = new Blob([JSON.stringify(jsonObject)], { type: 'application/json' });
+                        // formDataOject.append('wm_httpRequestDetails', blob)
                         const data = contentTypeCheck ? formDataOject : jsonObject
                         return data
                     }
