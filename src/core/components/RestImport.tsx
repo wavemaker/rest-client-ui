@@ -43,6 +43,7 @@ export interface restImportConfigI {
     projectId: string
     httpMethod?: "GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT"
     useProxy?: boolean
+    withCredentials?: boolean
     httpAuth?: {
         type: "NONE" | "BASIC" | "OAUTH2",
         providerId?: string,
@@ -247,7 +248,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [apiURL, setapiURL] = useState(restImportConfig?.url || '')
     const [httpMethod, sethttpMethod] = useState<"GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT">(restImportConfig?.httpMethod || 'GET')
     const [useProxy, setuseProxy] = useState(restImportConfig?.useProxy === true ? true : false)
-    const [withCredentials, setwithCredentials] = useState(false)
+    const [withCredentials, setwithCredentials] = useState(restImportConfig?.withCredentials)
     const [requestTabValue, setrequestTabValue] = useState(0)
     const [responseTabValue, setresponseTabValue] = useState(0)
     const [httpAuth, sethttpAuth] = useState<"NONE" | "BASIC" | "OAUTH2">(restImportConfig?.httpAuth?.type || 'NONE')
