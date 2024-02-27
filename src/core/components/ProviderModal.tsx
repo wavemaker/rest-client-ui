@@ -47,7 +47,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
     const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false })
     const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false }])
     const [defaultProviderIds, setDefaultProviderId] = useState<string[]>([])
-    const providers = providerConfig.providerList
+    let providers = providerConfig.providerList 
 
     useEffect(() => {
         if (proxyObj.httpAuth?.type === 'OAUTH2') {
@@ -63,11 +63,11 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    useEffect(() => {
+    useEffect(() => { 
         handleDefaultProviderList()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [providers])
-    
+
     useEffect(() => {
         if (currentProvider?.isConfigured) {
             handleClose()
@@ -118,7 +118,8 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
             const sortedProviders = response.data.map((provider: { isConfigured: boolean; providerId: any; }) => {
                 provider.isConfigured = true;
                 return provider;
-            }) || [];
+            }) || []
+            providers = sortedProviders
             updateProviderConfig("providerList", sortedProviders)
         } catch (error) {
             console.error('Error fetching provider list:', error);

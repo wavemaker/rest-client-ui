@@ -37,6 +37,7 @@ export interface IProviderConfig {
     providerList: []
     configOpen: boolean
     providerOpen: boolean
+    isConfigured: boolean
 }
 export interface restImportConfigI {
     url?: string
@@ -69,6 +70,7 @@ export interface restImportConfigI {
     appEnvVariables: HeaderAndQueryI[],
     monacoEditorURL: string,
     responseBlockHeight?: number,
+    withCredentials?: boolean,
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse, settingsUploadResponse?: any) => void,
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
@@ -242,12 +244,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const state_val = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ=="
     const httpMethods = ["GET", "POST", "DELETE", "HEAD", "PATCH", "PUT"]
     const httpAuthTypes = ["NONE", 'BASIC', 'OAUTH2']
-    const defaultValueforHandQParams = { name: '', value: '', type: 'string' }
+    const defaultValueforHandQParams: HeaderAndQueryI = { name: '', value: '', type: 'string' }
+    const defaultValueforMultipartParams: BodyParamsI = { name: '', value: '', type: 'file', filename: '', contentType: 'file' }
     const { t: translate, i18n } = useTranslation();
     const [apiURL, setapiURL] = useState(restImportConfig?.url || '')
     const [httpMethod, sethttpMethod] = useState<"GET" | "POST" | "DELETE" | "HEAD" | "PATCH" | "PUT">(restImportConfig?.httpMethod || 'GET')
     const [useProxy, setuseProxy] = useState(restImportConfig?.useProxy === true ? true : false)
-    const [withCredentials, setwithCredentials] = useState(false)
+    const [withCredentials, setwithCredentials] = useState(restImportConfig.withCredentials || false)
     const [requestTabValue, setrequestTabValue] = useState(0)
     const [responseTabValue, setresponseTabValue] = useState(0)
     const [httpAuth, sethttpAuth] = useState<"NONE" | "BASIC" | "OAUTH2">(restImportConfig?.httpAuth?.type || 'NONE')
@@ -255,7 +258,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [headerParams, setheaderParams] = useState<HeaderAndQueryI[]>(restImportConfig?.headerParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
     const [queryParams, setqueryParams] = useState<HeaderAndQueryI[]>(restImportConfig?.queryParams?.concat(defaultValueforHandQParams) || [defaultValueforHandQParams])
     const [bodyParams, setbodyParams] = useState(restImportConfig?.bodyParams || '')
-    const [multipartParams, setmultipartParams] = useState<BodyParamsI[]>(restImportConfig?.multipartParams?.concat({ name: '', value: '', type: 'file', filename: '', contentType: 'file' }) || [{ name: '', value: '', type: 'file', filename: '', contentType: 'file' }])
+    const [multipartParams, setmultipartParams] = useState<BodyParamsI[]>(restImportConfig?.multipartParams?.concat(defaultValueforMultipartParams) || [defaultValueforMultipartParams])
     const [pathParams, setpathParams] = useState<PathParamsI[]>([])
     const [contentType, setcontentType] = useState(restImportConfig?.contentType || 'application/json')
     const [addCustomType, setaddCustomType] = useState(false)
@@ -279,7 +282,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
         providerAuthURL: "",
         providerList: [],
         configOpen: false,
-        providerOpen: false
+        providerOpen: false,
+        isConfigured: false,
     })
     var multiParamInfoList: any[] = []
     var oAuthRetry = true
@@ -429,6 +433,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const handleChangehttpMethod = (event: SelectChangeEvent) => {
         sethttpMethod(event.target.value as any)
         handleChangeHeaderTabs(null as any, 0)
+        setmultipartParams([defaultValueforMultipartParams])
+        setcontentType('application/json')
     }
     const handleChangeResponseTabs = (_event: any, newValue: number) => {
         newValue === 0 ? restImportConfig.hideMonacoEditor(false) : restImportConfig.hideMonacoEditor(true)
@@ -738,15 +744,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 if (data.name && data.value) {
                                     if (data.type === 'file') {
                                         formDataOject.append(data.name, new Blob([data.value], { type: 'application/json' }))
-                                        multiParamInfoList.push({ name: data.name, type: data.type, list: true })
+                                        multiParamInfoList.push({ name: data.name, type: 'file', list: true, contentType: undefined, testValue: undefined })
                                     } else {
-                                        formDataOject.append(data.name, data.contentType === 'text' ? data.value : new Blob([data.value], { type: 'application/json' }))
-                                        multiParamInfoList.push({ name: data.name, type: data.type, list: false, testValue: data.value, contentType: ['string', 'file'].includes(data.type) ? undefined : data.contentType })
+                                        formDataOject.append(data.name, data.contentType === 'text' ? data.value : new Blob([data.value], { type: data.contentType }))
+                                        multiParamInfoList.push({ name: data.name, type: data.type, list: false, testValue: data.value, contentType: data.contentType === 'text' ? undefined : data.contentType })
                                     }
                                 }
-                                if (index === multipartParams.length - 1 && data.name.trim() !== '' && data.value) {
+                                if (index === multipartParams.length - 1 && data.name.trim() !== '' && data.value)
                                     setmultipartParams([...multipartParams, { name: '', value: '', type: 'file', contentType: 'file' }])
-                                }
                             })
                             jsonObject['multiParamInfoList'] = multiParamInfoList
                         }
@@ -1180,7 +1185,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                         <Typography>{translate('WITH_CREDENTIALS')}</Typography>
                                         <Switch name="wm-webservice-with-credentials" data-testid="with-credentials" checked={withCredentials} onChange={handleChangeWithCredentials} />
-                                        <i title={'Check this if the cookies from the endpoint API should be set and honored by the browser.'} className="wms wms-help"></i>
+                                        <Tooltip
+                                            title={
+                                                <span dangerouslySetInnerHTML={{ __html: translate("WITH_CREDENTIALS_TOOLTIP") }} style={{ fontSize: "13px" }}></span>
+                                            }
+                                        >
+                                            <i className="wms wms-help"></i>
+                                        </Tooltip>
                                     </Stack>
                                 </Grid>
                             }

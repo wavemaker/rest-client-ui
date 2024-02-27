@@ -102,5 +102,6 @@
   "JSON": "JSON",
   "PKCE_USE": "PKCE is a technique for clients to mitigate the threat of having the authorization code intercepted. If your oAuth provider supports PKCE, you can enable it here.",
   "CODE_CHALLENGE": "Code Challenge method which your oAuth provider supports for PKCE.",
-  "USEPROXY_TOOLTIP": "Disable the Use Proxy to make a direct call to the target API for bypassing the proxy server. There may be issues if the API does not allow Cross Origin Resource Sharing.<br><br><u>Note</u>: \nUse Proxy should be enabled if you want to configure a Header or Query param as a Server Side Property. A server side param is sent from the proxy server and is hidden from the UI."
+  "USEPROXY_TOOLTIP": "Disable the Use Proxy to make a direct call to the target API for bypassing the proxy server. There may be issues if the API does not allow Cross Origin Resource Sharing.<br><br><u>Note</u>: \nUse Proxy should be enabled if you want to configure a Header or Query param as a Server Side Property. A server side param is sent from the proxy server and is hidden from the UI.",
+  "WITH_CREDENTIALS_TOOLTIP": "Check this if the cookies from the endpoint API should be set and honored by the browser."
 }
