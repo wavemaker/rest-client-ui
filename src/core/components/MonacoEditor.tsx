@@ -33,9 +33,6 @@ const MonacoEditor = ({ editorRef, initialValue, url, initialLanguage, viewMode 
                 });
                 editorRef.current = editorInstance;
             });
-            window.addEventListener('resize', function () {
-                editorRef?.current?.layout();
-            });
         };
         loadMonaco();
         // eslint-disable-next-line react-hooks/exhaustive-deps
