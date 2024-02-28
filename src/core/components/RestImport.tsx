@@ -1259,7 +1259,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                             <i onClick={() => setConfigOpen(true)} title={translate("Edit Provider")} className='wms wms-edit'></i>
                                                         )
                                                     }
-                                                    <Button className='select_provider_btn' name='wm-webservice-select-provider' onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
+                                                    <Button className='select_provider_btn' name='wm-webservice-select-provider' onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{providerId ? translate("CHANGE_PROVIDER") : translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
                                                 </Stack>
                                             </Grid>
                                         </>}
@@ -1287,7 +1287,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                 </FormControl>
                                                 <i title={translate("Choose appropriate content type")} className="wms wms-help"></i>
                                                 {addCustomType ? <Stack direction={'row'}>
-                                                    <TextField name="wm-webservice-new-content-type" value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />+3
+                                                    <TextField name="wm-webservice-new-content-type" value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
                                                     <i onClick={() => { setnewContentType(''); setaddCustomType(false) }} title={translate("CLOSE")} className='wms wms-close'></i>
                                                     <i onClick={() => handleAddCustomContentType()} title={translate("ADD")} className='wms wms-done'></i>
                                                 </Stack> :
