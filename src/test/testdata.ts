@@ -109,7 +109,7 @@ export const githubOrGoogleUserInfoResponse = {
   family_name: "Doe",
   picture: "https://lh3.gitgoogleusercontent.com/a/ACg8ogAJ47YWegWNFpw=s96-c",
   locale: "en",
-}; 
+};
 export const amazonUserInfoResponse = {
   id: "1024312046741520124",
 };
@@ -275,22 +275,12 @@ export const emptyConfig: restImportConfigI = {
     proxy_path: "restimport",
     list_provider: "get-default-provider",
     getprovider: "getprovider",
+    settingsUpload: "",
     addprovider: "addprovider",
     authorizationUrl: "authorizationUrl",
   },
   projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
-  state_val:
-    "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
-  default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
-  oAuthConfig: {
-    base_path: "https://www.wavemakeronline.com/studio/services",
-    proxy_path: "/proxy_path",
-    project_id: "",
-    list_provider: "/oauth2/providers/default",
-    getprovider: "/projects/oauth2/providers", // /projects/{projectID}/oauth2/providers
-    addprovider: "/projects/oauth2/addprovider", // /projects/{projectID}/oauth2/providers
-    authorizationUrl: "/projects/oauth2/authorizationUrl", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
-  },
+  appEnvVariables: [],
   error: {
     errorFunction: (msg: string) => {
       alert(msg);
@@ -298,12 +288,16 @@ export const emptyConfig: restImportConfigI = {
     errorMessageTimeout: 5000,
     errorMethod: "default",
   },
-  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {},
-  hideMonacoEditor: (value: boolean) => {},
-  getServiceName(value: string) {},
+  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => { },
+  hideMonacoEditor: (value: boolean) => { },
+  getServiceName(value: string) { },
+  getUseProxy(value) {
+    return value
+  },
   setServiceName: "",
   setResponseHeaders: { namespace: "test" },
   viewMode: false,
+  monacoEditorURL: "",
 };
 export const mockEmptyProps: mockPropsI = {
   language: "en",
@@ -319,18 +313,12 @@ const configWithData: restImportConfigI = {
   projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
   userName: "Ardella",
   userPassword: "HBubkbai89",
+  appEnvVariables: [],
   headerParams: [
     {
       name: "Authorization",
       type: "string",
       value: "Bearer ibYkjnuIBNkbhk782b",
-    },
-  ],
-  multipartParams: [
-    {
-      name: "post",
-      type: "file",
-      value: "fe",
     },
   ],
   contentType: "multipart/form-data",
@@ -340,19 +328,8 @@ const configWithData: restImportConfigI = {
     list_provider: "get-default-provider",
     getprovider: "getprovider_error",
     addprovider: "addprovider",
+    settingsUpload: "",
     authorizationUrl: "authorizationUrl",
-  },
-  state_val:
-    "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
-  default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
-  oAuthConfig: {
-    base_path: "https://www.wavemakeronline.com/studio/services",
-    proxy_path: "",
-    project_id: "",
-    list_provider: "/oauth2/providers/default",
-    getprovider: "", // /projects/{projectID}/oauth2/providers
-    addprovider: "", // /projects/{projectID}/oauth2/providers
-    authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
   },
   error: {
     errorFunction: (msg) => {
@@ -361,12 +338,17 @@ const configWithData: restImportConfigI = {
     errorMethod: "toast",
     errorMessageTimeout: 5000,
   },
-  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => {},
-  hideMonacoEditor: (value: boolean) => {},
-  getServiceName(value: string) {},
+  handleResponse: (requset: AxiosRequestConfig, response?: AxiosResponse) => { },
+  hideMonacoEditor: (value: boolean) => { },
+  getServiceName(value: string) { },
+  getUseProxy(value) {
+    console.log(value)
+    return value
+  },
   setServiceName: "",
   viewMode: false,
   setResponseHeaders: { namespace: "test" },
+  monacoEditorURL: "",
 };
 
 export const preLoadedProps: mockPropsI = {

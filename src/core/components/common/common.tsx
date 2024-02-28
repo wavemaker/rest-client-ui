@@ -24,7 +24,7 @@ export function getCurrentDateTime(
   const minute = date.getMinutes();
   const second = date.getSeconds();
   const valueWOTime = `${year}-${month}-${day}`;
-  const valueWTime = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+  const valueWTime = `${year}-${month.toString().length === 1 ? "0" + month : month}-${day.toString().length === 1 ? "0" + day : day}T${hour.toString().length === 1 ? "0" + hour : hour}:${minute.toString().length === 1 ? "0" + minute : minute}:${second.toString().length === 1 ? "0" + second : second}`;
   const time = `${hour}:${minute}:${second}`;
   let returnValue = "";
 
@@ -177,21 +177,10 @@ export function removeDuplicatesByComparison(
 export function findDuplicatesByComparison(concernedArray: any[], collection: any[], key: string) {
   return concernedArray.filter(obj => collection.some(objFromCollection => objFromCollection[key] === obj[key]))
 }
-
-export const isValidUrl = (urlString: string) => {
-  const urlPattern = new RegExp(
-    "^(https?:\\/\\/)?" + // validate protocol
-    "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // validate domain name
-    "((\\d{1,3}\\.){3}\\d{1,3}))" + // validate OR ip (v4) address
-    "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // validate port and path
-    "(\\?([;&a-z\\d%_.~+=-]*,?)+)?" + // validate query string
-    "(\\#[-a-z\\d_]*)?$",
-    "i"
-  ); // validate fragment locator'
-
-  return urlPattern.test(urlString);
-};
-
+export function isValidUrl(url: string) {
+  const regex = /^(https?:\/\/(www\.)?|www\.)([^\s/?.#]+\.?)+(\/[^\s]*)?$/i;
+  return regex.test(url);
+}
 export function retrieveQueryDetailsFromURL(url: string) {
   const query = url?.split('?')[1]
   const queries = query?.split('&')
@@ -226,4 +215,14 @@ export function constructCommaSeparatedUniqueQueryValuesString(valueCollection: 
   const uniqueArray = valueCollection.filter((value, index) => value && valueCollection.indexOf(value) === index)
   const valueToSet = uniqueArray.join(',')
   return valueToSet
+}
+
+export function checkTypeForParameter(type: string): "SERVER" | "ENVIRONMENT" | "BASIC" {
+  const UITypes = ['boolean', 'date', 'date-time', 'double', 'float', 'int32', 'int64', 'string']
+  const ServerSideProperties = ['DATE', 'DATETIME', 'TIME', 'TIMESTAMP', 'USER_ID', 'USER_NAME']
+  let value: "SERVER" | "ENVIRONMENT" | "BASIC" = "BASIC"
+  if (UITypes.includes(type)) value = "BASIC"
+  else if (ServerSideProperties.includes(type)) value = "SERVER"
+  else value = "ENVIRONMENT"
+  return value
 }

@@ -3,17 +3,22 @@ import '@testing-library/jest-dom';
 import user from '@testing-library/user-event'
 import ConfigModel from '../core/components/ConfigModel'
 import { ProviderI } from '../core/components/ProviderModal';
-import { restImportConfigI } from '../core/components/RestImport';
+import { IProviderConfig, restImportConfigI } from '../core/components/RestImport';
 import { ERROR_MESSAGES, SEND_ACCESSTOKEN, emptyConfig } from './testdata';
-import { Provider } from 'react-redux'
-import appStore from '../core/components/appStore/Store';
 
 interface mockPropsI {
     handleOpen: boolean,
     handleClose: () => void,
     handleParentModalClose?: () => void,
     providerConf?: ProviderI | null,
-    proxyObj: restImportConfigI
+    proxyObj: restImportConfigI,
+    isCustomErrorFunc: boolean,
+    customFunction: () => void,
+    handleSuccessCallback: () => void,
+    currentProviderConfig: ProviderI | null,
+    providerConfig: IProviderConfig,
+    updateProviderConfig: (key: string, value: any) => void,
+    isConfigured: boolean
 }
 
 const providerObj = {
@@ -28,6 +33,7 @@ const providerObj = {
     scopes: [{ name: "Basic Profile", value: "profile" }],
     oauth2Flow: "AUTHORIZATION_CODE",
     responseType: "token",
+    oAuth2Pkce: null
 }
 
 
@@ -37,12 +43,19 @@ let mockProps: mockPropsI = {
     handleOpen: true,
     handleParentModalClose: jest.fn(() => console.log("Parent Modal Closed")),
     handleClose: jest.fn(() => console.log("closed")),
-    proxyObj: emptyConfig
+    proxyObj: emptyConfig,
+    isCustomErrorFunc: false,
+    customFunction: jest.fn(() => console.log("Toast Error")),
+    handleSuccessCallback: jest.fn(() => console.log("Success Msg")),
+    currentProviderConfig: null,
+    providerConfig: null as any,
+    updateProviderConfig: jest.fn(),
+    isConfigured: false
 }
 
 function renderComponent(type: string) {
 
-    const copymockProps = { ...mockProps }
+    const copymockProps: any = { ...mockProps }
     if (type === 'ProviderConfigWithoutPKCE') {
         copymockProps['providerConf'] = providerObj
     } else if (type === 'ProviderConfigWithPKCES256') {
@@ -51,8 +64,6 @@ function renderComponent(type: string) {
     } else if (type === 'ProviderConfigWithPKCEBasic') {
         copymockProps['providerConf'] = providerObj
         copymockProps.providerConf['oAuth2Pkce'] = { enabled: true, challengeMethod: "plain" }
-    } else if (type === 'withOAuthConfig') {
-        copymockProps.proxyObj['default_proxy_state'] = 'OFF'
     } else if (type === 'withAddProviderAPIError') {
         copymockProps.proxyObj.proxy_conf['addprovider'] = 'addErrorproviders'
     } else if (type === 'withListAPIError') {
@@ -61,7 +72,7 @@ function renderComponent(type: string) {
     }
 
 
-    render(<Provider store={appStore}><ConfigModel {...copymockProps} /></Provider >)
+    render(<ConfigModel {...copymockProps} />)
 
 }
 async function isErrorMsgDisplayed(msgToCheck: string) {

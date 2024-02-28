@@ -2,59 +2,104 @@ import React, { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import RestModel from "./components/RestModelDialog";
-import { Editor } from '@monaco-editor/react';
-
 function App() {
   const [open, setOpen] = useState(false);
   const [fullScreenView, setFullScreenView] = useState(false);
   const [defaultData, setDefaultData] = useState(true);
-  const [monacoEditorValue, setmonacoEditorValue] = useState()
-  const [hideMonacoEditor, sethideMonacoEditor] = useState(true)
+  const restDataW = {
+    url: "https://jsonplaceholder.typicode.com/posts/{id}",
+    httpMethod: "POST",
+    useProxy: true,
+    httpAuth: "BASIC",
+    bodyParams: "{userName:password}",
+    userName: "userName",
+    userPassword: "userPassword",
+    contentType: "multipart/form-data",
+    proxy_conf: {
+      base_path: "http://localhost:4000",
+      proxy_path: "/restimport",
+      list_provider: "/get-default-provider",
+      getprovider: "/getprovider",
+      addprovider: "/addprovider",
+      authorizationUrl: "/authorizationUrl",
+    },
+    state_val:
+      "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
+    default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
+    oAuthConfig: {
+      base_path: "https://www.wavemakeronline.com/studio/services",
+      project_id: "",
+      list_provider: "/oauth2/providers/default",
+      getprovider: "", // /projects/{projectID}/oauth2/providers
+      addprovider: "", // /projects/{projectID}/oauth2/providers
+      authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+    },
+    error: {
+      errorFunction: (msg, response) => {
+        alert(msg);
+        console.log(response);
+      },
+      errorMethod: "default",
+      errorMessageTimeout: 5000,
+    },
+    handleResponse: (response) => {
+      console.log(response?.data);
+    },
+    hideMonacoEditor: (value) => {
+    },
+  };
+  const restDataWO = {
+    url: "https://jsonplaceholder.typicode.com/posts/{id}?test=true",
+    httpMethod: "POST",
+    useProxy: true,
+    httpAuth: "BASIC",
+    bodyParams: "{userName:password}",
+    userName: "userName",
+    userPassword: "userPassword",
+    contentType: "multipart/form-data",
+    proxy_conf: {
+      base_path: "http://localhost:4000",
+      proxy_path: "/restimport",
+      list_provider: "/get-default-provider",
+      getprovider: "/getprovider",
+      addprovider: "/addprovider",
+      authorizationUrl: "/authorizationUrl",
+    },
+    state_val:
+      "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
+    default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
+    oAuthConfig: {
+      base_path: "https://www.wavemakeronline.com/studio/services",
+      project_id: "",
+      list_provider: "/oauth2/providers/default",
+      getprovider: "", // /projects/{projectID}/oauth2/providers
+      addprovider: "", // /projects/{projectID}/oauth2/providers
+      authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+    },
+    error: {
+      errorFunction: (msg, response) => {
+        alert(msg);
+        console.log(response);
+      },
+      errorMethod: "default",
+      errorMessageTimeout: 5000,
+    },
+    handleResponse: (response) => {
+      console.log(response?.data);
+    },
+    hideMonacoEditor: (value) => {
+    },
+  };
 
   useEffect(() => {
     if (fullScreenView) {
       window.RestImport({
-        dom_id: "#full-",
+        dom_id: "#full-screen",
         language: "en",
-        config: {
-          proxy_conf: {
-            base_path: "http://localhost:4000",
-            proxy_path: "/restimport",
-            list_provider: "/get-default-provider",
-            getprovider: "/getprovider",
-            addprovider: "/addprovider",
-            authorizationUrl: "/authorizationUrl",
-          },
-          state_val:
-            "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==",
-          default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
-          oAuthConfig: {
-            base_path: "https://www.wavemakeronline.com/studio/services",
-            proxy_path: "",
-            project_id: "",
-            list_provider: "/oauth2/providers/default",
-            getprovider: "", // /projects/{projectID}/oauth2/providers
-            addprovider: "", // /projects/{projectID}/oauth2/providers
-            authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
-          },
-          error: {
-            errorFunction: (msg, response) => {
-              alert(msg)
-              console.log(response)
-            },
-            errorMethod: "customFunction",
-            errorMessageTimeout: 5000
-          },
-          handleResponse: (response) => {
-            console.log(response?.data);
-            setmonacoEditorValue(JSON.stringify(response?.data, null, 2));
-          },
-          hideMonacoEditor: (value) => {
-            sethideMonacoEditor(value);
-          },
-        },
+        config: restDataW,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fullScreenView]);
 
   const handleClose = () => {
@@ -86,38 +131,7 @@ function App() {
         scopes: [],
         sendAccessTokenAs: 'HEADER',
       },
-      config: {
-        proxy_conf: {
-          base_path: "http://localhost:4000",
-          proxy_path: "/restimport",
-          list_provider: "/get-default-provider",
-          getprovider: "/getprovider",
-          addprovider: "/addprovider",
-        },
-        default_proxy_state: "ON", // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
-        oAuthConfig: {
-          base_path: "https://www.wavemakeronline.com/studio/services",
-          project_id: "",
-          list_provider: "/oauth2/providers/default",
-          getprovider: "", // /projects/{projectID}/oauth2/providers
-          addprovider: "", // /projects/{projectID}/oauth2/providers
-          authorizationUrl: "", // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
-        },
-        error: {
-          errorFunction: (msg) => {
-            alert(msg)
-          },
-          errorMethod: "default",
-          errorMessageTimeout: 5000
-        },
-        handleResponse: (response) => {
-          console.log(response?.data)
-          setmonacoEditorValue(JSON.stringify(response?.data, null, 2))
-        },
-        hideMonacoEditor: (value) => {
-          sethideMonacoEditor(value)
-        }
-      },
+      config: restDataWO,
     });
   };
 
@@ -134,7 +148,6 @@ function App() {
           variant="contained"
           onClick={() => {
             setFullScreenView(!fullScreenView);
-            sethideMonacoEditor((hide) => !hide)
           }}
         >
           Full Screen
@@ -155,22 +168,7 @@ function App() {
         defaultData={defaultData}
       />
       <div id="configModalUI"></div>
-      {fullScreenView && <div id="full-screen"></div>}'
-      {!hideMonacoEditor && <Editor
-        height="200px"
-        width={'100%'}
-        language="json"
-        path={'file.json'}
-        theme="vs-dark"
-        value={monacoEditorValue}
-        defaultValue=""
-        options={{
-          domReadOnly: true,
-          readOnly: true,
-          minimap: {
-            enabled: false,
-          },
-        }} />}
+      {fullScreenView && <div id="full-screen"></div>}
     </>
   );
 }

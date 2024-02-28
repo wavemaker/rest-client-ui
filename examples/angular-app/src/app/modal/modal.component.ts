@@ -17,100 +17,59 @@ export class ModalComponent implements OnInit {
   };
   public code: string = '';
   public hideMonacoEditor: boolean = false;
+  restDataW = {
+    url: 'https://jsonplaceholder.typicode.com/posts/{id}',
+    httpMethod: 'POST',
+    useProxy: true,
+    httpAuth: 'BASIC',
+    bodyParams: '{userName:password}',
+    userName: 'userName',
+    userPassword: 'userPassword',
+    contentType: 'multipart/form-data',
+    proxy_conf: {
+      base_path: 'http://localhost:4000',
+      proxy_path: '/restimport',
+      list_provider: '/get-default-provider',
+      getprovider: '/getprovider',
+      addprovider: '/addprovider',
+      authorizationUrl: '/authorizationUrl',
+    },
+    state_val:
+      'eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ==',
+    default_proxy_state: 'ON', // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
+    oAuthConfig: {
+      base_path: 'https://www.wavemakeronline.com/studio/services',
+      project_id: '',
+      list_provider: '/oauth2/providers/default',
+      getprovider: '', // /projects/{projectID}/oauth2/providers
+      addprovider: '', // /projects/{projectID}/oauth2/providers
+      authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
+    },
+    error: {
+      errorFunction: (msg: any, response: any) => {
+        alert(msg);
+        console.log(response);
+      },
+      errorMethod: 'default',
+      errorMessageTimeout: 5000,
+    },
+    handleResponse: (response: { data: any }) => {
+      console.log(response?.data);
+    },
+    hideMonacoEditor: (value: any) => {},
+  };
   ngOnInit(): void {
     if (this.configtype) {
       RestImport({
         dom_id: '#rest-import-ui-modal',
         language: 'en',
-        config: {
-          url: 'https://jsonplaceholder.typicode.com/posts/{id}?test=false',
-          httpMethod: 'POST',
-          useProxy: true,
-          httpAuth: 'BASIC',
-          bodyParams: '{userName:password}',
-          userName: 'userName',
-          userPassword: 'userPassword',
-          headerParams: [
-            {
-              name: 'New',
-              type: 'string',
-              value: 'application',
-            },
-          ],
-          multipartParams: [
-            {
-              name: 'post',
-              type: 'file',
-              value: 'fe',
-            },
-          ],
-          contentType: 'multipart/form-data',
-          proxy_conf: {
-            base_path: 'http://localhost:4000',
-            proxy_path: '/restimport',
-            list_provider: '/get-default-provider',
-            getprovider: '/getprovider',
-            addprovider: '/addprovider',
-          },
-          default_proxy_state: 'ON', // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
-          oAuthConfig: {
-            base_path: 'https://www.wavemakeronline.com/studio/services',
-            project_id: '',
-            list_provider: '/oauth2/providers/default',
-            getprovider: '', // /projects/{projectID}/oauth2/providers
-            addprovider: '', // /projects/{projectID}/oauth2/providers
-            authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
-          },
-          error: {
-            errorFunction: (msg: string) => {
-              alert(msg);
-            },
-            errorMethod: 'toast',
-            errorMessageTimeout: 5000,
-          },
-          handleResponse: (response: { data: any }) => {
-            this.code = JSON.stringify(response?.data, null, 2);
-          },
-          hideMonacoEditor: (value: any) => {
-            this.hideMonacoEditor = value;
-          },
-        },
+        config: this.restDataW,
       });
     } else {
       RestImport({
         dom_id: '#rest-import-ui-modal',
         language: 'en',
-        config: {
-          proxy_conf: {
-            base_path: 'http://localhost:4000',
-            proxy_path: '/restimport',
-            list_provider: '/get-default-provider',
-            getprovider: '/getprovider',
-            addprovider: '/addprovider',
-          },
-          default_proxy_state: 'ON', // Execute the proxy configuration if the value of default_proxy_state is set to "ON"; otherwise, execute the OAuth configuration.
-          oAuthConfig: {
-            base_path: 'https://www.wavemakeronline.com/studio/services',
-            project_id: '',
-            list_provider: '/oauth2/providers/default',
-            getprovider: '', // /projects/{projectID}/oauth2/providers
-            addprovider: '', // /projects/{projectID}/oauth2/providers
-            authorizationUrl: '', // /projects/{projectID}/oauth2/{providerId}/authorizationUrl
-          },
-          error: {
-            errorFunction: (msg: string) => {
-              alert(msg);
-            },
-            errorMethod: 'toast',
-            errorMessageTimeout: 5000,
-          },
-          handleResponse: (response: { data: any }) => {
-            this.code = JSON.stringify(response?.data, null, 2);
-          },
-          hideMonacoEditor: (value: any) => {
-            this.hideMonacoEditor = value;
-          },
-        },
+        config: this.restDataW,
       });
     }
   }

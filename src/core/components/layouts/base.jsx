@@ -1,11 +1,6 @@
-/**
- * @prettier
- */
 import React from "react";
 import PropTypes from "prop-types";
 import "../../../i18n";
-import { Provider } from "react-redux";
-import appStore from "../../../jsx/core/components/appStore/Store";
 export default class BaseLayout extends React.Component {
   static propTypes = {
     errSelectors: PropTypes.object.isRequired,
@@ -31,14 +26,15 @@ export default class BaseLayout extends React.Component {
     const RestImport = getComponent("RestImport");
     const language = specSelectors.language();
     const config = specSelectors.config();
+    const domID = specSelectors.dom_id();
     return (
-      <Provider store={appStore}>
-        <div className="rest-import-ui">
-          <div className="information-container">
-            <RestImport language={language} restImportConfig={config} />
-          </div>
-        </div>
-      </Provider>
+      <div className="rest-import-ui">
+        <RestImport
+          domID={domID}
+          language={language}
+          restImportConfig={config}
+        />
+      </div>
     );
   }
 }

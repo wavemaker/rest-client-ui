@@ -77,7 +77,6 @@ window.onload = function () {
     presets: [RestImportBundle.presets.apis, RestImportStandalonePreset],
     plugins: [RestImportBundle.plugins.DownloadUrl],
     layout: "BaseLayout",
-  });
-
+  }); 
   window.ui = ui;
 };

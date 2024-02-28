@@ -1,17 +1,15 @@
+import React, { useEffect, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import CloseIcon from '@mui/icons-material/Close';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import { Card, CardContent, CardMedia, Grid, IconButton, Link, Stack, Tooltip, Typography } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardMedia, Grid, Link, Stack, Typography } from '@mui/material';
 import ConfigModel from './ConfigModel';
 import { useTranslation } from 'react-i18next';
 import Apicall, { getProviderList } from './common/apicall';
-import { restImportConfigI } from './RestImport'
-import { setProviderAuthorizationUrl, setSelectedProvider, setproviderList } from './appStore/Slice';
-import { useDispatch, useSelector } from 'react-redux';
+import { INotifyMessage, restImportConfigI } from './RestImport'
+import { AxiosResponse } from 'axios';
 export interface ProviderI {
     providerId: string
     authorizationUrl: string
@@ -20,9 +18,11 @@ export interface ProviderI {
     accessTokenParamName: string
     scopes: ScopeI[],
     responseType?: string,
-    oAuth2Pkce?: oAuth2I
+    oAuth2Pkce: oAuth2I | null,
     clientId?: string,
-    clientSecret?: string
+    clientSecret?: string,
+    oauth2Flow: string,
+    isConfigured: boolean
 }
 interface oAuth2I {
     enabled: boolean,
@@ -35,14 +35,19 @@ export interface ScopeI {
     checked?: boolean;
 }
 
-export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI }) {
+export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCustomErrorFunc, customFunction, handleSuccessCallback, providerConfig, updateProviderConfig }:
+    {
+        handleOpen: boolean, handleClose: () => void, proxyObj: restImportConfigI, isCustomErrorFunc: boolean,
+        customFunction: (msg: string, response?: AxiosResponse) => void,
+        handleSuccessCallback: (msg: INotifyMessage, response?: AxiosResponse) => void,
+        providerConfig: any, updateProviderConfig: (key: string, value: any) => void
+    }) {
     const { t: translate } = useTranslation();
-    const dispatch = useDispatch();
     const [openConfig, setopenConfig] = useState(false)
-    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] })
-    const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [] }])
-    const [defaultProviderIds, setDefaultProviderId] = useState([])
-    const providers = useSelector((store: any) => store.slice.providerList)
+    const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false })
+    const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false }])
+    const [defaultProviderIds, setDefaultProviderId] = useState<string[]>([])
+    let providers = providerConfig.providerList 
 
     useEffect(() => {
         if (proxyObj.httpAuth?.type === 'OAUTH2') {
@@ -53,22 +58,39 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
         }
     }, [allProvider, proxyObj])
 
-
-    const handleOpenConfig = (provider: ProviderI | null) => {
-        setcurrentProvider(provider)
-        setopenConfig(true)
-    }
     useEffect(() => {
-        if (currentProvider?.accessTokenParamName) {
+        handleProviderList()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
+    useEffect(() => { 
+        handleDefaultProviderList()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [providers])
+
+    useEffect(() => {
+        if (currentProvider?.isConfigured) {
             handleClose()
-            dispatch(setSelectedProvider(currentProvider))
+            updateProviderConfig("selectedProvider", currentProvider)
             handleAuthorizationUrl()
+        } else if (!currentProvider?.isConfigured && currentProvider?.providerId) {
+            setopenConfig(true)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentProvider])
 
+    const handleOpenConfig = (provider: ProviderI | null) => {
+        if (!provider) {
+            setopenConfig(true)
+            setcurrentProvider(provider)
+            return
+        } else if (currentProvider?.providerId === provider?.providerId) {
+            return handleClose()
+        }
+        setcurrentProvider(provider)
+    }
     const handleAuthorizationUrl = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", currentProvider?.providerId as string) : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.authorizationUrl.replace(":providerID", currentProvider?.providerId as string);
+        const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.authorizationUrl.replace(":providerID", currentProvider?.providerId as string)
         const configProvider = {
             url: url,
             method: "GET",
@@ -80,26 +102,31 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
         const response: any = await Apicall(configProvider);
         if (response.status === 200) {
             const authorization_url = response.data
-            dispatch(setProviderAuthorizationUrl(authorization_url))
+            updateProviderConfig("providerAuthURL", authorization_url)
         } else {
             console.log("Received an unexpected response:", response);
         }
     }
     const handleCloseConfig = () => {
+        setcurrentProvider(null)
         setopenConfig(false)
     }
     const handleProviderList = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.getprovider;
+        const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.getprovider
         try {
             const response = await getProviderList(url);
-            const sortedProviders = response.data;
-            dispatch(setproviderList(sortedProviders))
+            const sortedProviders = response.data.map((provider: { isConfigured: boolean; providerId: any; }) => {
+                provider.isConfigured = true;
+                return provider;
+            }) || []
+            providers = sortedProviders
+            updateProviderConfig("providerList", sortedProviders)
         } catch (error) {
             console.error('Error fetching provider list:', error);
         }
     }
     const handleDefaultProviderList = async () => {
-        const url = proxyObj?.default_proxy_state === 'ON' ? proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.list_provider : proxyObj?.oAuthConfig?.base_path + proxyObj?.oAuthConfig?.list_provider;
+        const url = proxyObj?.proxy_conf?.base_path + proxyObj?.proxy_conf?.list_provider
         const configProvider = {
             url: url,
             method: "GET",
@@ -132,34 +159,20 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
         }
     }
 
-    useEffect(() => {
-        handleProviderList()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-
-    useEffect(() => {
-        handleDefaultProviderList()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [providers])
-
     return (
         <>
-            <Dialog className='rest-import-ui' maxWidth={'md'} data-testid='provider-modal' open={handleOpen} onClose={handleClose}>
-                <DialogTitle>
+            <Dialog id='wm-rest-provider-model' className='rest-import-ui provider_model_dialog' maxWidth={'md'} data-testid='provider-modal' open={handleOpen} onClose={handleClose}>
+                <DialogTitle className='provider_dialog_title'>
                     <Stack direction={'row'} display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
-                        <Typography variant='h6' fontWeight={600}>{translate("SELECT") + " " + translate("OR") + " " + translate("ADD") + " " + translate("PROVIDER")}</Typography>
+                        <Typography variant='h4' fontWeight={600}>{translate("SELECT") + " " + translate("OR") + " " + translate("ADD") + " " + translate("PROVIDER")}</Typography>
                         <Stack spacing={1} className='cmnflx' direction={'row'}>
-                            <Tooltip title={translate("oAuth")}>
-                                <IconButton>
-                                    <HelpOutlineIcon />
-                                </IconButton>
-                            </Tooltip>
+                            <i title={translate("oAuth")} className="wms wms-help"></i>
                             <Link sx={{ color: 'gray' }}>{translate("HELP")}</Link>
                             <CloseIcon sx={{ cursor: 'pointer' }} onClick={handleClose} />
                         </Stack>
                     </Stack>
                 </DialogTitle>
-                <DialogContent sx={{ backgroundColor: 'lightgray' }}>
+                <DialogContent className='provider_dialog_content' sx={{ backgroundColor: 'lightgray' }}>
                     <Grid spacing={5} sx={{ width: '100%', ml: 0, mt: 0, mb: 2 }} container>
                         <Grid item md={3}>
                             <Card onClick={() => handleOpenConfig(null)} data-testid="add-provider" sx={{ flexDirection: 'column', width: 130, height: 130, cursor: 'pointer' }} className='cmnflx cardcontainer'>
@@ -214,11 +227,16 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj }: { h
             {
                 !currentProvider?.responseType && (
                     <ConfigModel
+                        providerConfig={providerConfig}
                         handleOpen={openConfig}
                         handleClose={handleCloseConfig}
                         handleParentModalClose={handleClose}
-                        providerConf={currentProvider}
+                        currentProviderConfig={currentProvider}
                         proxyObj={proxyObj}
+                        updateProviderConfig={updateProviderConfig}
+                        isCustomErrorFunc={isCustomErrorFunc}
+                        customFunction={customFunction}
+                        handleSuccessCallback={handleSuccessCallback}
                     />
                 )
             }

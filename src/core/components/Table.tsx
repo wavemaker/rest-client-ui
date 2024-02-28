@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties, ReactNode, useEffect, useRef } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -6,15 +6,19 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, Stack, TextField } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import {
+    Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, TextField, Typography
+} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { ChangeEvent } from 'react';
-import { constructCommaSeparatedUniqueQueryValuesString, constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison, getCurrentDateTime, retrieveQueryDetailsFromURL } from './common/common';
+import {
+    constructCommaSeparatedUniqueQueryValuesString, constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison,
+    getCurrentDateTime, retrieveQueryDetailsFromURL
+} from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
-import { PathParamsI, restImportConfigI } from './RestImport';
+import { INotifyMessage, PathParamsI, defaultContentTypes, restImportConfigI } from './RestImport';
 import { useTranslation } from 'react-i18next';
+import { AxiosResponse } from 'axios';
 
 export interface HeaderAndQueryI {
     name: string
@@ -27,7 +31,9 @@ export interface BodyParamsI {
     type: string
     value: string | File
     filename?: string
+    contentType: string
 }
+
 
 export const TableRowStyled = styled(TableRow)`
   &:nth-of-type(odd) {
@@ -37,20 +43,71 @@ export const TableRowStyled = styled(TableRow)`
     background-color: #f3f3f3;
   } 
 `;
+export const tableHeaderStyle: CSSProperties = {
+    fontWeight: 700,
+    paddingTop: 5,
+    paddingBottom: 5,
+    border: "1px solid #ccc"
+}
+export const tableRowStyle: CSSProperties = {
+    paddingTop: 8,
+    paddingBottom: 8,
+    border: "1px solid #ccc"
+}
 
-export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams, handleToastError, restImportConfig }:
+export function HeaderAndQueryTable(
     {
-        value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string,
-        apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
-        pathParams: PathParamsI[], handleToastError: (msg: string) => void, restImportConfig: restImportConfigI
-    }) {
+        value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams, handleToastError, restImportConfig, setAlertMsg,
+        multipartParams
+    }:
+        {
+            value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string, setAlertMsg: (value: boolean) => void,
+            apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
+            pathParams: PathParamsI[], handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void, restImportConfig: restImportConfigI,
+            multipartParams: BodyParamsI[]
+        }
+) {
+    const tableRef = useRef<HTMLTableElement | null>(null)
+    useEffect(() => {
+        const updateStickyRow = () => {
+            const table = tableRef.current;
+            if (table) {
+                const tbody = table.querySelector('tbody');
+                if (tbody) {
+                    const rows = tbody.getElementsByTagName('tr');
+                    const lastRow = rows[rows.length - 1];
+                    const tableRect = table.getBoundingClientRect();
+                    const lastRowRect = lastRow.getBoundingClientRect();
+                    if (lastRowRect.bottom < tableRect.bottom) {
+                        lastRow.style.position = 'sticky';
+                        lastRow.style.bottom = '0';
+                        lastRow.style.background = rows.length % 2 === 0 ? "#f3f3f3" : 'white'; // Adjust as needed 
+                    } else {
+                        lastRow.style.position = 'static';
+                        lastRow.style.bottom = 'auto';
+                        lastRow.style.background = rows.length % 2 === 0 ? 'white' : "#f3f3f3";;
+                    }
+                }
+            }
+        };
+        // Initial update
+        updateStickyRow();
+        // Listen for scroll events on the table
+        tableRef.current?.addEventListener('scroll', updateStickyRow);
+        // Cleanup event listener on component unmount
+        return () => {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            tableRef.current?.removeEventListener('scroll', updateStickyRow);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
     const { t: translate } = useTranslation();
-    var selectTypes =
+    const selectTypes =
     {
         UITypes: [
             { value: 'boolean', label: translate('BOOLEAN') },
             { value: 'date', label: translate('DATE') },
-            { value: 'date-time', label: translate('DATE') + " " + translate('TIME') },
+            { value: 'date-time', label: translate('DATE') + translate('TIME') },
             { value: 'double', label: translate('DOUBLE') },
             { value: 'float', label: translate('FLOAT') },
             { value: 'int32', label: translate('INTEGER') },
@@ -59,7 +116,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         ],
         ServerSideProperties: [
             { value: 'DATE', label: translate('CURRENT') + " " + translate('DATE') },
-            { value: 'DATETIME', label: translate('CURRENT') + " " + translate('DATE') + " " + translate('TIME') },
+            { value: 'DATETIME', label: translate('CURRENT') + " " + translate('DATE') + translate('TIME') },
             { value: 'TIME', label: translate('CURRENT') + " " + translate('TIME') },
             { value: 'TIMESTAMP', label: translate('CURRENT') + " " + translate('TIMESTAMP') },
             { value: 'USER_ID', label: translate('LOGGEDIN') + " " + translate('USERID') },
@@ -92,19 +149,17 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
         if (name !== null) {
-            valueClone.map((data: HeaderAndQueryI, index) => {
+            valueClone.forEach((data: HeaderAndQueryI, index) => {
                 if (index === currentIndex) {
                     data.name = name
                 }
-                return data
             })
         }
         else {
-            valueClone.map((data: HeaderAndQueryI, index) => {
+            valueClone.forEach((data: HeaderAndQueryI, index) => {
                 if (index === currentIndex) {
                     data.name = ''
                 }
-                return data
             })
         }
         setValue(valueClone)
@@ -112,7 +167,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
 
     const handleChangeType = (event: SelectChangeEvent, currentIndex: number) => {
         const valueClone = [...value]
-        valueClone.map((data, index) => {
+        valueClone.forEach((data, index) => {
             if (index === currentIndex) {
                 if (selectTypes.ServerSideProperties.find(e => e.value === event.target.value)) {
                     if (from === 'query') {
@@ -134,42 +189,41 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
                     data.type = event.target.value
                 }
             }
-            return data
         })
         setValue(valueClone)
     }
 
 
-    const handleChangeTestValue = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, currentIndex: number) => {
+    const handleChangeTestValue = (newValue: string, currentIndex: number) => {
         const valueClone = [...value]
-        valueClone.map((data, index) => {
+        valueClone.forEach((data, index) => {
             if (index === currentIndex) {
-                data.value = event.target.value
+                data.value = newValue
             }
-            return data
         })
         setValue(valueClone)
     }
 
     function handleAddRow() {
+        setAlertMsg(false)
         const lastRow = value[value.length - 1]
         const valueClone = [...value]
         const duplicates = findDuplicateObjectsWithinArray(valueClone, "name")
-        const allDuplicates = (): any[] => {
-            let returnDuplicates: any[] = []
+        const allDuplicates = (): HeaderAndQueryI[] => {
+            let returnDuplicates: HeaderAndQueryI[] = []
             if (from === 'header') {
-                returnDuplicates = findDuplicatesByComparison([lastRow], [...queryParams, ...pathParams], "name")
+                returnDuplicates = findDuplicatesByComparison([lastRow], [...queryParams, ...multipartParams, ...pathParams], "name")
             }
             else {
-                returnDuplicates = findDuplicatesByComparison([lastRow], [...headerParams, ...pathParams], "name")
+                returnDuplicates = findDuplicatesByComparison([lastRow], [...headerParams, ...multipartParams, ...pathParams], "name")
             }
             return returnDuplicates
         }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
             if (from === 'header' && duplicates.length > 0)
-                return handleToastError(`parameter "${duplicates[0].name}" already exists`)
+                return handleToastError({ message: `parameter "${duplicates[0].name}" already exists`, type: 'error' })
             if (allDuplicates().length > 0)
-                return handleToastError(`parameter "${allDuplicates()[0].name}" already exists`)
+                return handleToastError({ message: `parameter "${allDuplicates()[0].name}" already exists`, type: 'error' })
             if (from === 'query' && allDuplicates().length === 0) {
                 const lastRowValuesArray = lastRow.value.split(',')
                 const lastRowValues = lastRowValuesArray.filter((value, index) => value && lastRowValuesArray.indexOf(value) === index)
@@ -208,7 +262,7 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
             setValue(valueClone)
         }
         else {
-            handleToastError(translate("MANDATORY_ALERT"))
+            handleToastError({ message: translate("MANDATORY_ALERT"), type: 'error' })
         }
     }
 
@@ -252,81 +306,92 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
         }
     }
 
-    function getAppEnvProperties(): React.ReactNode {
+    function getAppEnvProperties(): ReactNode {
         const nodes: JSX.Element[] = [];
-        if (restImportConfig.appEnvVariables) {
+        if (restImportConfig.appEnvVariables.length > 0)
             restImportConfig.appEnvVariables?.forEach((data) => {
-                nodes.push(<MenuItem key={data.value} value={data.value}>{data.value}</MenuItem>);
+                nodes.push(<MenuItem title={data.name} key={data.name} value={data.name}>{data.name}</MenuItem>);
             });
-        } else {
-            nodes.push(<MenuItem disabled={true}>{translate('NO_PROPERTIES_FOUND')}</MenuItem>);
-        }
+        else
+            nodes.push(<MenuItem key={translate('NO_PROPERTIES_FOUND')} disabled={true}>{translate('NO_PROPERTIES_FOUND')}</MenuItem>);
         return nodes;
     }
 
     return (
-        <TableContainer component={Paper}>
-            <Table>
+        <TableContainer sx={{ maxHeight: '35vh' }} component={Paper}>
+            <Table ref={tableRef as React.RefObject<HTMLTableElement>}>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }} data-testid="subheaders">
-                        <TableCell align='center'>{translate("NAME")}</TableCell>
-                        <TableCell align='center'>{translate("TYPE")}</TableCell>
-                        <TableCell align='center'>{translate("TEST") + " " + translate("VALUE")}</TableCell>
-                        <TableCell align='center'>{translate("ACTIONS")}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate("NAME")}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate("TYPE")}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate("TEST") + " " + translate("VALUE")}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate("ACTIONS")}</TableCell>
                     </TableRow>
                 </TableHead>
-                <TableBody>
+                <TableBody sx={{ maxHeight: '35vh', overflowY: 'auto' }}>
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
-                            <TableCell align='center'>
-                                <Stack className='cmnflx'>
-                                    {from === 'query' ?
-                                        <Autocomplete
-                                            sx={{ width: 200 }}
-                                            size='small'
-                                            disabled={index !== value.length - 1}
-                                            inputValue={data.name}
-                                            onInputChange={(event, newValue: string) => {
-                                                handleChangeName(newValue, index);
-                                            }}
-                                            freeSolo
-                                            options={[]}
-                                            renderInput={(params) => <TextField  {...params} InputLabelProps={{ children: '' }} />}
-                                        /> :
-                                        <Autocomplete
-                                            sx={{ width: 200 }}
-                                            size='small'
-                                            disabled={index !== value.length - 1}
-                                            inputValue={data.name}
-                                            onInputChange={(event, newValue: string) => {
-                                                handleChangeName(newValue, index);
-                                            }}
-                                            freeSolo
-                                            options={selectNames.map((option) => option.label)}
-                                            renderInput={(params) => <TextField  {...params} InputLabelProps={{ children: '' }} />}
-                                        />}
-                                </Stack>
+                            <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
+                                {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <Autocomplete
+                                    fullWidth={true}
+                                    size='small'
+                                    disabled={index !== value.length - 1}
+                                    inputValue={data.name}
+                                    onInputChange={(event, newValue: string) => {
+                                        handleChangeName(newValue, index);
+                                    }}
+                                    freeSolo
+                                    options={from === 'query' ? [] : selectNames.map((option) => option.label)}
+                                    renderInput={(params) => <TextField
+                                        name="wm-webservice-param-name"
+                                        {...params}
+                                        InputLabelProps={{ children: '' }} />}
+                                />}
                             </TableCell>
-                            <TableCell>
-                                <Stack className='cmnflx'>
-                                    <FormControl size='small' sx={{ minWidth: 200 }}>
-                                        <InputLabel>{translate("SELECT") + " " + translate("TYPE")}</InputLabel>
-                                        <Select onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate("Select Type")} data-testid="param-type">
-                                            <ListSubheader>{translate("UI_TYPES")}</ListSubheader>
-                                            {selectTypes.UITypes.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                            <ListSubheader>{translate("SERVER_SIDE") + " " + translate("PROPERTIES")}</ListSubheader>
-                                            {selectTypes.ServerSideProperties.map((type) => <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                            <ListSubheader>{translate("APPENVIRONMENT") + " " + translate("PROPERTIES")}</ListSubheader>
-                                            {getAppEnvProperties()}
-                                        </Select>
-                                    </FormControl>
-                                </Stack>
+                            <TableCell style={tableRowStyle} width={"30%"} align='left'>
+                                <FormControl size='small' fullWidth={true}>
+                                    <Select
+                                        MenuProps={{
+                                            PaperProps: {
+                                                style: {
+                                                    height: '300px', // Set the maximum height of the dropdown menu
+                                                },
+                                            },
+                                        }} name="wm-webservice-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} data-testid="param-type">
+                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("UI_TYPES")}</ListSubheader>
+                                        {selectTypes.UITypes.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("SERVER") + " " + translate("SIDE") + ' ' + translate('PROPERTIES')}</ListSubheader>
+                                        {selectTypes.ServerSideProperties.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("APPENVIRONMENT") + translate('PROPERTIES')} </ListSubheader>
+                                        {getAppEnvProperties()}
+                                    </Select>
+                                </FormControl>
                             </TableCell>
-                            <TableCell align='center'>
-                                <TextField data-testid="param-value" size='small' onBlur={() => handleOnBlurTestValue(index)} onChange={(e) => handleChangeTestValue(e, index)} value={data.value} />
+                            <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
+                                {data.name !== 'Content-Type' ? <TextField
+                                    name="wm-webservice-param-value"
+                                    fullWidth={true} data-testid="param-value" size='small'
+                                    onBlur={() => handleOnBlurTestValue(index)}
+                                    onChange={(e) => handleChangeTestValue(e.target.value, index)}
+                                    value={data.value} />
+                                    : <Autocomplete
+                                        fullWidth={true}
+                                        size='small'
+                                        inputValue={data.value}
+                                        onInputChange={(event, newValue: string) => {
+                                            handleChangeTestValue(newValue, index)
+                                        }}
+                                        freeSolo
+                                        options={from === 'query' ? [] : defaultContentTypes.map((option) => option.label)}
+                                        renderInput={(params) => <TextField
+                                            name="wm-webservice-param-value"
+                                            {...params}
+                                            InputLabelProps={{ children: '' }} />}
+                                    />}
                             </TableCell>
-                            <TableCell align='center'>
-                                {index === value.length - 1 ? <AddIcon onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
+                            <TableCell style={tableRowStyle} width={"5%"} align='center'>
+                                {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} />
+                                    : <i className="wms wms-delete" aria-label="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} style={{ cursor: 'pointer' }}></i>}
                             </TableCell>
                         </TableRowStyled>
                     )}
@@ -336,24 +401,61 @@ export function HeaderAndQueryTable({ value, setValue, from, apiURL, changeapiUR
     )
 }
 
-export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setValue: (data: BodyParamsI[]) => void, }) {
+export function MultipartTable(
+    { value, setValue, handleToastError, headerParams, queryParams, pathParams, setAlertMsg }:
+        {
+            value: BodyParamsI[], setValue: (data: BodyParamsI[]) => void, handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void,
+            headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[], pathParams: PathParamsI[], setAlertMsg: (value: boolean) => void
+        }) {
+    const tableRef = useRef<HTMLTableElement | null>(null);
 
+    useEffect(() => {
+        const updateStickyRow = () => {
+            const table = tableRef.current;
+            if (table) {
+                const tbody = table.querySelector('tbody');
+                if (tbody) {
+                    const rows = tbody.getElementsByTagName('tr');
+                    const lastRow = rows[rows.length - 1];
+                    const tableRect = table.getBoundingClientRect();
+                    const lastRowRect = lastRow.getBoundingClientRect();
+                    if (lastRowRect.bottom < tableRect.bottom) {
+                        lastRow.style.position = 'sticky';
+                        lastRow.style.bottom = '0';
+                        lastRow.style.background = rows.length % 2 === 0 ? "#f3f3f3" : 'white'; // Adjust as needed 
+                    } else {
+                        lastRow.style.position = 'static';
+                        lastRow.style.bottom = 'auto';
+                        lastRow.style.background = rows.length % 2 === 0 ? 'white' : "#f3f3f3";;
+                    }
+                }
+            }
+        };
+        // Initial update
+        updateStickyRow();
+        // Listen for scroll events on the table
+        tableRef.current?.addEventListener('scroll', updateStickyRow);
+        // Cleanup event listener on component unmount
+        return () => {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            tableRef.current?.removeEventListener('scroll', updateStickyRow);
+        };
+    }, [value]);
+    const { t: translate } = useTranslation();
     const handleChangeName = (name: string, currentIndex: number) => {
         const valueClone = [...value]
         if (name !== null) {
-            valueClone.map((data: BodyParamsI, index) => {
+            valueClone.forEach((data: BodyParamsI, index) => {
                 if (index === currentIndex) {
                     data.name = name as string
                 }
-                return data
             })
         }
         else {
-            valueClone.map((data: BodyParamsI, index) => {
+            valueClone.forEach((data: BodyParamsI, index) => {
                 if (index === currentIndex) {
                     data.name = ''
                 }
-                return data
             })
         }
         setValue(valueClone)
@@ -361,47 +463,63 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
 
     const handleChangeType = (event: SelectChangeEvent, currentIndex: number) => {
         const valueClone = [...value]
-        valueClone.map((data, index) => {
+        valueClone.forEach((data, index) => {
             if (index === currentIndex) {
-                data.type = event.target.value
+                data.type = event.target.value === 'file' ? 'file' : 'string'
                 data.value = ''
                 data.filename = ''
+                data.contentType = event.target.value
             }
-            return data
         })
         setValue(valueClone)
     }
     const handleChangeTestValue = (currentValue: string, currentIndex: number) => {
         const valueClone = [...value]
-        valueClone.map((data, index) => {
+        valueClone.forEach((data, index) => {
             if (index === currentIndex) {
                 data.value = currentValue
                 data.filename = ''
             }
-            return data
         })
         setValue(valueClone)
     }
 
-    const handleChangeFile = (e: File, currentIndex: number) => {
-        const valueClone = [...value]
-        valueClone.forEach((data, index) => {
-            if (index === currentIndex) {
-                data.filename = e.name
-                data.value = e
-            }
-        })
-        setValue(valueClone)
+    const handleChangeFile = (e: React.ChangeEvent<HTMLInputElement>, currentIndex: number) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const valueClone = [...value];
+            valueClone.forEach((data, dataIndex) => {
+                if (dataIndex === currentIndex) {
+                    data.filename = files[0].name;
+                    data.value = files[0];
+                    data.contentType = 'file'
+                }
+            });
+            setValue(valueClone);
+        }
     }
 
     function handleAddRow() {
+        setAlertMsg(false)
         const lastRow = value[value.length - 1]
         const valueClone = [...value]
+        const duplicates = findDuplicateObjectsWithinArray(valueClone, "name")
+        const allDuplicates = (): HeaderAndQueryI[] => {
+            let returnDuplicates: HeaderAndQueryI[] = []
+            returnDuplicates = findDuplicatesByComparison([lastRow], [...headerParams, ...queryParams, ...pathParams], "name")
+            return returnDuplicates
+        }
         if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
+            if (duplicates.length > 0)
+                return handleToastError({ message: `parameter "${duplicates[0].name}" already exists`, type: 'error' })
+            if (allDuplicates().length > 0)
+                return handleToastError({ message: `parameter "${allDuplicates()[0].name}" already exists`, type: 'error' })
             valueClone.push({
-                name: '', value: "", type: 'file', filename: ''
+                name: '', value: "", type: 'file', filename: '', contentType: 'file'
             })
             setValue(valueClone)
+        } else {
+            handleToastError({ message: translate("MANDATORY_ALERT"), type: 'error' })
         }
     }
 
@@ -410,65 +528,67 @@ export function MultipartTable({ value, setValue }: { value: BodyParamsI[], setV
         valueClone.splice(currentIndex, 1)
         setValue(valueClone)
     }
-    const { t: translate } = useTranslation();
+
+    function openFileSelectionWindow(index: number) {
+        document.getElementById('file-selector-' + index)?.click()
+    }
 
     return (
-        <TableContainer component={Paper}>
-            <Table data-testid="multipart-table">
+        <TableContainer sx={{ maxHeight: '35vh' }} component={Paper}>
+            <Table ref={tableRef as React.RefObject<HTMLTableElement>} data-testid="multipart-table">
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#d4e6f1' }}>
-                        <TableCell align='center'>{translate('NAME')}</TableCell>
-                        <TableCell align='center'>{translate('TYPE')}</TableCell>
-                        <TableCell align='center'>{translate('TEST') + " " + translate('VALUE')}</TableCell>
-                        <TableCell align='center'>{translate('ACTIONS')}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate('NAME')}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate('TYPE')}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate('TEST') + " " + translate('VALUE')}</TableCell>
+                        <TableCell style={tableHeaderStyle} align='left'>{translate('ACTIONS')}</TableCell>
                     </TableRow>
                 </TableHead>
-                <TableBody>
+                <TableBody sx={{ maxHeight: '35vh', overflowY: 'auto' }}>
                     {value.map((data, index) =>
                         <TableRowStyled key={index}>
-                            <TableCell align='center'>
-                                <TextField disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} data-testid="multipart-name" />
+                            <TableCell width={'32.5%'} style={tableRowStyle} align='left'>
+                                {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <TextField name="wm-webservice-param-name" fullWidth disabled={index !== value.length - 1} size='small' value={data.name} onChange={(e) => handleChangeName(e.target.value, index)} data-testid="multipart-name" />}
                             </TableCell>
-                            <TableCell>
-                                <FormControl size='small' sx={{ minWidth: 200 }}>
+                            <TableCell width={'30%'} style={tableRowStyle}>
+                                <FormControl size='small' fullWidth={true}>
                                     <InputLabel>{translate('SELECT') + " " + translate('TYPE')}</InputLabel>
-                                    <Select sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }} onChange={(e) => handleChangeType(e, index)} value={data.type} label={translate('SELECT') + " " + translate('TYPE')} data-testid="multipart-type">
-                                        <MenuItem value={'file'}>{translate("FILE")}</MenuItem>
-                                        <MenuItem value={'text'}>{translate("TEXT")}</MenuItem>
-                                        <MenuItem value={'plaintext'}>{translate("Text(Text/Plain)")}</MenuItem>
-                                        <MenuItem value={'application/json'}>{translate("application/json")}</MenuItem>
+                                    <Select name="wm-webservice-param-type" sx={{ '& .MuiSelect-select ': { textAlign: 'left' } }}
+                                        onChange={(e) => handleChangeType(e, index)} value={data.contentType}
+                                        label={translate('SELECT') + " " + translate('TYPE')} data-testid="multipart-type">
+                                        <MenuItem title={translate("FILE")} value={'file'}>{translate("FILE")}</MenuItem>
+                                        <MenuItem title={translate("TEXT")} value={'text'}>{translate("TEXT")}</MenuItem>
+                                        <MenuItem title={translate("PLAINTEXT")} value={"text/plain"}>{translate("PLAINTEXT")}</MenuItem>
+                                        <MenuItem title={translate("JSON") + " (" + translate("APPLICATION/JSON") + ")"} value={'application/json'}>{translate("JSON") + "  (" + translate("APPLICATION/JSON") + ")"}</MenuItem>
                                     </Select>
                                 </FormControl>
                             </TableCell>
-                            <TableCell align='center'>
-                                {data.type === 'file' ? <TextField
-                                    variant="standard"
-                                    type="text"
-                                    disabled
-                                    value={data.filename}
+                            <TableCell width={'32.5%'} style={tableRowStyle} align='left'>
+                                {data.type === 'file' ? <><TextField
+                                    variant="outlined"
+                                    size='small'
+                                    fullWidth={true}
+                                    sx={{
+                                        '& .MuiInputBase-input:hover': {
+                                            cursor: 'pointer !important',
+                                        },
+                                    }}
+                                    value={data.filename ?? ''}
                                     data-testid="test-value"
+                                    onClick={() => openFileSelectionWindow(index)}
                                     InputProps={{
+                                        readOnly: true,
                                         endAdornment: (
                                             <IconButton component="label">
                                                 <FileUploadOutlined />
-                                                <input
-                                                    style={{ display: "none" }}
-                                                    type="file"
-                                                    hidden
-                                                    onChange={(e) => {
-                                                        //@ts-ignore
-                                                        handleChangeFile(e.target.files[0], index)
-                                                    }}
-                                                    data-testid="file-upload"
-                                                />
                                             </IconButton>
                                         ),
                                     }}
-                                /> :
-                                    <TextField size='small' onChange={(e) => handleChangeTestValue(e.target.value, index)} value={data.value} />}
+                                /> <input id={'file-selector-' + index} type="file" style={{ display: "none" }} onChange={(e) => { handleChangeFile(e, index) }} /></> :
+                                    <TextField name={"wm-webservice-param-value"} fullWidth size='small' onChange={(e) => handleChangeTestValue(e.target.value, index)} value={data.value} />}
                             </TableCell>
-                            <TableCell align='center'>
-                                {index === value.length - 1 ? <AddIcon onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <DeleteIcon onClick={() => handleDeleteRow(index)} sx={{ cursor: 'pointer' }} />}
+                            <TableCell width={'5%'} style={tableRowStyle} align='center'>
+                                {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} /> : <i className="wms wms-delete" aria-label="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} style={{ cursor: 'pointer' }}></i>}
                             </TableCell>
                         </TableRowStyled>
                     )}
