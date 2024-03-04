@@ -1266,7 +1266,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                     <TextField disabled={!providerId ? true : false} sx={{ backgroundColor: providerId ? 'lightgray' : 'white', fontSize: '11px' }} size='small' data-testid="provider-name" value={providerId} label={!providerId ? translate("NO") + " " + translate("PROVIDER") + " " + translate("SELECTED_YET") : ''} />
                                                     {
                                                         providerId && (
-                                                            <i onClick={() => setConfigOpen(true)} title={translate("Edit Provider")} className='wms wms-edit'>hwresfs</i>
+                                                            <i onClick={() => setConfigOpen(true)} title={translate("Edit Provider")} className='wms wms-edit'></i>
                                                         )
                                                     }
                                                     <Button className='select_provider_btn' name='wm-webservice-select-provider' onClick={() => setproviderOpen(true)} variant='contained' data-testid='select-provider'>{providerId ? translate("CHANGE_PROVIDER") : translate("SELECT") + "/" + translate("ADD") + " " + translate("PROVIDER")}</Button>
