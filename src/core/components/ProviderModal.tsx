@@ -47,7 +47,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
     const [currentProvider, setcurrentProvider] = useState<ProviderI | null>({ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false })
     const [allProvider, setAllProvider] = useState<ProviderI[]>([{ providerId: '', authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false }])
     const [defaultProviderIds, setDefaultProviderId] = useState<string[]>([])
-    let providers = providerConfig.providerList 
+    let providers = providerConfig.providerList
 
     useEffect(() => {
         if (proxyObj.httpAuth?.type === 'OAUTH2') {
@@ -63,7 +63,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    useEffect(() => { 
+    useEffect(() => {
         handleDefaultProviderList()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [providers])
@@ -227,6 +227,7 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
             {
                 !currentProvider?.responseType && (
                     <ConfigModel
+                        restImportConfig={proxyObj}
                         providerConfig={providerConfig}
                         handleOpen={openConfig}
                         handleClose={handleCloseConfig}

@@ -18,12 +18,12 @@ import '../../i18n';
 
 export default function ConfigModel(
     { handleOpen, handleClose, handleParentModalClose, providerConfig, proxyObj, configModel, isCustomErrorFunc, currentProviderConfig,
-        customFunction, handleSuccessCallback, updateProviderConfig }:
+        customFunction, handleSuccessCallback, updateProviderConfig, restImportConfig }:
         {
             handleOpen: boolean, handleClose: () => void, handleParentModalClose?: () => void, providerConfig: IProviderConfig, proxyObj: restImportConfigI,
             configModel?: boolean, isCustomErrorFunc: boolean, customFunction: (msg: string, response?: AxiosResponse) => void,
             handleSuccessCallback: (msg: INotifyMessage, response?: AxiosResponse) => void, currentProviderConfig: ProviderI | null,
-            updateProviderConfig: (key: string, value: any) => void
+            updateProviderConfig: (key: string, value: any) => void, restImportConfig: restImportConfigI
         }) {
     const { t: translate } = useTranslation();
     const [flow, setFlow] = useState('AUTHORIZATION_CODE')
@@ -306,11 +306,19 @@ export default function ConfigModel(
                             <Typography>{translate("FLOW")} <span className='text-danger'>*</span></Typography>
                         </Grid>
                         <Grid item md={9}>
-                            <FormControl sx={{ width: "30em" }} size='small' disabled={!!currentProviderConfig}>
+                            <FormControl sx={{
+                                width: "30em",
+                            }} size='small' disabled={!!currentProviderConfig}>
                                 <Select
                                     name="wm-webservice-flow-value"
                                     data-testid="flow"
                                     value={flow}
+                                    sx={{
+                                        backgroundColor: restImportConfig.viewMode ? '#eeeced' : 'none',
+                                        "& .MuiInputBase-input.Mui-disabled": {
+                                            WebkitTextFillColor: restImportConfig.viewMode ? "#000" : 'none',
+                                        },
+                                    }}
                                     onChange={handleChangeFlow}
                                 >
                                     <MenuItem title={translate("AUTHORIZATION") + " " + translate("CODE")} value={'AUTHORIZATION_CODE'}>{translate("AUTHORIZATION") + " " + translate("CODE")} </MenuItem>

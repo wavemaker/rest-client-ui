@@ -164,6 +164,15 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     },
                 },
             },
+            MuiSelect: {
+                styleOverrides: {
+                    select: {
+                        '&.Mui-disabled': {
+                            cursor: 'not-allowed',
+                        },
+                    },
+                },
+            },
             MuiTextField: {
                 styleOverrides: {
                     root: {
@@ -1137,6 +1146,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             WebkitTextFillColor: restImportConfig.viewMode ? "#000" : 'none',
                                         },
                                     }}
+                                    disabled={restImportConfig.viewMode}
                                     onChange={handleChangehttpMethod}
                                 >
                                     {httpMethods.map((httpMethod) => <MenuItem key={httpMethod} title={httpMethod} value={httpMethod}>{httpMethod}</MenuItem>)}
@@ -1390,6 +1400,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 <ConfigModel
                     currentProviderConfig={providerConfig.selectedProvider}
                     handleOpen={configOpen}
+                    restImportConfig={restImportConfig}
                     updateProviderConfig={updateProviderConfig}
                     handleClose={handleCloseConfig}
                     handleParentModalClose={handleCloseProvider}
