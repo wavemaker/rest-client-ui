@@ -59,14 +59,13 @@ export default function ProviderModal({ handleOpen, handleClose, proxyObj, isCus
     }, [allProvider, proxyObj])
 
     useEffect(() => {
-        handleProviderList()
+        async function fetchData() {
+            await handleProviderList()
+            await handleDefaultProviderList()
+        }
+        fetchData()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
-
-    useEffect(() => {
-        handleDefaultProviderList()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [providers])
 
     useEffect(() => {
         if (currentProvider?.isConfigured) {
