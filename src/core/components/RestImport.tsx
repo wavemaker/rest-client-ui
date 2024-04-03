@@ -965,7 +965,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 web: useProxy ? 'PROXY' : 'DIRECT',
                 withCredentials: withCredentials,
             };
-            settingsUploadResponseData['serviceId'] = serviceName.trim() !== '' ? serviceName : settingsUploadResponseData['serviceId']
+            settingsUploadResponseData['serviceId'] = serviceName.trim() !== '' ? !restImportConfig.viewMode ? settingsUploadResponseData['serviceId'] : serviceName : settingsUploadResponseData['serviceId']
             function setSwaggerParameters(obj: any, param: HeaderAndQueryI, from: "HEADER" | "QUERY") {
                 const typeCheck = checkTypeForParameter(param.type)
                 if (typeCheck === 'SERVER') {
