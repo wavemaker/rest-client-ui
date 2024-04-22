@@ -752,7 +752,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             multipartParams.forEach((data, index) => {
                                 if (data.name && data.value) {
                                     if (data.type === 'file') {
-                                        formDataOject.append(data.name, new Blob([data.value], { type: 'application/json' }))
+                                        formDataOject.append(data.name, new Blob([data.value], { type: 'application/json' }), data.filename)
                                         multiParamInfoList.push({ name: data.name, type: 'file', list: true, contentType: undefined, testValue: undefined })
                                     } else {
                                         formDataOject.append(data.name, data.contentType === 'text' ? data.value : new Blob([data.value], { type: data.contentType }))
@@ -763,6 +763,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     setmultipartParams([...multipartParams, { name: '', value: '', type: 'file', contentType: 'file' }])
                             })
                             jsonObject['multiParamInfoList'] = multiParamInfoList
+                            jsonObject['headers']['Content-Type'] = contentType
                         }
                         const blob = new Blob([JSON.stringify(jsonObject)], { type: 'application/json' });
                         formDataOject.append('wm_httpRequestDetails', blob)
