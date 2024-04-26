@@ -788,7 +788,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     } else {
                         requestConfig = {
                             url: requestAPI,
-                            headers: header,
+                            headers: {...header, 'Content-Type': contentTypeCheck ? 'multipart/form-data' : header['Content-Type'] },
                             method: httpMethod,
                             data: contentTypeCheck ? constructMultipartReqBody() : bodyParams,
                             authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
