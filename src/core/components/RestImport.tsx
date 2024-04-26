@@ -602,7 +602,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         try {
             if (apiURL.length > 0) {
                 setAlertMsg(false)
-                let header: any = {}
+                let header: any = { 'Content-Type': 'application/json' }
                 let requestAPI = apiURL
                 const contentTypeCheck = contentType === 'multipart/form-data' ? true : false
                 if (isValidUrl(encodeURI(requestAPI))) {
@@ -737,7 +737,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             return
                         }
                     }
-                    function getBody(): FormData | {} {
+                    function constructProxyRequestBody(): FormData | {} {
                         const jsonObject: any = {
                             endpointAddress: requestAPI,
                             method: httpMethod,
@@ -746,71 +746,77 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             headers: header,
                             authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
                         }
-                        const formDataOject = new FormData()
-                        if (contentTypeCheck) {
-                            multiParamInfoList = []
-                            multipartParams.forEach((data, index) => {
-                                if (data.name && data.value) {
-                                    if (data.type === 'file') {
-                                        formDataOject.append(data.name, new Blob([data.value], { type: 'application/json' }), data.filename)
-                                        multiParamInfoList.push({ name: data.name, type: 'file', list: true, contentType: undefined, testValue: undefined })
-                                    } else {
-                                        formDataOject.append(data.name, data.contentType === 'text' ? data.value : new Blob([data.value], { type: data.contentType }))
-                                        multiParamInfoList.push({ name: data.name, type: data.type, list: false, testValue: data.value, contentType: data.contentType === 'text' ? undefined : data.contentType })
-                                    }
-                                }
-                                if (index === multipartParams.length - 1 && data.name.trim() !== '' && data.value)
-                                    setmultipartParams([...multipartParams, { name: '', value: '', type: 'file', contentType: 'file' }])
-                            })
-                            jsonObject['multiParamInfoList'] = multiParamInfoList
-                            jsonObject['headers']['Content-Type'] = contentType
-                        }
+                        if (!contentTypeCheck) return jsonObject
+                        const formData = constructMultipartReqBody()
+                        jsonObject['multiParamInfoList'] = multiParamInfoList
+                        jsonObject['headers']['Content-Type'] = contentType
                         const blob = new Blob([JSON.stringify(jsonObject)], { type: 'application/json' });
-                        formDataOject.append('wm_httpRequestDetails', blob)
-                        const data = contentTypeCheck ? formDataOject : jsonObject
-                        return data
+                        formData.append('wm_httpRequestDetails', blob)
+                        return formData
                     }
-                    const configWOProxy: ICustomAxiosConfig = {
-                        url: requestAPI,
-                        headers: header,
-                        method: httpMethod,
-                        data: getBody(),
-                        authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
-                        useProxy: useProxy,
-                        withCredentials: withCredentials
+
+                    function constructMultipartReqBody() {
+                        const formDataOject = new FormData()
+                        multiParamInfoList = []
+                        multipartParams.forEach((data, index) => {
+                            if (data.name && data.value) {
+                                if (data.type === 'file') {
+                                    formDataOject.append(data.name, new Blob([data.value], { type: 'application/json' }), data.filename)
+                                    multiParamInfoList.push({ name: data.name, type: 'file', list: true, contentType: undefined, testValue: undefined })
+                                } else {
+                                    formDataOject.append(data.name, data.contentType === 'text' ? data.value : new Blob([data.value], { type: data.contentType }))
+                                    multiParamInfoList.push({ name: data.name, type: data.type, list: false, testValue: data.value, contentType: data.contentType === 'text' ? undefined : data.contentType })
+                                }
+                            }
+                            if (index === multipartParams.length - 1 && data.name.trim() !== '' && data.value)
+                                setmultipartParams([...multipartParams, { name: '', value: '', type: 'file', contentType: 'file' }])
+                        })
+                        return formDataOject
                     }
-                    const url = restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path
-                    const configWProxy: ICustomAxiosConfig = {
-                        url: url,
-                        data: getBody(),
-                        method: "POST",
-                        headers: {
-                            'Content-Type': contentTypeCheck ? contentType : 'application/json',
-                        },
-                        withCredentials: true,
-                        useProxy: useProxy,
+                    let requestConfig: ICustomAxiosConfig = {}
+                    if (useProxy) {
+                        requestConfig = {
+                            url: restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.proxy_path,
+                            data: constructProxyRequestBody(),
+                            method: "POST",
+                            headers: {
+                                'Content-Type': contentTypeCheck ? contentType : 'application/json',
+                            },
+                            withCredentials: true,
+                            useProxy: useProxy,
+                        }
+                    } else {
+                        requestConfig = {
+                            url: requestAPI,
+                            headers: header,
+                            method: httpMethod,
+                            data: contentTypeCheck ? constructMultipartReqBody() : bodyParams,
+                            authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
+                            useProxy: useProxy,
+                            withCredentials: withCredentials
+                        }
                     }
+
                     setloading(true)
-                    const config = useProxy ? configWProxy : configWOProxy
-                    const response: any = await Apicall(config as AxiosRequestConfig)
+                    const response: any = await Apicall(requestConfig as AxiosRequestConfig)
                     if (response.status >= 200 && response.status < 300) {
                         if (providerId) {
                             if (response.status === 401 || response.data.statusCode === 401) {
-                                return oAuthRetryF(config)
+                                return oAuthRetryF(requestConfig)
                             }
                         }
-                        const settingsUploadData = await settingsUpload(config, response)
+                        const settingsUploadData = await settingsUpload(requestConfig, response)
                         if (settingsUploadData) {
                             setserviceNameEnabled(false)
                             if (!restImportConfig.viewMode) {
                                 restImportConfig.getServiceName(settingsUploadData?.serviceId)
                                 setserviceName(settingsUploadData?.serviceId)
                             }
-                            handleResponse(response, config, settingsUploadData)
+                            handleResponse(response, requestConfig, settingsUploadData)
                         }
                     } else {
                         setserviceNameEnabled(true)
-                        handleResponse(response, config)
+                        handleResponse(response, requestConfig)
                     }
                     setloading(false)
                 } else
