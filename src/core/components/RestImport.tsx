@@ -250,7 +250,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
         }
     })
     const matches = useMediaQuery('(min-width:1600px)');
-    const state_val = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ=="
     const httpMethods = ["GET", "POST", "DELETE", "HEAD", "PATCH", "PUT"]
     const httpAuthTypes = ["NONE", 'BASIC', 'OAUTH2']
     const defaultValueforHandQParams: HeaderAndQueryI = { name: '', value: '', type: 'string' }
@@ -299,15 +298,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
 
     useEffect(() => {
         if (restImportConfig?.contentType) {
-            const existingContentType = contentTypes.some(contentType =>
-                contentType.value === restImportConfig?.contentType
-            );
-            if (!existingContentType) {
-                setcontentTypes((prevContentTypes: any) => [
-                    ...prevContentTypes,
-                    { label: restImportConfig.contentType, value: restImportConfig.contentType },
-                ]);
-            }
+            checkForExistingContentType(restImportConfig.contentType)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [restImportConfig?.contentType])
@@ -418,13 +409,40 @@ export default function RestImport({ language, restImportConfig }: { language: s
     }
     const handleCloseProvider = () => setproviderOpen(false)
     const handleChangeapiURL = (value: string) => setapiURL(value)
-    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => setheaderParams(data)
+    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => {
+        data.forEach(entry => {
+            if (entry.name === 'Content-Type') {
+                if (checkForExistingContentType(entry.value))
+                    setcontentType(entry.value)
+            }
+        })
+        setheaderParams(data)
+    }
+    const checkForExistingContentType = (newType: string): boolean => {
+        const existingContentType = contentTypes.some(contentType =>
+            contentType.value === newType
+        );
+        if (!existingContentType) {
+            setcontentTypes((prevContentTypes: any) => [
+                ...prevContentTypes,
+                { label: newType, value: newType },
+            ]);
+        }
+        return existingContentType
+    }
     const handleChangeQueryParams = (data: HeaderAndQueryI[]) => setqueryParams(data)
     const handlemultipartParams = (data: BodyParamsI[]) => setmultipartParams(data)
     const handleChangeWithCredentials = (event: ChangeEvent<HTMLInputElement>) => setwithCredentials(event.target.checked)
     const handleChangehttpAuth = (event: SelectChangeEvent) => sethttpAuth(event.target.value as any)
-    const handleChangecontentType = (event: SelectChangeEvent) => setcontentType(event.target.value)
-    const handleChangeHeaderTabs = (_event: SyntheticEvent, newValue: number) => setrequestTabValue(newValue);
+    const handleChangeHeaderTabs = (_event: SyntheticEvent, newValue: number) => setrequestTabValue(newValue)
+    const handleChangecontentType = (event: SelectChangeEvent) => {
+        headerParams.forEach((data) => {
+            if (data.name === 'Content-Type') {
+                data.value = event.target.value
+            }
+        })
+        setcontentType(event.target.value)
+    }
     const handleChangeProxy = (event: ChangeEvent<HTMLInputElement>) => {
         restImportConfig.getUseProxy(event.target.checked)
         setuseProxy(event.target.checked)
@@ -636,7 +654,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         const clientId = providerConfig.selectedProvider.clientId;
                         let redirectUri = restImportConfig?.proxy_conf?.base_path + `oauth2/${providerConfig.selectedProvider.providerId}/callback`;
                         const responseType = "code";
-                        const state = state_val
+                        const state = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ=="
                         const scope = providerConfig.selectedProvider.scopes.length > 0 ? providerConfig.selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
                         let childWindow: any;
                         var authUrl: string
@@ -788,7 +806,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     } else {
                         requestConfig = {
                             url: requestAPI,
-                            headers: {...header, 'Content-Type': contentTypeCheck ? 'multipart/form-data' : header['Content-Type'] },
+                            headers: { ...header, 'Content-Type': contentTypeCheck ? 'multipart/form-data' : header['Content-Type'] },
                             method: httpMethod,
                             data: contentTypeCheck ? constructMultipartReqBody() : bodyParams,
                             authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
