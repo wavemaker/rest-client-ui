@@ -410,12 +410,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const handleCloseProvider = () => setproviderOpen(false)
     const handleChangeapiURL = (value: string) => setapiURL(value)
     const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => {
-        data.forEach(entry => {
-            if (entry.name === 'Content-Type') {
-                if (checkForExistingContentType(entry.value))
-                    setcontentType(entry.value)
-            }
-        })
         setheaderParams(data)
     }
     const checkForExistingContentType = (newType: string): boolean => {
@@ -427,6 +421,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 ...prevContentTypes,
                 { label: newType, value: newType },
             ]);
+
         }
         return existingContentType
     }
@@ -549,20 +544,20 @@ export default function RestImport({ language, restImportConfig }: { language: s
             handleToastError({ message: error.message, type: 'error' })
         }
     }
-    const handleAddCustomContentType = () => {
-        if (newContentType && !contentTypes.find(e => e.value === newContentType)) {
+    const handleAddCustomContentType = (value: string) => {
+        if (value && !contentTypes.find(e => e.value === value)) {
             const contentTypesClone = [...contentTypes]
             contentTypesClone.push({
-                label: newContentType,
-                value: newContentType
+                label: value,
+                value: value
             })
             setcontentTypes(contentTypesClone)
             setaddCustomType(false)
-            setcontentType(newContentType)
+            setcontentType(value)
             setnewContentType("")
-        } else if (newContentType && contentTypes.find(e => e.value === newContentType)) {
+        } else if (value && contentTypes.find(e => e.value === value)) {
             setaddCustomType(false)
-            setcontentType(newContentType)
+            setcontentType(value)
             setnewContentType("")
         }
         else
@@ -1301,7 +1296,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     </Grid>
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={1}>
-                                    <HeaderAndQueryTable multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                    <HeaderAndQueryTable handleHeaderParamsContentTypeChange={handleAddCustomContentType} multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={2}>
                                     <Stack spacing={1}>
@@ -1324,7 +1319,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                 {addCustomType ? <Stack direction={'row'}>
                                                     <TextField name="wm-webservice-new-content-type" value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
                                                     <i onClick={() => { setnewContentType(''); setaddCustomType(false) }} title={translate("CLOSE")} className='wms wms-close'></i>
-                                                    <i onClick={() => handleAddCustomContentType()} title={translate("ADD")} className='wms wms-done'></i>
+                                                    <i onClick={() => handleAddCustomContentType(newContentType)} title={translate("ADD")} className='wms wms-done'></i>
                                                 </Stack> :
                                                     <i onClick={() => setaddCustomType(true)} title={translate("CUSTOM_CONTENT_TYPE")} className='wms wms-plus'></i>
                                                 }
@@ -1336,7 +1331,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     </Stack>
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={3}>
-                                    <HeaderAndQueryTable multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                    <HeaderAndQueryTable handleHeaderParamsContentTypeChange={handleAddCustomContentType} multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={4}>
                                     {pathParams.length > 0 ? <TableContainer component={Paper}>

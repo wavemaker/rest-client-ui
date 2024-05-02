@@ -58,13 +58,13 @@ export const tableRowStyle: CSSProperties = {
 export function HeaderAndQueryTable(
     {
         value, setValue, from, apiURL, changeapiURL, headerParams, queryParams, pathParams, handleToastError, restImportConfig, setAlertMsg,
-        multipartParams
+        multipartParams, handleHeaderParamsContentTypeChange
     }:
         {
             value: HeaderAndQueryI[], setValue: (data: HeaderAndQueryI[]) => void, from: string, setAlertMsg: (value: boolean) => void,
             apiURL: string, changeapiURL: (value: string) => void, headerParams: HeaderAndQueryI[], queryParams: HeaderAndQueryI[],
             pathParams: PathParamsI[], handleToastError: (error: INotifyMessage, response?: AxiosResponse) => void, restImportConfig: restImportConfigI,
-            multipartParams: BodyParamsI[]
+            multipartParams: BodyParamsI[], handleHeaderParamsContentTypeChange: (value: string) => void
         }
 ) {
     const tableRef = useRef<HTMLTableElement | null>(null)
@@ -303,6 +303,12 @@ export function HeaderAndQueryTable(
                     setValue(valueClone)
                 }
             }
+        } else {
+            valueClone.forEach(value => {
+                if (value.name === 'Content-Type' && value.value.trim() !== "") {
+                    handleHeaderParamsContentTypeChange(value.value)
+                }
+            })
         }
     }
 
@@ -378,6 +384,7 @@ export function HeaderAndQueryTable(
                                         fullWidth={true}
                                         size='small'
                                         inputValue={data.value}
+                                        onBlur={() => handleOnBlurTestValue(index)}
                                         onInputChange={(event, newValue: string) => {
                                             handleChangeTestValue(newValue, index)
                                         }}
