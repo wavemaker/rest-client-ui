@@ -33,10 +33,24 @@ const MonacoEditor = ({ editorRef, initialValue, url, initialLanguage, viewMode 
                 });
                 editorRef.current = editorInstance;
             });
+            window.addEventListener('resize', refreshMonacoLayout);
+            window.addEventListener('refreshMonacoLayout', refreshMonacoLayout);
         };
         loadMonaco();
+
+        return () => {
+            window.removeEventListener('resize', refreshMonacoLayout);
+            window.removeEventListener('refreshMonacoLayout', refreshMonacoLayout);
+        }
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    function refreshMonacoLayout(event: any) {
+        setTimeout(() => {
+            editorRef?.current?.layout();
+        }, 0)
+    }
 
     return <>
         <div  className="monaco_editor" style={{ height: matches ? "65vh" : viewMode ? "50vh" : '55vh', width: '99%' }}>
