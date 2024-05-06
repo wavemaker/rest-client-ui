@@ -298,7 +298,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
 
     useEffect(() => {
         if (restImportConfig?.contentType) {
-            checkForExistingContentType(restImportConfig.contentType)
+            handleAddCustomContentType(restImportConfig.contentType)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [restImportConfig?.contentType])
@@ -339,15 +339,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
             seterrorMessage({ type: error.type, message: error.message })
             error.message && setAlertMsg(true)
             if (restImportConfig.error.errorMessageTimeout) {
-                return setTimeout(() => {
+                setTimeout(() => {
                     setAlertMsg(false)
+                    return
                 }, restImportConfig.error.errorMessageTimeout);
             }
         }
         if (restImportConfig.error.errorMethod === 'toast') {
             seterrorMessage({ type: error.type, message: error.message })
             sethandleToastOpen(true)
-            return null
+            return;
         }
         if (restImportConfig.error.errorMethod === 'customFunction')
             return restImportConfig.error.errorFunction(error.message, response)
@@ -411,19 +412,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const handleChangeapiURL = (value: string) => setapiURL(value)
     const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => {
         setheaderParams(data)
-    }
-    const checkForExistingContentType = (newType: string): boolean => {
-        const existingContentType = contentTypes.some(contentType =>
-            contentType.value === newType
-        );
-        if (!existingContentType) {
-            setcontentTypes((prevContentTypes: any) => [
-                ...prevContentTypes,
-                { label: newType, value: newType },
-            ]);
-
-        }
-        return existingContentType
     }
     const handleChangeQueryParams = (data: HeaderAndQueryI[]) => setqueryParams(data)
     const handlemultipartParams = (data: BodyParamsI[]) => setmultipartParams(data)
