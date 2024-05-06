@@ -26,68 +26,6 @@ export default function App() {
       type: "APP_ENVIRONMENT"
     }],
     loggenInUserName: 'vew',
-    headerParams: [{
-      name: "new",
-      type: "DATE",
-      value: "vew"
-    }, {
-      name: "ewf",
-      type: "DATE",
-      value: "vew"
-    }, {
-      name: "nefewwew",
-      type: "DATE",
-      value: "vew"
-    }, {
-      name: "newfwewe",
-      type: "DATE",
-      value: "vew"
-    }, {
-      name: "nfweew",
-      type: "DATE",
-      value: "vew"
-    }, {
-      name: "nfewew",
-      type: "DATE",
-      value: "vew"
-    }, {
-      name: "nfewww",
-      type: "DATE",
-      value: "vew"
-    }, {
-      name: "nefeww",
-      type: "DATE",
-      value: "vew"
-    },],
-    multipartParams: [
-      {
-        name: 'wm_data_json',
-        value: `{
-          "booleancol": true,
-          "datecol": "2019-01-01",
-          "floatcol": 121.121,
-          "intcol": 123,
-          "stringcol": "automation",
-          "timecol": "12:12:12",
-          "timestampcol": 1573018000,
-          "datetimecol": "2019-01-01T12:12:12"
-        }`,
-        type: 'string',
-        contentType: "application/json",
-      },
-      {
-        name: 'blobcol',
-        value: '',
-        contentType: "file",
-        type: 'file',
-      },
-      {
-        name: 'filecol',
-        value: '',
-        contentType: "file",
-        type: 'file',
-      }
-    ],
     queryParams: [{
       name: "jh",
       type: "gwe",

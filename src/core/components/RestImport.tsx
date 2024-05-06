@@ -250,7 +250,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
         }
     })
     const matches = useMediaQuery('(min-width:1600px)');
-    const state_val = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ=="
     const httpMethods = ["GET", "POST", "DELETE", "HEAD", "PATCH", "PUT"]
     const httpAuthTypes = ["NONE", 'BASIC', 'OAUTH2']
     const defaultValueforHandQParams: HeaderAndQueryI = { name: '', value: '', type: 'string' }
@@ -298,27 +297,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
     var oAuthRetry = true
 
     useEffect(() => {
-        if (restImportConfig?.contentType) {
-            const existingContentType = contentTypes.some(contentType =>
-                contentType.value === restImportConfig?.contentType
-            );
-            if (!existingContentType) {
-                setcontentTypes((prevContentTypes: any) => [
-                    ...prevContentTypes,
-                    { label: restImportConfig.contentType, value: restImportConfig.contentType },
-                ]);
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [restImportConfig?.contentType])
-
-    useEffect(() => {
         if (!window.google) {
             const script = document.createElement('script');
             script.src = 'https://accounts.google.com/gsi/client';
             script.async = true;
             document.head.appendChild(script);
         }
+        if (restImportConfig?.contentType) {
+            handleAddCustomContentType(restImportConfig.contentType)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
@@ -348,15 +336,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
             seterrorMessage({ type: error.type, message: error.message })
             error.message && setAlertMsg(true)
             if (restImportConfig.error.errorMessageTimeout) {
-                return setTimeout(() => {
+                setTimeout(() => {
                     setAlertMsg(false)
+                    return
                 }, restImportConfig.error.errorMessageTimeout);
             }
         }
         if (restImportConfig.error.errorMethod === 'toast') {
             seterrorMessage({ type: error.type, message: error.message })
             sethandleToastOpen(true)
-            return null
+            return;
         }
         if (restImportConfig.error.errorMethod === 'customFunction')
             return restImportConfig.error.errorFunction(error.message, response)
@@ -418,13 +407,22 @@ export default function RestImport({ language, restImportConfig }: { language: s
     }
     const handleCloseProvider = () => setproviderOpen(false)
     const handleChangeapiURL = (value: string) => setapiURL(value)
-    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => setheaderParams(data)
+    const handleChangeHeaderParams = (data: HeaderAndQueryI[]) => {
+        setheaderParams(data)
+    }
     const handleChangeQueryParams = (data: HeaderAndQueryI[]) => setqueryParams(data)
     const handlemultipartParams = (data: BodyParamsI[]) => setmultipartParams(data)
     const handleChangeWithCredentials = (event: ChangeEvent<HTMLInputElement>) => setwithCredentials(event.target.checked)
     const handleChangehttpAuth = (event: SelectChangeEvent) => sethttpAuth(event.target.value as any)
-    const handleChangecontentType = (event: SelectChangeEvent) => setcontentType(event.target.value)
-    const handleChangeHeaderTabs = (_event: SyntheticEvent, newValue: number) => setrequestTabValue(newValue);
+    const handleChangeHeaderTabs = (_event: SyntheticEvent, newValue: number) => setrequestTabValue(newValue)
+    const handleChangecontentType = (event: SelectChangeEvent) => {
+        headerParams.forEach((data) => {
+            if (data.name === 'Content-Type') {
+                data.value = event.target.value
+            }
+        })
+        setcontentType(event.target.value)
+    }
     const handleChangeProxy = (event: ChangeEvent<HTMLInputElement>) => {
         restImportConfig.getUseProxy(event.target.checked)
         setuseProxy(event.target.checked)
@@ -531,20 +529,20 @@ export default function RestImport({ language, restImportConfig }: { language: s
             handleToastError({ message: error.message, type: 'error' })
         }
     }
-    const handleAddCustomContentType = () => {
-        if (newContentType && !contentTypes.find(e => e.value === newContentType)) {
+    const handleAddCustomContentType = (value: string) => {
+        if (value && !contentTypes.find(e => e.value === value)) {
             const contentTypesClone = [...contentTypes]
             contentTypesClone.push({
-                label: newContentType,
-                value: newContentType
+                label: value,
+                value: value
             })
             setcontentTypes(contentTypesClone)
             setaddCustomType(false)
-            setcontentType(newContentType)
+            setcontentType(value)
             setnewContentType("")
-        } else if (newContentType && contentTypes.find(e => e.value === newContentType)) {
+        } else if (value && contentTypes.find(e => e.value === value)) {
             setaddCustomType(false)
-            setcontentType(newContentType)
+            setcontentType(value)
             setnewContentType("")
         }
         else
@@ -602,7 +600,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         try {
             if (apiURL.length > 0) {
                 setAlertMsg(false)
-                let header: any = { 'Content-Type': 'application/json' }
+                let header: any = {}
                 let requestAPI = apiURL
                 const contentTypeCheck = contentType === 'multipart/form-data' ? true : false
                 if (isValidUrl(encodeURI(requestAPI))) {
@@ -636,7 +634,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         const clientId = providerConfig.selectedProvider.clientId;
                         let redirectUri = restImportConfig?.proxy_conf?.base_path + `oauth2/${providerConfig.selectedProvider.providerId}/callback`;
                         const responseType = "code";
-                        const state = state_val
+                        const state = "eyJtb2RlIjoiZGVzaWduVGltZSIsInByb2plY3RJZCI6IldNUFJKMmM5MTgwODg4OWE5NjQwMDAxOGExYzE0YjBhNzI4YTQifQ=="
                         const scope = providerConfig.selectedProvider.scopes.length > 0 ? providerConfig.selectedProvider.scopes.map((scope: { value: any }) => scope.value).join(' ') : '';
                         let childWindow: any;
                         var authUrl: string
@@ -788,7 +786,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     } else {
                         requestConfig = {
                             url: requestAPI,
-                            headers: {...header, 'Content-Type': contentTypeCheck ? 'multipart/form-data' : header['Content-Type'] },
+                            headers: { ...header, 'Content-Type': contentTypeCheck ? 'multipart/form-data' : header['Content-Type'] },
                             method: httpMethod,
                             data: contentTypeCheck ? constructMultipartReqBody() : bodyParams,
                             authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
@@ -1283,7 +1281,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     </Grid>
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={1}>
-                                    <HeaderAndQueryTable multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                    <HeaderAndQueryTable handleHeaderParamsContentTypeChange={handleAddCustomContentType} multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='header' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={headerParams} setValue={handleChangeHeaderParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={2}>
                                     <Stack spacing={1}>
@@ -1306,7 +1304,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                                 {addCustomType ? <Stack direction={'row'}>
                                                     <TextField name="wm-webservice-new-content-type" value={newContentType} onChange={(e) => setnewContentType(e.target.value)} size='small' data-testid='custom-type-field' />
                                                     <i onClick={() => { setnewContentType(''); setaddCustomType(false) }} title={translate("CLOSE")} className='wms wms-close'></i>
-                                                    <i onClick={() => handleAddCustomContentType()} title={translate("ADD")} className='wms wms-done'></i>
+                                                    <i onClick={() => handleAddCustomContentType(newContentType)} title={translate("ADD")} className='wms wms-done'></i>
                                                 </Stack> :
                                                     <i onClick={() => setaddCustomType(true)} title={translate("CUSTOM_CONTENT_TYPE")} className='wms wms-plus'></i>
                                                 }
@@ -1318,7 +1316,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                     </Stack>
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={3}>
-                                    <HeaderAndQueryTable multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
+                                    <HeaderAndQueryTable handleHeaderParamsContentTypeChange={handleAddCustomContentType} multipartParams={multipartParams} setAlertMsg={setAlertMsg} restImportConfig={restImportConfig} handleToastError={handleToastError} from='query' headerParams={headerParams} queryParams={queryParams} pathParams={pathParams} value={queryParams} setValue={handleChangeQueryParams} apiURL={apiURL} changeapiURL={handleChangeapiURL} />
                                 </CustomTabPanel>
                                 <CustomTabPanel value={requestTabValue} index={4}>
                                     {pathParams.length > 0 ? <TableContainer component={Paper}>
