@@ -297,19 +297,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
     var oAuthRetry = true
 
     useEffect(() => {
-        if (restImportConfig?.contentType) {
-            handleAddCustomContentType(restImportConfig.contentType)
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [restImportConfig?.contentType])
-
-    useEffect(() => {
         if (!window.google) {
             const script = document.createElement('script');
             script.src = 'https://accounts.google.com/gsi/client';
             script.async = true;
             document.head.appendChild(script);
         }
+        if (restImportConfig?.contentType) {
+            handleAddCustomContentType(restImportConfig.contentType)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
@@ -603,7 +600,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         try {
             if (apiURL.length > 0) {
                 setAlertMsg(false)
-                let header: any = { 'Content-Type': 'application/json' }
+                let header: any = {}
                 let requestAPI = apiURL
                 const contentTypeCheck = contentType === 'multipart/form-data' ? true : false
                 if (isValidUrl(encodeURI(requestAPI))) {
