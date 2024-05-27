@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 declare const window: any;
-const MonacoEditor = ({ editorRef, initialValue, url, initialLanguage, viewMode }:
-    { editorRef: any, initialValue: string | undefined, url: string, initialLanguage: string, viewMode: boolean }) => {
+const MonacoEditor = ({ editorRef, initialValue, url, editorLanguage, viewMode }:
+    { editorRef: any, initialValue: string | undefined, url: string, editorLanguage: string, viewMode: boolean }) => {
     const matches = useMediaQuery('(min-width:1600px)');
+    const [editorModel, setEditorModel] = useState<any>(null)
 
     useEffect(() => {
         const loadMonaco = async () => {
@@ -22,8 +23,8 @@ const MonacoEditor = ({ editorRef, initialValue, url, initialLanguage, viewMode 
             window.require(['vs/editor/editor.main'], () => {
                 // Create Monaco Editor instance
                 const editorInstance = window.monaco.editor.create(editorRef.current, {
-                    value: initialValue,
-                    language: initialLanguage,
+                    value: (initialValue && editorLanguage === 'json') ? JSON.stringify(JSON.parse(initialValue), undefined, 2) : initialValue,
+                    language: editorLanguage,
                     theme: 'vs-dark',
                     minimap: {
                         enabled: false,
@@ -32,6 +33,7 @@ const MonacoEditor = ({ editorRef, initialValue, url, initialLanguage, viewMode 
                     wordWrap: 'on',
                 });
                 editorRef.current = editorInstance;
+                setEditorModel(editorInstance.getModel())
             });
             window.addEventListener('resize', refreshMonacoLayout);
             window.addEventListener('refreshMonacoLayout', refreshMonacoLayout);
@@ -45,6 +47,23 @@ const MonacoEditor = ({ editorRef, initialValue, url, initialLanguage, viewMode 
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        if(editorModel && editorLanguage) {
+            const currentLanguageId = editorModel.getLanguageId();
+            switch(editorLanguage){
+                case 'json':
+                    currentLanguageId !== 'json' && window.monaco.editor.setModelLanguage(editorModel, 'json');
+                    break;
+                case 'xml':
+                    currentLanguageId !== 'xml' && window.monaco.editor.setModelLanguage(editorModel, 'xml');
+                    break;
+                case 'plaintext':
+                    currentLanguageId !== 'xml' && window.monaco.editor.setModelLanguage(editorModel, 'xml');
+                    break;
+            }
+        }
+    },[editorLanguage, editorModel])
 
     function refreshMonacoLayout(event: any) {
         setTimeout(() => {
