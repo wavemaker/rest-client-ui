@@ -22,7 +22,7 @@ const MonacoEditor = ({ editorRef, initialValue, url, initialLanguage, viewMode 
             window.require(['vs/editor/editor.main'], () => {
                 // Create Monaco Editor instance
                 const editorInstance = window.monaco.editor.create(editorRef.current, {
-                    value: initialValue,
+                    value: (initialValue && initialLanguage === 'json') ? JSON.stringify(JSON.parse(initialValue), undefined, 2) : initialValue,
                     language: initialLanguage,
                     theme: 'vs-dark',
                     minimap: {

@@ -65,6 +65,7 @@ export interface restImportConfigI {
     setServiceName: string,
     setResponseHeaders?: any,
     setResponse?: any,
+    responseType?: string,
     loggenInUserId?: string,
     loggenInUserName?: string,
     appEnvVariables: HeaderAndQueryI[],
@@ -147,7 +148,8 @@ export const defaultContentTypes = [
 ]
 declare global {
     interface Window {
-        google: any;
+        google: any,
+        monaco: any;
     }
 }
 
@@ -284,7 +286,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const editorRef: any = useRef(null)
     const [errorMessage, seterrorMessage] = useState<INotifyMessage>({ type: 'error', message: '' })
     const [handleToastOpen, sethandleToastOpen] = useState(false)
-    const [editorLanguage, seteditorLanguage] = useState('json')
+    const [editorLanguage, seteditorLanguage] = useState(restImportConfig?.responseType || 'json')
     const [providerConfig, setProviderConfig] = useState<IProviderConfig>({
         selectedProvider: { providerId: '', clientId: "", authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null || { enabled: true, challengeMethod: '' }, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false },
         providerAuthURL: "",
@@ -866,16 +868,37 @@ export default function RestImport({ language, restImportConfig }: { language: s
     }
     function checkXMLorJSON(responseValue: any): any {
         let response = responseValue
+        let isValidJson = true
+        // Check if the response is of type JSON
         try {
-            if ('string' === typeof responseValue)
+            if ('string' === typeof responseValue){
                 response = JSON.stringify(JSON.parse(responseValue), undefined, 2)
-            else if ('object' === typeof responseValue)
+            }
+            else if ('object' === typeof responseValue){
                 response = JSON.stringify(JSON.parse(JSON.stringify(responseValue)), undefined, 2)
+            }
         } catch (error) {
-            seteditorLanguage('plaintext')
+            isValidJson = false;
         }
+        if(isValidJson){
+            editorRef.current.getModel().getLanguageId() !== 'json' && window.monaco.editor.setModelLanguage(editorRef.current.getModel(), 'json')
+            return response
+        }
+
+        // Check if the response is of type XML
+        const parser = new DOMParser();
+        const parsedDoc = parser.parseFromString(responseValue, 'application/xml');
+        let isValidXML = parsedDoc.getElementsByTagName('parsererror').length === 0;
+        if(isValidXML) {
+            editorRef.current.getModel().getLanguageId() !== 'xml' && window.monaco.editor.setModelLanguage(editorRef.current.getModel(), 'xml')
+            return response
+        }
+
+        // If the response is neither JSON nor XML, return it as it is and set editor's language to plain text
+        window.monaco.editor.setModelLanguage(editorRef.current.getModel(), 'plaintext')
         return response
     }
+    
     async function settingsUpload(request: any, response: any) {
         const headers = response.headers;
         const constructHeaders: any = {};
@@ -1370,7 +1393,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             </Box>
                         </Box>
                         <div style={{ display: responseTabValue === 0 ? 'block' : 'none' }}>
-                            <MonacoEditor viewMode={restImportConfig.viewMode} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={JSON.stringify(response.data, undefined, 2)} initialLanguage={editorLanguage} />
+                            <MonacoEditor viewMode={restImportConfig.viewMode} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={response.data} initialLanguage={editorLanguage} />
                         </div>
                         {responseTabValue === 1 && <Stack overflow={'auto'} sx={{ backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
                             {response !== undefined && <TableContainer style={{ height: restImportConfig?.responseBlockHeight ? `${restImportConfig?.responseBlockHeight / 1.2}px` : '300px' }}>
