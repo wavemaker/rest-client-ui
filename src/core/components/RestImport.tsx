@@ -148,8 +148,7 @@ export const defaultContentTypes = [
 ]
 declare global {
     interface Window {
-        google: any,
-        monaco: any;
+        google: any;
     }
 }
 
@@ -286,7 +285,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const editorRef: any = useRef(null)
     const [errorMessage, seterrorMessage] = useState<INotifyMessage>({ type: 'error', message: '' })
     const [handleToastOpen, sethandleToastOpen] = useState(false)
-    const [editorLanguage, seteditorLanguage] = useState(restImportConfig?.responseType || 'json')
+    const [editorLanguage, setEditorLanguage] = useState(restImportConfig?.responseType || 'json')
     const [providerConfig, setProviderConfig] = useState<IProviderConfig>({
         selectedProvider: { providerId: '', clientId: "", authorizationUrl: '', accessTokenUrl: '', sendAccessTokenAs: '', accessTokenParamName: '', scopes: [], oAuth2Pkce: null || { enabled: true, challengeMethod: '' }, oauth2Flow: 'AUTHORIZATION_CODE', isConfigured: false },
         providerAuthURL: "",
@@ -881,7 +880,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             isValidJson = false;
         }
         if(isValidJson){
-            editorRef.current.getModel().getLanguageId() !== 'json' && window.monaco.editor.setModelLanguage(editorRef.current.getModel(), 'json')
+            setEditorLanguage('json')
             return response
         }
 
@@ -890,12 +889,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const parsedDoc = parser.parseFromString(responseValue, 'application/xml');
         let isValidXML = parsedDoc.getElementsByTagName('parsererror').length === 0;
         if(isValidXML) {
-            editorRef.current.getModel().getLanguageId() !== 'xml' && window.monaco.editor.setModelLanguage(editorRef.current.getModel(), 'xml')
+            setEditorLanguage('xml')
             return response
         }
 
         // If the response is neither JSON nor XML, return it as it is and set editor's language to plain text
-        window.monaco.editor.setModelLanguage(editorRef.current.getModel(), 'plaintext')
+        setEditorLanguage('plaintext')
         return response
     }
     
@@ -1393,7 +1392,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             </Box>
                         </Box>
                         <div style={{ display: responseTabValue === 0 ? 'block' : 'none' }}>
-                            <MonacoEditor viewMode={restImportConfig.viewMode} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={response.data} initialLanguage={editorLanguage} />
+                            <MonacoEditor viewMode={restImportConfig.viewMode} url={restImportConfig.monacoEditorURL} editorRef={editorRef} initialValue={response.data} editorLanguage={editorLanguage} />
                         </div>
                         {responseTabValue === 1 && <Stack overflow={'auto'} sx={{ backgroundColor: "rgb(40, 42, 54)", color: 'white' }} width={'100%'} direction={'row'}>
                             {response !== undefined && <TableContainer style={{ height: restImportConfig?.responseBlockHeight ? `${restImportConfig?.responseBlockHeight / 1.2}px` : '300px' }}>
