@@ -21,6 +21,7 @@ import ConfigModel from './ConfigModel'
 import '../../i18n';
 import MonacoEditor from './MonacoEditor'
 import Snackbar from '@mui/material/Snackbar';
+import X2JS from "x2js";
 
 interface TabPanelProps {
     children?: ReactNode
@@ -834,9 +835,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
         if (useProxy) {
             if (response.status >= 200 && response.status < 300)
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
-                    responseValue = { data: checkXMLorJSON(response.data.responseBody), status: response?.data.statusCode, headers: response?.data.headers }
+                    responseValue = { data: setEditorLanguageAndReturnResponse(response.data.responseBody), status: response?.data.statusCode, headers: response?.data.headers }
                 else {
-                    responseValue = { data: checkXMLorJSON(response.data.responseBody) || JSON.stringify(response?.data?.errors?.error[0]?.parameters[0], undefined, 2), status: response?.data.statusCode, headers: response?.data.headers }
+                    responseValue = { data: setEditorLanguageAndReturnResponse(response.data.responseBody) || JSON.stringify(response?.data?.errors?.error[0]?.parameters[0], undefined, 2), status: response?.data.statusCode, headers: response?.data.headers }
                     handleToastError({ message: httpStatusCodes.get(response?.data.statusCode) as string, type: 'error' }, response)
                 }
             else
@@ -848,7 +849,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         }
         else {
             if (response.status >= 200 && response.status < 300) {
-                responseValue = { data: checkXMLorJSON(response?.data), status: response?.status, headers: response?.headers }
+                responseValue = { data: setEditorLanguageAndReturnResponse(response?.data), status: response?.status, headers: response?.headers }
             }
             else if (response.response !== undefined) {
                 responseValue = { data: response?.response.status + " " + httpStatusCodes.get(response.response?.status), status: response?.response.status, headers: response.response?.headers }
@@ -865,23 +866,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
         setloading(false)
         restImportConfig.handleResponse(request, responseValue as AxiosResponse, settingsUploadData)
     }
-    function checkXMLorJSON(responseValue: any): any {
-        let response = responseValue
-        let isValidJson = true
-        // Check if the response is of type JSON
-        try {
-            if ('string' === typeof responseValue){
-                response = JSON.stringify(JSON.parse(responseValue), undefined, 2)
-            }
-            else if ('object' === typeof responseValue){
-                response = JSON.stringify(JSON.parse(JSON.stringify(responseValue)), undefined, 2)
-            }
-        } catch (error) {
-            isValidJson = false;
-        }
-        if(isValidJson){
+    function setEditorLanguageAndReturnResponse(responseValue: any): any {
+        const { isValid, jsonString } = isValidJson(responseValue)
+        if (isValid) {
             setEditorLanguage('json')
-            return response
+            return jsonString
         }
 
         // Check if the response is of type XML
@@ -890,14 +879,45 @@ export default function RestImport({ language, restImportConfig }: { language: s
         let isValidXML = parsedDoc.getElementsByTagName('parsererror').length === 0;
         if(isValidXML) {
             setEditorLanguage('xml')
-            return response
+            return responseValue
         }
 
         // If the response is neither JSON nor XML, return it as it is and set editor's language to plain text
         setEditorLanguage('plaintext')
-        return response
+        return responseValue
     }
+
+    function isValidJson(responseValue: any) {
+        let jsonString = responseValue
+        let isValid = true
+        // Check if the response is of type JSON
+        try {
+            if ('string' === typeof responseValue) {
+                jsonString = JSON.stringify(JSON.parse(responseValue), undefined, 2)
+            }
+            else if ('object' === typeof responseValue) {
+                jsonString = JSON.stringify(JSON.parse(JSON.stringify(responseValue)), undefined, 2)
+            }
+        } catch (error) {
+            isValid = false
+        }
+        return { isValid, jsonString }
+    }
+
+    function xmlToJson(xmlString: string) {
+        const x2js = new X2JS({
+            emptyNodeForm: 'object',
+            attributePrefix: '',
+            enableToStringFunc: false
+        });
     
+        let json : {[key: string] : any} = x2js.xml2js(xmlString);
+        if(json){
+            const rootKey = Object.keys(json)[0];
+            json = json[rootKey];
+        }
+        return json
+    }
     async function settingsUpload(request: any, response: any) {
         const headers = response.headers;
         const constructHeaders: any = {};
@@ -920,7 +940,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             sampleHttpResponseDetails: {
                 headers: useProxy ? response.data.headers : headers,
                 responseBody: useProxy ? response.data.responseBody : JSON.stringify(response?.data), // when useproxy is true return response.responseBody
-                convertedResponse: null,
+                convertedResponse: isValidJson(response.data.responseBody).isValid ? null : JSON.stringify(xmlToJson(response.data.responseBody)),
                 statusCode: response?.status,
             },
             requestBody: bodyParams
