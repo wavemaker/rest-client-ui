@@ -19,7 +19,7 @@ const MonacoEditor = ({ editorRef, initialValue, url, editorLanguage, viewMode }
             }
         };
         const initializeMonaco = () => {
-            window.require.config({ paths: { 'vs': url || 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+            // window.require.config({ paths: { 'vs': url || 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
             window.require(['vs/editor/editor.main'], () => {
                 // Create Monaco Editor instance
                 const editorInstance = window.monaco.editor.create(editorRef.current, {
