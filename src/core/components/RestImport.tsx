@@ -603,9 +603,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
             if (apiURL.length > 0) {
                 setAlertMsg(false)
                 let header: any = {}
-                let requestAPI = apiURL
+                let requestAPI = encodeURI(apiURL)
                 const contentTypeCheck = contentType === 'multipart/form-data' ? true : false
-                if (isValidUrl(encodeURI(requestAPI))) {
+                if (isValidUrl(requestAPI)) {
                     headerParams.forEach((data, index) => {
                         if (data.name && data.value) {
                             if (data.name === 'Authorization' && header['Authorization'])
