@@ -603,9 +603,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
             if (apiURL.length > 0) {
                 setAlertMsg(false)
                 let header: any = {}
-                let requestAPI = encodeURI(apiURL)
+                let requestAPI = apiURL
                 const contentTypeCheck = contentType === 'multipart/form-data' ? true : false
-                if (isValidUrl(requestAPI)) {
+                if (isValidUrl(encodeURI(requestAPI))) {
                     headerParams.forEach((data, index) => {
                         if (data.name && data.value) {
                             if (data.name === 'Authorization' && header['Authorization'])
@@ -739,7 +739,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     }
                     function constructProxyRequestBody(): FormData | {} {
                         const jsonObject: any = {
-                            endpointAddress: requestAPI,
+                            endpointAddress: encodeURI(requestAPI),
                             method: httpMethod,
                             contentType: contentType,
                             requestBody: contentTypeCheck ? "" : bodyParams,
