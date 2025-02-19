@@ -3,7 +3,6 @@
  */
 
 import path from "path"
-import ReactRefreshWebpackPlugin from "@pmmmwh/react-refresh-webpack-plugin"
 import HtmlWebpackPlugin from "html-webpack-plugin"
 import { HtmlWebpackSkipAssetsPlugin } from "html-webpack-skip-assets-plugin"
 
@@ -30,7 +29,6 @@ const devConfig = configBuilder(
         "./src/standalone/index.js",
       ],
       "rest-import-ui": "./src/style/main.scss",
-      vendors: ["react-refresh/runtime"],
     },
 
     performance: {
@@ -79,7 +77,6 @@ const devConfig = configBuilder(
           options: {
             retainLines: true,
             cacheDirectory: true,
-            plugins: [isDevelopment && require.resolve("react-refresh/babel")].filter(Boolean),
           },
         },
         {
@@ -94,7 +91,6 @@ const devConfig = configBuilder(
     },
 
     plugins: [
-      isDevelopment && new ReactRefreshWebpackPlugin({ library: "[name]" }),
       new HtmlWebpackPlugin({
         template: path.join(projectBasePath, "dev-helpers", "index.html"),
       }),
