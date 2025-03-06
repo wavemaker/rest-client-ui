@@ -76,7 +76,8 @@ export interface restImportConfigI {
     handleResponse: (request: AxiosRequestConfig, response?: AxiosResponse, settingsUploadResponse?: any) => void,
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
-    getUseProxy: (value: boolean) => void
+    getUseProxy: (value: boolean) => void,
+    urlBasePath :string
 }
 export interface ICustomAxiosConfig extends AxiosRequestConfig {
     useProxy?: boolean,
@@ -99,6 +100,7 @@ interface APII {
     authorizationUrl: string,
     project_id?: string,
     settingsUpload: string,
+    updateSwagger: string
 }
 function CustomTabPanel(props: TabPanelProps) {
     const { children, value, index, ...other } = props
@@ -297,6 +299,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
     })
     var multiParamInfoList: any[] = []
     var oAuthRetry = true
+    const [basePath, setBasePath] = useState<string>(restImportConfig?.urlBasePath)
+    const [basePathList, setBasePathList] = useState<string[]>([]);
+    const [basePathEnabled, setBasePathEnabled] = useState(!restImportConfig?.viewMode)
+    const [settingsDetailsResponse, setSettingsDetailsResponse] = useState({})
+    const [handleRes, setHandleRes] =useState<any>()
+    const [handleReq, setHandleReq] = useState<any>()
 
     useEffect(() => {
         if (!window.google) {
@@ -320,6 +328,27 @@ export default function RestImport({ language, restImportConfig }: { language: s
         handleChangeResponseTabs(null, responseTabValue)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [response])
+
+    useEffect(() => {
+        getBasePaths(apiURL);
+    }, [apiURL])
+
+    const getBasePaths = (url :string)=> {
+        try {
+            const path = new URL(url).pathname; // Extract path from URL
+            const parts = path.split("/").filter(Boolean); // Remove empty strings
+
+            const basePathDetails = parts.map((_, index) => decodeURIComponent("/" + parts.slice(0, index + 1).join("/")));
+            if(basePathDetails.length > 0){
+                setBasePath(restImportConfig?.urlBasePath ? restImportConfig?.urlBasePath : basePathDetails[0]);
+            }
+            setBasePathList(basePathDetails)
+        } catch (error) {
+            console.error("Invalid URL:", error);
+            setBasePathList([])
+        }
+
+    }
 
     const updateProviderConfig = (key: string, value: any) => {
         setProviderConfig((prevState) => ({
@@ -799,6 +828,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
 
                     setloading(true)
                     const response: any = await Apicall(requestConfig as AxiosRequestConfig)
+                    setHandleReq(requestConfig)
+                    setHandleRes(response)
                     if (response.status >= 200 && response.status < 300) {
                         if (providerId) {
                             if (response.status === 401 || response.data.statusCode === 401) {
@@ -808,6 +839,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         const settingsUploadData = await settingsUpload(requestConfig, response)
                         if (settingsUploadData) {
                             setserviceNameEnabled(false)
+                            setBasePathEnabled(false)
                             if (!restImportConfig.viewMode) {
                                 restImportConfig.getServiceName(settingsUploadData?.serviceId)
                                 setserviceName(settingsUploadData?.serviceId)
@@ -816,6 +848,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         }
                     } else {
                         setserviceNameEnabled(true)
+                        setBasePathEnabled(true)
                         handleResponse(response, requestConfig)
                     }
                     setloading(false)
@@ -832,6 +865,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     function handleResponse(response: any, request?: any, settingsUploadData?: any): void {
         let responseValue;
         setserviceNameEnabled(false)
+        setBasePathEnabled(false)
         if (useProxy) {
             if (response.status >= 200 && response.status < 300)
                 if (response.data.statusCode >= 200 && response.data.statusCode < 300)
@@ -943,7 +977,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 convertedResponse: isValidJson(response.data.responseBody).isValid ? null : JSON.stringify(xmlToJson(response.data.responseBody)),
                 statusCode: response?.status,
             },
-            requestBody: bodyParams
+            requestBody: bodyParams,
+            urlBasePath : basePathEnabled ? '' : basePath
         };
         const dataConfig: AxiosRequestConfig = {
             url: restImportConfig.proxy_conf.base_path + restImportConfig.proxy_conf.settingsUpload,
@@ -954,6 +989,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const settingsUploadResponse: any = await Apicall(dataConfig)
         if (response.status >= 200 && response.status < 300) {
             let settingsUploadResponseData = settingsUploadResponse.data
+            setSettingsDetailsResponse(settingsUploadResponseData)
             const params: any[] = getParamsWithTypes(settingsUploadResponseData).paramaters
             const firstKey = getParamsWithTypes(settingsUploadResponseData).firstKey
             const secondKey = getParamsWithTypes(settingsUploadResponseData).secondKey
@@ -1080,11 +1116,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const config = useProxy ? configWProxy : configWOProxy
         setloading(true)
         const response: any = await Apicall(config as AxiosRequestConfig)
+        setHandleReq(config)
+        setHandleRes(response)
         if (response.status >= 200 && response.status < 300) {
             if (response.data.statusCode === 200) {
                 const settingsUploadData = await settingsUpload(config, response)
                 if (settingsUploadData) {
                     setserviceNameEnabled(false)
+                    setBasePathEnabled(false)
                     if (!restImportConfig.viewMode) {
                         restImportConfig.getServiceName(settingsUploadData?.serviceId)
                         setserviceName(settingsUploadData?.serviceId)
@@ -1167,6 +1206,32 @@ export default function RestImport({ language, restImportConfig }: { language: s
         }
     }
 
+    const handleChangeBasePath = async (event: SelectChangeEvent) => {
+        setBasePath(event.target.value as any);
+        if (Object.keys(settingsDetailsResponse).length !== 0) {
+            let updateSwaggerPayload: any = settingsDetailsResponse;
+            updateSwaggerPayload['httpRequestDetails']['urlBasePath'] = event.target.value
+            const url = restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.updateSwagger
+                const updateSwagger = {
+                    url: url,
+                    method: "POST",
+                    data: updateSwaggerPayload,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    withCredentials: true
+                };
+            const response: any = await Apicall(updateSwagger);
+            handleResponse(handleRes, handleReq, response)
+            if (response.status === 200) {
+                const updateSwaggerResponse = response.data
+            } else {
+                console.log("Received an unexpected response:", response);
+            }
+        }
+        
+    }
+
     return (
         <ThemeProvider theme={theme}>
             <Stack sx={{ height: "97vh" }} className='rest-import-ui'>
@@ -1206,7 +1271,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             <Button className='test-btn' name="wm-webservice-sample-test" onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
                         <Grid mt={2} container>
-                            <Grid item md={6}>
+                            <Grid item md={3}>
                                 <Stack sx={{ cursor: "pointer" }} spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('SERVICE_NAME')}</Typography>
                                     <TextField value={serviceName}
@@ -1222,6 +1287,24 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                             setserviceName(e.target.value)
                                             restImportConfig.getServiceName(e.target.value)
                                         }} disabled={serviceNameEnabled || restImportConfig.viewMode} size='small' />
+                                </Stack>
+                            </Grid>
+                            <Grid item md={3} pr={2}>
+                                <Stack sx={{ cursor: "pointer" }} spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                                <Typography sx={{ margin: '10px' }}>{translate("BASE_PATH")}</Typography>
+                                <FormControl size='small' sx={{width:'200px'}}>
+                                    <Select
+                                        className='form-control-select'
+                                        name="wm-base-path"
+                                        data-testid="base-path"
+                                        value={basePath}
+                                        title={basePath}
+                                        inputProps={{ readOnly: basePathEnabled}}
+                                        onChange={handleChangeBasePath}
+                                    >
+                                        {basePathList.map((basePath) => <MenuItem key={basePath} title={basePath} value={basePath}>{basePath}</MenuItem>)}
+                                    </Select>
+                                </FormControl>
                                 </Stack>
                             </Grid>
                             <Grid item md={3}>

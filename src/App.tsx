@@ -9,10 +9,11 @@ export default function App() {
       base_path: "http://localhost:4000/",
       proxy_path: "restimport",
       list_provider: "get-default-provider",
-      settingsUpload: "settingUpload",
+      settingsUpload: "generateSwagger",
       getprovider: "getprovider",
       addprovider: "addprovider",
       authorizationUrl: "authorizationUrl",
+      updateSwagger: "updateSwagger",
     }, 
     useProxy: true,
     httpMethod: 'POST',
@@ -51,6 +52,7 @@ export default function App() {
     viewMode: false,
     monacoEditorURL: undefined as any,
     responseBlockHeight: 550,
+    urlBasePath:""
   }
 
   return (

@@ -278,6 +278,7 @@ export const emptyConfig: restImportConfigI = {
     settingsUpload: "",
     addprovider: "addprovider",
     authorizationUrl: "authorizationUrl",
+    updateSwagger: "updateSwagger"
   },
   projectId: "WMPRJ2c91808889a96400018a26070b7b2e68",
   appEnvVariables: [],
@@ -298,6 +299,7 @@ export const emptyConfig: restImportConfigI = {
   setResponseHeaders: { namespace: "test" },
   viewMode: false,
   monacoEditorURL: "",
+  urlBasePath: ''
 };
 export const mockEmptyProps: mockPropsI = {
   language: "en",
@@ -330,6 +332,7 @@ const configWithData: restImportConfigI = {
     addprovider: "addprovider",
     settingsUpload: "",
     authorizationUrl: "authorizationUrl",
+    updateSwagger: "updateSwagger"
   },
   error: {
     errorFunction: (msg) => {
@@ -349,6 +352,7 @@ const configWithData: restImportConfigI = {
   viewMode: false,
   setResponseHeaders: { namespace: "test" },
   monacoEditorURL: "",
+  urlBasePath: ''
 };
 
 export const preLoadedProps: mockPropsI = {
