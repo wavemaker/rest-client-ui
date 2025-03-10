@@ -1222,10 +1222,16 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     withCredentials: true
                 };
             const response: any = await Apicall(updateSwagger);
-            handleResponse(handleRes, handleReq, response)
-            if (response.status === 200) {
+            
+            if (response.status >= 200 && response.status < 300) {
                 const updateSwaggerResponse = response.data
+                if (!restImportConfig.viewMode) {
+                    restImportConfig.getServiceName(updateSwaggerResponse?.serviceId)
+                    setserviceName(updateSwaggerResponse?.serviceId)
+                }
+                handleResponse(handleRes, handleReq, updateSwaggerResponse)
             } else {
+                handleResponse(handleRes, handleReq)
                 console.log("Received an unexpected response:", response);
             }
         }
@@ -1271,8 +1277,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             <Button className='test-btn' name="wm-webservice-sample-test" onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
                         </Stack>
                         <Grid mt={2} container>
-                            <Grid item md={3}>
-                                <Stack sx={{ cursor: "pointer" }} spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                            <Grid item md={4}>
+                                <Stack sx={{ cursor: "pointer" }}  display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('SERVICE_NAME')}</Typography>
                                     <TextField value={serviceName}
                                         className='url-input service-input'
@@ -1289,17 +1295,17 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         }} disabled={serviceNameEnabled || restImportConfig.viewMode} size='small' />
                                 </Stack>
                             </Grid>
-                            <Grid item md={3} pr={2}>
+                            <Grid item md={4} px={2}>
                                 <Stack sx={{ cursor: "pointer" }} spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
-                                <Typography sx={{ margin: '10px' }}>{translate("BASE_PATH")}</Typography>
+                                <Typography sx={{ marginRight: '15px' }}>{translate("BASE_PATH")}</Typography>
                                 <FormControl size='small' sx={{width:'200px'}}>
                                     <Select
-                                        className='form-control-select'
+                                        className='form-control-select service-base-path'
                                         name="wm-base-path"
                                         data-testid="base-path"
                                         value={basePath}
                                         title={basePath}
-                                        inputProps={{ readOnly: basePathEnabled}}
+                                        disabled={ basePathEnabled}
                                         onChange={handleChangeBasePath}
                                     >
                                         {basePathList.map((basePath) => <MenuItem key={basePath} title={basePath} value={basePath}>{basePath}</MenuItem>)}
@@ -1307,8 +1313,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 </FormControl>
                                 </Stack>
                             </Grid>
-                            <Grid item md={3}>
-                                <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                            <Grid item md={2}>
+                                <Stack display={'flex'} alignItems={'center'} direction={'row'}>
                                     <Typography>{translate('USE_PROXY')}</Typography>
                                     <Switch name="wm-webservice-use-proxy" data-testid="proxy-switch" checked={useProxy} onChange={handleChangeProxy} />
                                     <Tooltip
@@ -1321,8 +1327,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 </Stack>
                             </Grid>
                             {!useProxy &&
-                                <Grid item md={3}>
-                                    <Stack spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
+                                <Grid item md={2}>
+                                    <Stack  display={'flex'} alignItems={'center'} direction={'row'}>
                                         <Typography>{translate('WITH_CREDENTIALS')}</Typography>
                                         <Switch name="wm-webservice-with-credentials" data-testid="with-credentials" checked={withCredentials} onChange={handleChangeWithCredentials} />
                                         <Tooltip
