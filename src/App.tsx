@@ -52,7 +52,8 @@ export default function App() {
     viewMode: false,
     monacoEditorURL: undefined as any,
     responseBlockHeight: 550,
-    urlBasePath:""
+    urlBasePath:"",
+    settingsDetailsResponse: {}
   }
 
   return (

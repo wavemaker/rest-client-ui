@@ -50,7 +50,8 @@ export const ProxyOFFConfig: restImportConfigI = {
     viewMode: false,
     setResponseHeaders: { namespace: "test" },
     monacoEditorURL: "",
-    urlBasePath: ''
+    urlBasePath: '',
+    settingsDetailsResponse : {}
 }
 
 const mockProxyOFFProps: mockPropsI = {
