@@ -299,7 +299,8 @@ export const emptyConfig: restImportConfigI = {
   setResponseHeaders: { namespace: "test" },
   viewMode: false,
   monacoEditorURL: "",
-  urlBasePath: ''
+  urlBasePath: '',
+  settingsDetailsResponse : {}
 };
 export const mockEmptyProps: mockPropsI = {
   language: "en",
@@ -352,7 +353,8 @@ const configWithData: restImportConfigI = {
   viewMode: false,
   setResponseHeaders: { namespace: "test" },
   monacoEditorURL: "",
-  urlBasePath: ''
+  urlBasePath: '',
+  settingsDetailsResponse : {}
 };
 
 export const preLoadedProps: mockPropsI = {
