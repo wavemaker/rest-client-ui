@@ -77,7 +77,8 @@ export interface restImportConfigI {
     hideMonacoEditor: (value: boolean) => void,
     getServiceName: (value: string) => void,
     getUseProxy: (value: boolean) => void,
-    urlBasePath :string
+    urlBasePath :string,
+    settingsDetailsResponse : any
 }
 export interface ICustomAxiosConfig extends AxiosRequestConfig {
     useProxy?: boolean,
@@ -302,7 +303,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [basePath, setBasePath] = useState<string>(restImportConfig?.urlBasePath)
     const [basePathList, setBasePathList] = useState<string[]>([]);
     const [basePathEnabled, setBasePathEnabled] = useState(!restImportConfig?.viewMode)
-    const [settingsDetailsResponse, setSettingsDetailsResponse] = useState({})
+    const [settingsDetailsResponse, setSettingsDetailsResponse] = useState(restImportConfig?.settingsDetailsResponse || {})
     const [handleRes, setHandleRes] =useState<any>()
     const [handleReq, setHandleReq] = useState<any>()
 
@@ -1208,7 +1209,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
 
     const handleChangeBasePath = async (event: SelectChangeEvent) => {
         setBasePath(event.target.value as any);
-        if (Object.keys(settingsDetailsResponse).length !== 0) {
+        if (Object.keys(settingsDetailsResponse).length !== 0 || restImportConfig.viewMode) {
             let updateSwaggerPayload: any = settingsDetailsResponse;
             updateSwaggerPayload['httpRequestDetails']['urlBasePath'] = event.target.value
             const url = restImportConfig?.proxy_conf?.base_path + restImportConfig?.proxy_conf?.updateSwagger
@@ -1229,7 +1230,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     restImportConfig.getServiceName(updateSwaggerResponse?.serviceId)
                     setserviceName(updateSwaggerResponse?.serviceId)
                 }
-                handleResponse(handleRes, handleReq, updateSwaggerResponse)
+                if(handleRes && handleReq)
+                    handleResponse(handleRes, handleReq, updateSwaggerResponse)
             } else {
                 handleResponse(handleRes, handleReq)
                 console.log("Received an unexpected response:", response);
