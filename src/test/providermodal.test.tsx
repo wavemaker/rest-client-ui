@@ -28,6 +28,7 @@ export const ProxyOFFConfig: restImportConfigI = {
         getprovider: "/getprovider",
         addprovider: "/addprovider",
         authorizationUrl: "/authorizationUrl",
+        updateSwagger: "updateSwagger"
     },
     appEnvVariables: [],
     projectId: "",
@@ -48,7 +49,8 @@ export const ProxyOFFConfig: restImportConfigI = {
     setServiceName: '',
     viewMode: false,
     setResponseHeaders: { namespace: "test" },
-    monacoEditorURL: ""
+    monacoEditorURL: "",
+    urlBasePath: ''
 }
 
 const mockProxyOFFProps: mockPropsI = {
