@@ -79,6 +79,7 @@ export interface restImportConfigI {
     getUseProxy: (value: boolean) => void,
     urlBasePath :string,
     settingsDetailsResponse : any
+    handleUpdateSwaggerResponse: (updateSwaggerResponse: any) =>void
 }
 export interface ICustomAxiosConfig extends AxiosRequestConfig {
     useProxy?: boolean,
@@ -304,8 +305,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
     const [basePathList, setBasePathList] = useState<string[]>([]);
     const [basePathEnabled, setBasePathEnabled] = useState(!restImportConfig?.viewMode)
     const [settingsDetailsResponse, setSettingsDetailsResponse] = useState(restImportConfig?.settingsDetailsResponse || {})
-    const [handleRes, setHandleRes] =useState<any>()
-    const [handleReq, setHandleReq] = useState<any>()
 
     useEffect(() => {
         if (!window.google) {
@@ -829,8 +828,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
 
                     setloading(true)
                     const response: any = await Apicall(requestConfig as AxiosRequestConfig)
-                    setHandleReq(requestConfig)
-                    setHandleRes(response)
                     if (response.status >= 200 && response.status < 300) {
                         if (providerId) {
                             if (response.status === 401 || response.data.statusCode === 401) {
@@ -1117,8 +1114,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const config = useProxy ? configWProxy : configWOProxy
         setloading(true)
         const response: any = await Apicall(config as AxiosRequestConfig)
-        setHandleReq(config)
-        setHandleRes(response)
         if (response.status >= 200 && response.status < 300) {
             if (response.data.statusCode === 200) {
                 const settingsUploadData = await settingsUpload(config, response)
@@ -1230,10 +1225,8 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     restImportConfig.getServiceName(updateSwaggerResponse?.serviceId)
                     setserviceName(updateSwaggerResponse?.serviceId)
                 }
-                if(handleRes && handleReq)
-                    handleResponse(handleRes, handleReq, updateSwaggerResponse)
+                restImportConfig.handleUpdateSwaggerResponse(updateSwaggerResponse)
             } else {
-                handleResponse(handleRes, handleReq)
                 console.log("Received an unexpected response:", response);
             }
         }
@@ -1297,10 +1290,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         }} disabled={serviceNameEnabled || restImportConfig.viewMode} size='small' />
                                 </Stack>
                             </Grid>
-                            <Grid item md={4} px={2}>
+                            <Grid item md={3} px={1}>
                                 <Stack sx={{ cursor: "pointer" }} spacing={2} display={'flex'} alignItems={'center'} direction={'row'}>
                                 <Typography sx={{ marginRight: '15px' }}>{translate("BASE_PATH")}</Typography>
-                                <FormControl size='small' sx={{width:'200px'}}>
+                                <FormControl size='small'>
                                     <Select
                                         className='form-control-select service-base-path'
                                         name="wm-base-path"
@@ -1329,7 +1322,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 </Stack>
                             </Grid>
                             {!useProxy &&
-                                <Grid item md={2}>
+                                <Grid item md={3}>
                                     <Stack  display={'flex'} alignItems={'center'} direction={'row'}>
                                         <Typography>{translate('WITH_CREDENTIALS')}</Typography>
                                         <Switch name="wm-webservice-with-credentials" data-testid="with-credentials" checked={withCredentials} onChange={handleChangeWithCredentials} />
