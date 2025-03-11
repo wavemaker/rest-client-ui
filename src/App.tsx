@@ -53,7 +53,10 @@ export default function App() {
     monacoEditorURL: undefined as any,
     responseBlockHeight: 550,
     urlBasePath:"",
-    settingsDetailsResponse: {}
+    settingsDetailsResponse: {},
+    handleUpdateSwaggerResponse: (updateSwaggerResponse) =>{
+      console.log(updateSwaggerResponse)
+    }
   }
 
   return (
