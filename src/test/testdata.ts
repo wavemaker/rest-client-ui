@@ -300,7 +300,8 @@ export const emptyConfig: restImportConfigI = {
   viewMode: false,
   monacoEditorURL: "",
   urlBasePath: '',
-  settingsDetailsResponse : {}
+  settingsDetailsResponse : {},
+  handleUpdateSwaggerResponse: (updateSwaggerResponse: any) => {}
 };
 export const mockEmptyProps: mockPropsI = {
   language: "en",
@@ -354,7 +355,9 @@ const configWithData: restImportConfigI = {
   setResponseHeaders: { namespace: "test" },
   monacoEditorURL: "",
   urlBasePath: '',
-  settingsDetailsResponse : {}
+  settingsDetailsResponse : {},
+  handleUpdateSwaggerResponse: (updateSwaggerResponse: any) => {}
+
 };
 
 export const preLoadedProps: mockPropsI = {
