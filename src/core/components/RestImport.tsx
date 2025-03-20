@@ -338,7 +338,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
             const path = new URL(url).pathname; // Extract path from URL
             const parts = path.split("/").filter(Boolean); // Remove empty strings
 
-            const basePathDetails = parts.map((_, index) => decodeURIComponent("/" + parts.slice(0, index + 1).join("/")));
+            // Stop at the first occurrence of `{}` placeholders
+            const firstValidIndex = parts.findIndex(part => {
+                const decodePart = decodeURIComponent(part)
+               return decodePart.includes("{") || decodePart.includes("}")
+            });
+            const filteredParts = firstValidIndex === -1 ? parts : parts.slice(0, firstValidIndex);
+        
+            const basePathDetails = filteredParts.map((_, index) => decodeURIComponent("/" + filteredParts.slice(0, index + 1).join("/")));
             if(basePathDetails.length > 0){
                 setBasePath(restImportConfig?.urlBasePath ? restImportConfig?.urlBasePath : basePathDetails[0]);
             }
@@ -347,7 +354,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             console.error("Invalid URL:", error);
             setBasePathList([])
         }
-
+    
     }
 
     const updateProviderConfig = (key: string, value: any) => {
