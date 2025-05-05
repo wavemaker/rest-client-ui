@@ -345,9 +345,14 @@ export default function RestImport({ language, restImportConfig }: { language: s
             });
             const filteredParts = firstValidIndex === -1 ? parts : parts.slice(0, firstValidIndex);
         
-            const basePathDetails = filteredParts.map((_, index) => decodeURIComponent("/" + filteredParts.slice(0, index + 1).join("/")));
+            const basePathDetails = ["empty"];
+            for (let i = 0; i < filteredParts.length; i++) {
+              const segment = filteredParts.slice(0, i + 1).join("/");
+              basePathDetails.push(decodeURIComponent(segment));
+            } 
+
             if(basePathDetails.length > 0){
-                setBasePath(restImportConfig?.urlBasePath ? restImportConfig?.urlBasePath : basePathDetails[0]);
+                setBasePath(restImportConfig?.urlBasePath ? restImportConfig?.urlBasePath : basePathDetails[1]);
             }
             setBasePathList(basePathDetails)
         } catch (error) {
