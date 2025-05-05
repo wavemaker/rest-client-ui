@@ -345,13 +345,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
             });
             const filteredParts = firstValidIndex === -1 ? parts : parts.slice(0, firstValidIndex);
         
-            const basePathDetails = ["empty"];
-            for (let i = 0; i < filteredParts.length; i++) {
-              const segment = filteredParts.slice(0, i + 1).join("/");
-              basePathDetails.push(decodeURIComponent(segment));
-            }            
+            const basePathDetails = filteredParts.map((_, index) => decodeURIComponent("/" + filteredParts.slice(0, index + 1).join("/")));
             if(basePathDetails.length > 0){
-                setBasePath(restImportConfig?.urlBasePath ? restImportConfig?.urlBasePath : basePathDetails[1]);
+                setBasePath(restImportConfig?.urlBasePath ? restImportConfig?.urlBasePath : basePathDetails[0]);
             }
             setBasePathList(basePathDetails)
         } catch (error) {
@@ -987,7 +983,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 statusCode: response?.status,
             },
             requestBody: bodyParams,
-            urlBasePath : basePathEnabled ? null : basePath
+            urlBasePath : basePathEnabled ? '' : basePath
         };
         const dataConfig: AxiosRequestConfig = {
             url: restImportConfig.proxy_conf.base_path + restImportConfig.proxy_conf.settingsUpload,
