@@ -351,7 +351,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
             }
             setBasePathList(basePathDetails)
         } catch (error) {
-            console.error("Invalid URL:", error);
             setBasePathList([])
         }
     
@@ -983,7 +982,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                 statusCode: response?.status,
             },
             requestBody: bodyParams,
-            urlBasePath : basePathEnabled ? '' : basePath
+            urlBasePath : basePathEnabled ? null : basePath
         };
         const dataConfig: AxiosRequestConfig = {
             url: restImportConfig.proxy_conf.base_path + restImportConfig.proxy_conf.settingsUpload,
