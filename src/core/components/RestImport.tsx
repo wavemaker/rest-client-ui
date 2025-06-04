@@ -819,6 +819,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             },
                             withCredentials: true,
                             useProxy: useProxy,
+                            authDetails: httpAuth === "NONE" ? null : httpAuth === "BASIC" ? { type: "BASIC" } : { type: "OAUTH2", providerId: providerId },
                         }
                     } else {
                         requestConfig = {
@@ -966,10 +967,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
             });
         }
         const data = {
-            authDetails:
-                useProxy
-                    ? request?.data.authDetails
-                    : request?.authDetails,
+            authDetails: request?.authDetails,
             contentType: contentType,
             method: httpMethod,
             endpointAddress: apiURL,
