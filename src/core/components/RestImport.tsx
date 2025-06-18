@@ -157,6 +157,12 @@ declare global {
     }
 }
 
+interface BasePathOption {
+  label: string;
+  value: string;
+}
+
+
 export default function RestImport({ language, restImportConfig }: { language: string, restImportConfig: restImportConfigI }) {
     const theme = createTheme({
         typography: {
@@ -302,7 +308,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
     var multiParamInfoList: any[] = []
     var oAuthRetry = true
     const [basePath, setBasePath] = useState<string>(restImportConfig?.urlBasePath)
-    const [basePathList, setBasePathList] = useState<string[]>([]);
+    const [basePathList, setBasePathList] = useState<BasePathOption[]>([]);
     const [basePathEnabled, setBasePathEnabled] = useState(!restImportConfig?.viewMode)
     const [settingsDetailsResponse, setSettingsDetailsResponse] = useState(restImportConfig?.settingsDetailsResponse || {})
 
@@ -344,10 +350,23 @@ export default function RestImport({ language, restImportConfig }: { language: s
                return decodePart.includes("{") || decodePart.includes("}")
             });
             const filteredParts = firstValidIndex === -1 ? parts : parts.slice(0, firstValidIndex);
-        
-            const basePathDetails = filteredParts.map((_, index) => decodeURIComponent("/" + filteredParts.slice(0, index + 1).join("/")));
+            
+            const basePathDetails: BasePathOption[] = [
+                { label: "None", value: "/" }
+            ];
+
+            for (let i = 0; i < filteredParts.length; i++) {
+                const segment = filteredParts.slice(0, i + 1).join("/");
+                const decodedSegment = decodeURIComponent(segment);
+                basePathDetails.push({ 
+                    label: `/${decodedSegment}`, 
+                    value: `/${decodedSegment}`  
+                });
+            }
+
+
             if(basePathDetails.length > 0){
-                setBasePath(restImportConfig?.urlBasePath ? restImportConfig?.urlBasePath : basePathDetails[0]);
+                setBasePath(restImportConfig?.urlBasePath ? restImportConfig?.urlBasePath : basePathDetails[1].value);
             }
             setBasePathList(basePathDetails)
         } catch (error) {
@@ -1307,7 +1326,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                         disabled={ basePathEnabled}
                                         onChange={handleChangeBasePath}
                                     >
-                                        {basePathList.map((basePath) => <MenuItem key={basePath} title={basePath} value={basePath}>{basePath}</MenuItem>)}
+                                    {basePathList.map((option) => (
+                                        <MenuItem key={option.label} title={option.label} value={option.value}>
+                                            {option.label}
+                                        </MenuItem>
+                                        ))}
                                     </Select>
                                 </FormControl>
                                 </Stack>
