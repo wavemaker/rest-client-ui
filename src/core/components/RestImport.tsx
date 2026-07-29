@@ -9,7 +9,7 @@ import ProviderModal, { ProviderI } from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled, tableHeaderStyle, tableRowStyle } from './Table'
 import {
     retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString,
-    findDuplicatesByComparison, retrieveQueryDetailsFromURL, constructCommaSeparatedUniqueQueryValuesString, checkTypeForParameter
+    findDuplicatesByComparison, retrieveQueryDetailsFromURL, checkTypeForParameter
 } from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
@@ -410,6 +410,41 @@ export default function RestImport({ language, restImportConfig }: { language: s
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    // On mount, normalize multi/csv query params so the table and URL stay in sync after save/reopen.
+    useEffect(() => {
+        // Ignore the trailing empty placeholder row (name === '').
+        const configQueryParams = restImportConfig?.queryParams?.filter((row) => row.name) || []
+        if (configQueryParams.length === 0) {
+            return
+        }
+        // Two ways the config can indicate a multi-value param:
+        // 1. an explicit collectionFormat === 'multi' on a row, or
+        // 2. the same param name appearing on more than one row (repeated keys).
+        const hasMultiFormat = configQueryParams.some((param) => param.collectionFormat === 'multi')
+        const hasRepeatedNames = configQueryParams.some(
+            (param) => configQueryParams.filter((row) => row.name === param.name).length > 1
+        )
+        // Only rebuild state when there is something special to preserve (multi/csv/repeats).
+        // For plain single-value params the incoming url/queryParams are already fine.
+        if (hasMultiFormat || hasRepeatedNames || configQueryParams.some((param) => param.collectionFormat === 'csv')) {
+            // Backfill collectionFormat: 'multi' on repeated rows that don't carry the flag yet,
+            // so downstream URL building keeps them as separate key=value pairs (not comma-joined).
+            const normalizedParams = configQueryParams.map((param) => {
+                if (hasRepeatedNames && !param.collectionFormat) {
+                    return { ...param, collectionFormat: 'multi' as const }
+                }
+                return param
+            })
+            // Rebuild URL from table rows so it matches the query params.
+            const baseUrl = (restImportConfig.url || apiURL || '').split('?')[0]
+            const normalizedUrl = baseUrl + constructUpdatedQueryString(normalizedParams)
+            setapiURL(normalizedUrl)
+            // Keep the trailing empty placeholder row so the user can still add a new param.
+            setqueryParams([...normalizedParams, defaultValueforHandQParams])
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     useEffect(() => {
         setProviderId(providerConfig.selectedProvider.providerId)
     }, [providerConfig.selectedProvider])
@@ -592,50 +627,21 @@ export default function RestImport({ language, restImportConfig }: { language: s
         try {
             if (apiURL !== '') {
                 const query = apiURL?.split('?')[1]
-                const queries = query?.split('&')
-                if (queries?.length > 0) {
-                    const queryNames = queries.map(query => ({ name: query.split('=')[0], value: query.split('=')[1] }))
-                    let updatedQueryParams: HeaderAndQueryI[] = []
-                    const isThisNewQuery = (name: string, value: string): boolean => {
-                        let newQuery = true
-                        for (const query of queryParams) {
-                            if (query.name === name) {
-                                if (!updatedQueryParams.some(data => data.name === name)) {
-                                    const valueArray = value.split(',')
-                                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueArray)
-                                    updatedQueryParams.push({ name, value: valueToSet, type: query.type })
-                                    newQuery = false
-                                    break
-                                } else {
-                                    const queryIndex = updatedQueryParams.findIndex(data => data.name === name)
-                                    const valueCollection = [...updatedQueryParams[queryIndex].value.split(','), ...value.split(',')]
-                                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueCollection)
-                                    updatedQueryParams[queryIndex].value = valueToSet
-                                    newQuery = false
-                                    break
-                                }
-                            }
+                if (!query) {
+                    setqueryParams([{ name: '', value: '', type: 'string' }])
+                    return
+                }
+                const updatedQueryParams = retrieveQueryDetailsFromURL(apiURL)
+                if (updatedQueryParams.length > 0) {
+                    // Repeated query names (type=a&type=b) are multi-value params — keep as separate rows.
+                    const nameOccurrences = updatedQueryParams.reduce<Record<string, number>>((acc, param) => {
+                        acc[param.name] = (acc[param.name] || 0) + 1
+                        return acc
+                    }, {})
+                    updatedQueryParams.forEach((param) => {
+                        if (nameOccurrences[param.name] > 1) {
+                            param.collectionFormat = 'multi'
                         }
-                        return newQuery
-                    }
-                    queryNames.forEach(query => {
-                        const key = query.name
-                        const value = query.value
-                        if (key && value) {
-                            if (isThisNewQuery(key, value)) {
-                                if (updatedQueryParams.some(data => data.name === key)) {
-                                    const queryIndex = updatedQueryParams.findIndex(data => data.name === key)
-                                    const valueCollection = [...updatedQueryParams[queryIndex].value.split(','), ...value.split(',')]
-                                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueCollection)
-                                    updatedQueryParams[queryIndex].value = valueToSet
-                                } else {
-                                    const valueArray = value.split(',')
-                                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueArray)
-                                    updatedQueryParams.push({ name: key, value: valueToSet, type: 'string' })
-                                }
-                            }
-                        } else
-                            throw new Error('Please enter a valid query parameter')
                     })
                     const paths = retrievePathParamNamesFromURL(apiURL.split("?")[0], "{", "}")
                     const pathParamsClone = paths.map(path => {
@@ -651,16 +657,12 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             const duplicateQuery = duplicate.name
                             duplicateQueryNames += index !== duplicates.length - 1 ? `${duplicateQuery},` : duplicateQuery
                         })
-                        const newQueryPart = constructUpdatedQueryString(queryArrayWithoutDuplicates)
-                        const originalURL = apiURL.split('?')[0]
-                        setapiURL(originalURL + newQueryPart)
+                        setapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(queryArrayWithoutDuplicates))
                         handleToastError({ message: `Queries cannot have duplicates, removed the duplicates[${duplicateQueryNames}]`, type: 'error' })
                     } else {
                         updatedQueryParams.push({ name: '', value: '', type: 'string' })
                         setqueryParams(updatedQueryParams)
-                        const newQueryPart = constructUpdatedQueryString(updatedQueryParams)
-                        const originalURL = apiURL.split('?')[0]
-                        setapiURL(originalURL + newQueryPart)
+                        setapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(updatedQueryParams))
                     }
                 } else {
                     setqueryParams([{ name: '', value: '', type: 'string' }])
@@ -689,32 +691,30 @@ export default function RestImport({ language, restImportConfig }: { language: s
         else
             handleToastError({ message: "Please add a custom content type", type: 'error' })
     }
+    // A new query row typed manually (instead of added with the "+" icon)
+    // must not duplicate an existing query, header, path, or multipart
+    // parameter name.
+    const findPendingQueryParamDuplicate = () => {
+        const lastQueryRow = queryParams?.[queryParams.length - 1]
+        if (!lastQueryRow?.name || lastQueryRow.collectionFormat === 'multi') {
+            return []
+        }
+        return findDuplicatesByComparison(
+            [{ name: lastQueryRow.name, value: lastQueryRow.value ?? '', type: 'string' }],
+            [...headerParams, ...pathParams, ...multipartParams, ...queryParams.slice(0, -1)],
+            "name"
+        )
+    }
     const validateAndAddQueryAtLastRow = (requestAPI: string) => {
-        if (queryParams && queryParams[queryParams.length - 1].name && queryParams[queryParams.length - 1].value) {
-            const queryName = queryParams[queryParams.length - 1].name
-            const queryValue = queryParams[queryParams.length - 1].value
-            const queryParamsClone = [...queryParams]
-            const lastRowValuesArray = queryValue.split(',')
-            const lastRowValues = lastRowValuesArray.filter((value, index) => value && lastRowValuesArray.indexOf(value) === index)
-            const duplicates = findDuplicatesByComparison([{ name: queryName, value: queryValue, type: 'string' }], [...headerParams, ...pathParams], "name")
+        const lastQueryRow = queryParams?.[queryParams.length - 1]
+        if (lastQueryRow?.name) {
+            const queryName = lastQueryRow.name
+            const duplicates = findPendingQueryParamDuplicate()
             if (duplicates.length === 0) {
-                const queriesArrayFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(requestAPI)
-                if (queriesArrayFromUrl.some(query => query.name === queryName)) {
-                    const queryIndex = queriesArrayFromUrl.findIndex(data => data.name === queryName)
-                    const valueCollection = [...queriesArrayFromUrl[queryIndex].value.split(','), ...lastRowValues]
-                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueCollection)
-                    queriesArrayFromUrl[queryIndex].value = valueToSet
-                    queryParamsClone[queryParamsClone.findIndex(data => data.name === queryName)].value = valueToSet
-                    queryParamsClone[queryParamsClone.length - 1] = { name: '', type: 'string', value: '' }
-                } else {
-                    queriesArrayFromUrl.push({ name: queryName, value: lastRowValues.join(','), type: 'string' })
-                    queryParamsClone.push({ name: '', type: 'string', value: '' })
-                }
-                const newQueryString = constructUpdatedQueryString(queriesArrayFromUrl)
-                const urlWithoutQuery = requestAPI.split('?')[0]
-                requestAPI = urlWithoutQuery + newQueryString
+                const completedParams = queryParams.filter((row) => row.name)
+                requestAPI = requestAPI.split('?')[0] + constructUpdatedQueryString(completedParams)
                 setapiURL(requestAPI)
-                setqueryParams(queryParamsClone)
+                setqueryParams([...completedParams, { name: '', type: 'string', value: '' }])
             } else
                 throw new Error(`parameter "${queryName}" already exists`)
         }
@@ -1134,10 +1134,20 @@ export default function RestImport({ language, restImportConfig }: { language: s
                         }
                     }
                     else if (param.in === 'query') {
-                        for (let i = 0; i < query.length; i++) {
-                            if (param.name === query[i].name) {
-                                setSwaggerParameters(param, query[i], "QUERY")
-                                break
+                        // Detect multi-value query parameters and generate the appropriate
+                        // Swagger array definition (collectionFormat: 'multi' or 'csv').
+                        const matchingQueries = query.filter((q) => q.name === param.name && q.name !== '')
+                        if (matchingQueries.length > 1 || matchingQueries[0]?.collectionFormat === 'multi') {
+                            param.type = 'array'
+                            param.collectionFormat = 'multi'
+                            param.items = param.items || { type: 'string' }
+                            setSwaggerParameters(param, matchingQueries[0], "QUERY")
+                        } else if (matchingQueries.length === 1) {
+                            setSwaggerParameters(param, matchingQueries[0], "QUERY")
+                            if (matchingQueries[0].collectionFormat === 'csv') {
+                                param.type = 'array'
+                                param.collectionFormat = 'csv'
+                                param.items = param.items || { type: 'string' }
                             }
                         }
                     }
@@ -1397,7 +1407,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 getPathParams()
                                 handleQueryChange()
                             }} className='url-input' name='wm-webservice-sample-url' autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth />
-                            <Button className='test-btn' name="wm-webservice-sample-test" onClick={handleTestClick} variant='contained'>{translate('TEST')}</Button>
+                            <Button className='test-btn' name="wm-webservice-sample-test" onClick={handleTestClick} variant='contained' disabled={alertMsg}>{translate('TEST')}</Button>
                         </Stack>
                         <Grid mt={2} container>
                             <Grid item md={4}>

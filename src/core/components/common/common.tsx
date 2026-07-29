@@ -183,17 +183,12 @@ export function isValidUrl(url: string) {
 }
 export function retrieveQueryDetailsFromURL(url: string) {
   const query = url?.split('?')[1]
-  const queries = query?.split('&')
-  let queriesArrayFromUrl: HeaderAndQueryI[] = []
-  if (queries) {
-    queries.forEach(query => {
+  const queriesArrayFromUrl: HeaderAndQueryI[] = []
+  if (query) {
+    query.split('&').forEach(query => {
       const queryName = query.slice(0, query.indexOf('='))
       const queryValue = query.slice(query.indexOf('=') + 1)
-      if (queriesArrayFromUrl.some((data: any) => data.name === queryName)) {
-        queriesArrayFromUrl = queriesArrayFromUrl.map((data: HeaderAndQueryI) => {
-          return data.name === queryName ? { name: data.name, value: `${data.value},${queryValue}`, type: 'string' } : data
-        })
-      } else {
+      if (queryName) {
         queriesArrayFromUrl.push({ name: queryName, value: queryValue, type: 'string' })
       }
     })
@@ -203,9 +198,16 @@ export function retrieveQueryDetailsFromURL(url: string) {
 
 export function constructUpdatedQueryString(updatedQueryObj: HeaderAndQueryI[]) {
   let newQueryString = ''
-  updatedQueryObj.forEach((query, index) => {
-    if (query.name && query.value) {
-      newQueryString += index === 0 ? `?${query.name}=${query.value}` : `&${query.name}=${query.value}`
+  let isFirstParam = true
+  updatedQueryObj.forEach((query) => {
+    // Ignore empty placeholder entries for multi-value query parameters when generating the URL.
+    if (query.collectionFormat === 'multi' && !query.value) {
+      return
+    }
+    if (query.name) {
+      const pair = `${query.name}=${query.value ?? ''}`
+      newQueryString += isFirstParam ? `?${pair}` : `&${pair}`
+      isFirstParam = false
     }
   })
   return newQueryString
