@@ -7,12 +7,12 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import {
-    Autocomplete, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, TextField, Typography
+    Autocomplete, Box, FormControl, IconButton, InputLabel, ListSubheader, MenuItem, Select, SelectChangeEvent, TextField, Typography
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import {
-    constructCommaSeparatedUniqueQueryValuesString, constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison,
-    getCurrentDateTime, retrieveQueryDetailsFromURL
+    constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison,
+    getCurrentDateTime
 } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
@@ -24,6 +24,7 @@ export interface HeaderAndQueryI {
     name: string
     type: string
     value: string
+    collectionFormat?: 'multi' | 'csv'  // 'multi': repeated query key in URL; duplicate param names are allowed in the query table
 }
 
 export interface BodyParamsI {
@@ -162,34 +163,32 @@ export function HeaderAndQueryTable(
                 }
             })
         }
+        // When the user edits the pending query row after a duplicate-name error,
+        // clear the current alert so the Test button is re-enabled. If the updated
+        // name is still a duplicate, validation will show the error again.
+        if (from === 'query' && currentIndex === value.length - 1) {
+            setAlertMsg(false)
+        }
         setValue(valueClone)
     }
 
-    const handleChangeType = (event: SelectChangeEvent, currentIndex: number) => {
+    const handleChangeType = (event: SelectChangeEvent, indices: number[]) => {
+        // Apply the selected type to all rows belonging to the same query parameter.
+        // This ensures multi-value query parameters (e.g. ?id=1&id=2) remain consistent,
+        // then rebuild the URL from the updated query parameter state.
         const valueClone = [...value]
-        valueClone.forEach((data, index) => {
-            if (index === currentIndex) {
-                if (selectTypes.ServerSideProperties.find(e => e.value === event.target.value)) {
-                    if (from === 'query') {
-                        let newQueryString = ''
-                        const queriesArrayFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
-                        const result = queriesArrayFromUrl && queriesArrayFromUrl[index]?.name === data.name && queriesArrayFromUrl[index]?.value === data.value
-                        if (result) {  // Creating a URL with modified query parameter 
-                            queriesArrayFromUrl[index].value = ServerSidePropertiesMap.get(event.target.value) as string
-                            newQueryString = constructUpdatedQueryString(queriesArrayFromUrl)
-                        } else {  // Reconstructing the old URL
-                            newQueryString = constructUpdatedQueryString(queriesArrayFromUrl)
-                        }
-                        const originalURL = apiURL.split('?')[0]
-                        changeapiURL(originalURL + newQueryString)
-                    }
-                    data.type = event.target.value
-                    data.value = ServerSidePropertiesMap.get(event.target.value) as string
-                } else {
-                    data.type = event.target.value
-                }
+        indices.forEach((currentIndex) => {
+            const data = valueClone[currentIndex]
+            if (selectTypes.ServerSideProperties.find(e => e.value === event.target.value)) {
+                data.type = event.target.value
+                data.value = ServerSidePropertiesMap.get(event.target.value) as string
+            } else {
+                data.type = event.target.value
             }
         })
+        if (from === 'query' && apiURL) {
+            changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
+        }
         setValue(valueClone)
     }
 
@@ -216,44 +215,35 @@ export function HeaderAndQueryTable(
             }
             else {
                 returnDuplicates = findDuplicatesByComparison([lastRow], [...headerParams, ...multipartParams, ...pathParams], "name")
+                // check and reject the parameter name which is already used by another row in this same query table (use the "+" icon instead)
+                const existingQueryNameDuplicates = findDuplicatesByComparison([lastRow], valueClone.slice(0, -1), "name")
+                returnDuplicates = [...returnDuplicates, ...existingQueryNameDuplicates]
+            }
+            // rows created by the "+" icon (handleAddValueToGroup) never reach this check, so this is just a safety net
+            if (from === 'query' && lastRow.collectionFormat === 'multi') {
+                return []
             }
             return returnDuplicates
         }
-        if (lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== '') {
+        const isLastRowValid = from === 'query'
+            ? lastRow.name !== '' && lastRow.type !== ''
+            : lastRow.name !== '' && lastRow.type !== '' && lastRow.value !== ''
+        if (isLastRowValid) {
             if (from === 'header' && duplicates.length > 0)
                 return handleToastError({ message: `parameter "${duplicates[0].name}" already exists`, type: 'error' })
-            if (allDuplicates().length > 0)
-                return handleToastError({ message: `parameter "${allDuplicates()[0].name}" already exists`, type: 'error' })
+            if (allDuplicates().length > 0) {
+                const duplicateName = allDuplicates()[0].name
+                // query params get a message pointing at the "+" icon workflow instead of the generic header message
+                const message = from === 'query'
+                    ? `Query parameter "${duplicateName}" already exists. Use the + icon next to its Test Value to add another value.`
+                    : `parameter "${duplicateName}" already exists`
+                return handleToastError({ message, type: 'error' })
+            }
             if (from === 'query' && allDuplicates().length === 0) {
-                const lastRowValuesArray = lastRow.value.split(',')
-                const lastRowValues = lastRowValuesArray.filter((value, index) => value && lastRowValuesArray.indexOf(value) === index)
                 if (apiURL) {
-                    const queriesArrayFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
-                    if (queriesArrayFromUrl.some(query => query.name === lastRow.name)) {
-                        const queryIndex = queriesArrayFromUrl.findIndex(data => data.name === lastRow.name)
-                        const valueCollection = [...queriesArrayFromUrl[queryIndex].value.split(','), ...lastRowValues]
-                        const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueCollection)
-                        queriesArrayFromUrl[queryIndex].value = valueToSet
-                        valueClone[valueClone.findIndex(data => data.name === lastRow.name)].value = valueToSet
-                        valueClone.pop()
-                    } else {
-                        queriesArrayFromUrl.push({ name: lastRow.name, value: lastRowValues.join(','), type: 'string' })
-                        valueClone[valueClone.findIndex(data => data.name === lastRow.name)].value = lastRowValues.join(',')
-                    }
-                    const newQueryString = constructUpdatedQueryString(queriesArrayFromUrl)
-                    const originalURL = apiURL.split('?')[0]
-                    changeapiURL(originalURL + newQueryString)
-                } else {
-                    const firstIndex = valueClone.findIndex(item => item.name === lastRow.name)
-                    if (firstIndex !== valueClone.length - 1) {
-                        const valueCollection = [...valueClone[firstIndex].value.split(','), ...lastRowValues]
-                        const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueCollection)
-                        valueClone[firstIndex].value = valueToSet
-                        valueClone.pop()
-                    } else {
-                        valueClone[valueClone.findIndex(data => data.name === lastRow.name)].value = lastRowValues.join(',')
-                    }
+                    changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
                 }
+                // else: no URL yet — keep separate rows in the table; URL syncs on blur or when URL is set
             }
             if (allDuplicates().length === 0)
                 valueClone.push({
@@ -268,40 +258,43 @@ export function HeaderAndQueryTable(
 
     function handleDeleteRow(currentIndex: number) {
         const valueClone = [...value]
-        if (from === 'query') {
-            if (apiURL) {
-                let newQueryString = ''
-                let queriesArrayFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
-                const result = queriesArrayFromUrl && queriesArrayFromUrl.some(data => data.name === valueClone[currentIndex].name)
-                if (result) {
-                    queriesArrayFromUrl = queriesArrayFromUrl.filter(data => data.name !== valueClone[currentIndex].name)
-                    newQueryString = constructUpdatedQueryString(queriesArrayFromUrl)
-                    const originalURL = apiURL.split('?')[0]
-                    changeapiURL(originalURL + newQueryString)
-                }
-            }
-        }
         valueClone.splice(currentIndex, 1)
+        if (from === 'query' && apiURL) {
+            changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
+        }
+        setValue(valueClone)
+    }
+
+    function handleDeleteGroupRow(indices: number[]) {
+        const valueClone = value.filter((_, idx) => !indices.includes(idx))
+        if (from === 'query' && apiURL) {
+            changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
+        }
+        setValue(valueClone)
+    }
+
+    function handleAddValueToGroup(indices: number[]) {
+        const valueClone = [...value]
+        const lastIndexOfGroup = indices[indices.length - 1]
+        const template = valueClone[lastIndexOfGroup]
+        // don't let a new value be added while the last one is still empty
+        if (template.value.trim() === '') {
+            return
+        }
+        // tag every row in the group as 'multi' so a previously single, ungrouped row also groups correctly on re-render
+        indices.forEach((idx) => {
+            valueClone[idx] = { ...valueClone[idx], collectionFormat: 'multi' }
+        })
+        valueClone.splice(lastIndexOfGroup + 1, 0, { name: template.name, type: template.type, value: '', collectionFormat: 'multi' })
         setValue(valueClone)
     }
 
     const handleOnBlurTestValue = (currentIndex: number) => {
         const valueClone = [...value]
         if (from === 'query') {
-            let newQueryString = ''
-            if (apiURL) {
-                let queriesArrayFromUrl: HeaderAndQueryI[] = retrieveQueryDetailsFromURL(apiURL)
-                const result = queriesArrayFromUrl && currentIndex !== valueClone.length - 1
-                if (result) {
-                    const valueArray = valueClone[currentIndex].value.split(',')
-                    const valueToSet = constructCommaSeparatedUniqueQueryValuesString(valueArray)
-                    queriesArrayFromUrl[queriesArrayFromUrl.findIndex(query => query.name === valueClone[currentIndex].name)].value = valueToSet
-                    valueClone[currentIndex].value = valueToSet
-                    newQueryString = constructUpdatedQueryString(queriesArrayFromUrl)
-                    const originalURL = apiURL.split('?')[0]
-                    changeapiURL(originalURL + newQueryString)
-                    setValue(valueClone)
-                }
+            if (apiURL && currentIndex !== valueClone.length - 1) {
+                changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
+                setValue(valueClone)
             }
         } else {
             valueClone.forEach(value => {
@@ -323,6 +316,27 @@ export function HeaderAndQueryTable(
         return nodes;
     }
 
+    // Group rows sharing a name with collectionFormat 'multi' so they render as one row
+    // with a stacked value input per entry, instead of one table row per value.
+    const rowGroups: { indices: number[] }[] = []
+    if (from === 'query') {
+        const groupIndexByName = new Map<string, number>()
+        value.forEach((data, idx) => {
+            const isPlaceholderRow = idx === value.length - 1
+            const groupIndex = !isPlaceholderRow && data.collectionFormat === 'multi' && data.name ? groupIndexByName.get(data.name) : undefined
+            if (groupIndex !== undefined) {
+                rowGroups[groupIndex].indices.push(idx)
+            } else {
+                if (!isPlaceholderRow && data.collectionFormat === 'multi' && data.name) {
+                    groupIndexByName.set(data.name, rowGroups.length)
+                }
+                rowGroups.push({ indices: [idx] })
+            }
+        })
+    } else {
+        value.forEach((_, idx) => rowGroups.push({ indices: [idx] }))
+    }
+
     return (
         <TableContainer sx={{ maxHeight: '35vh' }} component={Paper}>
             <Table ref={tableRef as React.RefObject<HTMLTableElement>}>
@@ -335,73 +349,120 @@ export function HeaderAndQueryTable(
                     </TableRow>
                 </TableHead>
                 <TableBody sx={{ maxHeight: '35vh', overflowY: 'auto' }}>
-                    {value.map((data, index) =>
-                        <TableRowStyled key={index}>
-                            <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
-                                {index !== value.length - 1 ? <Typography>{data.name}</Typography> : <Autocomplete
-                                    fullWidth={true}
-                                    size='small'
-                                    disabled={index !== value.length - 1}
-                                    inputValue={data.name}
-                                    onInputChange={(event, newValue: string) => {
-                                        handleChangeName(newValue, index);
-                                    }}
-                                    freeSolo
-                                    options={from === 'query' ? [] : selectNames.map((option) => option.label)}
-                                    renderInput={(params) => <TextField
-                                        name="wm-webservice-param-name"
-                                        {...params}
-                                        InputLabelProps={{ children: '' }} />}
-                                />}
-                            </TableCell>
-                            <TableCell style={tableRowStyle} width={"30%"} align='left'>
-                                <FormControl size='small' fullWidth={true}>
-                                    <Select
-                                        MenuProps={{
-                                            PaperProps: {
-                                                style: {
-                                                    height: '300px', // Set the maximum height of the dropdown menu
-                                                },
-                                            },
-                                        }} name="wm-webservice-param-type" onChange={(e) => handleChangeType(e, index)} value={data.type} data-testid="param-type">
-                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("UI_TYPES")}</ListSubheader>
-                                        {selectTypes.UITypes.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("SERVER") + " " + translate("SIDE") + ' ' + translate('PROPERTIES')}</ListSubheader>
-                                        {selectTypes.ServerSideProperties.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
-                                        <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("APPENVIRONMENT") + translate('PROPERTIES')} </ListSubheader>
-                                        {getAppEnvProperties()}
-                                    </Select>
-                                </FormControl>
-                            </TableCell>
-                            <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
-                                {data.name !== 'Content-Type' ? <TextField
-                                    name="wm-webservice-param-value"
-                                    fullWidth={true} data-testid="param-value" size='small'
-                                    onBlur={() => handleOnBlurTestValue(index)}
-                                    onChange={(e) => handleChangeTestValue(e.target.value, index)}
-                                    value={data.value} />
-                                    : <Autocomplete
+                    {rowGroups.map((group) => {
+                        const index = group.indices[0]
+                        const data = value[index]
+                        const isPlaceholderRow = index === value.length - 1
+                        // every real query row (single value or a group of duplicates) uses the value-group UI below
+                        const isQueryValueRow = from === 'query' && !isPlaceholderRow
+                        return (
+                            <TableRowStyled key={index}>
+                                <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
+                                    {!isPlaceholderRow ? <Typography>{data.name}</Typography> : <Autocomplete
                                         fullWidth={true}
                                         size='small'
-                                        inputValue={data.value}
-                                        onBlur={() => handleOnBlurTestValue(index)}
+                                        disabled={!isPlaceholderRow}
+                                        inputValue={data.name}
                                         onInputChange={(event, newValue: string) => {
-                                            handleChangeTestValue(newValue, index)
+                                            handleChangeName(newValue, index);
                                         }}
                                         freeSolo
-                                        options={from === 'query' ? [] : defaultContentTypes.map((option) => option.label)}
+                                        options={from === 'query' ? [] : selectNames.map((option) => option.label)}
                                         renderInput={(params) => <TextField
-                                            name="wm-webservice-param-value"
+                                            name="wm-webservice-param-name"
                                             {...params}
                                             InputLabelProps={{ children: '' }} />}
                                     />}
-                            </TableCell>
-                            <TableCell style={tableRowStyle} width={"5%"} align='center'>
-                                {index === value.length - 1 ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} />
-                                    : <i className="wms wms-delete" aria-label="wm-webservice-remove-param" onClick={() => handleDeleteRow(index)} style={{ cursor: 'pointer' }}></i>}
-                            </TableCell>
-                        </TableRowStyled>
-                    )}
+                                </TableCell>
+                                <TableCell style={tableRowStyle} width={"30%"} align='left'>
+                                    <FormControl size='small' fullWidth={true}>
+                                        <Select
+                                            MenuProps={{
+                                                PaperProps: {
+                                                    style: {
+                                                        height: '300px', // Set the maximum height of the dropdown menu
+                                                    },
+                                                },
+                                            }} name="wm-webservice-param-type" onChange={(e) => handleChangeType(e, group.indices)} value={data.type} data-testid="param-type">
+                                            <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("UI_TYPES")}</ListSubheader>
+                                            {selectTypes.UITypes.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                            <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("SERVER") + " " + translate("SIDE") + ' ' + translate('PROPERTIES')}</ListSubheader>
+                                            {selectTypes.ServerSideProperties.map((type) => <MenuItem title={type.label} key={type.value} value={type.value}>{type.label}</MenuItem>)}
+                                            <ListSubheader sx={{ fontWeight: 700, color: 'black' }}>{translate("APPENVIRONMENT") + translate('PROPERTIES')} </ListSubheader>
+                                            {getAppEnvProperties()}
+                                        </Select>
+                                    </FormControl>
+                                </TableCell>
+                                <TableCell style={tableRowStyle} width={"32.5%"} align='left'>
+                                    {isQueryValueRow ? <>
+                                        {group.indices.map((valueIndex, i) => {
+                                            const isLastValue = i === group.indices.length - 1
+                                            const showRemove = group.indices.length > 1 // "x" only makes sense once there's more than one value
+                                            const isCurrentValueEmpty = value[valueIndex].value.trim() === '' // gates the "+" until this box is filled
+                                            // flex row so the value box and its icon sit beside each other, not stacked
+                                            return (
+                                                <Box key={valueIndex} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: isLastValue ? 0 : 1 }}>
+                                                    <TextField
+                                                        name="wm-webservice-param-value"
+                                                        data-testid="param-value" size='small'
+                                                        sx={{ flexGrow: 1, minWidth: 0 }}
+                                                        onBlur={() => handleOnBlurTestValue(valueIndex)}
+                                                        onChange={(e) => handleChangeTestValue(e.target.value, valueIndex)}
+                                                        value={value[valueIndex].value}
+                                                        InputProps={showRemove ? {
+                                                            // font-icon "x" instead of importing @mui/icons-material/Close
+                                                            endAdornment: <i
+                                                                className="wms wms-close"
+                                                                aria-label="wm-webservice-remove-param-value"
+                                                                onClick={() => handleDeleteRow(valueIndex)}
+                                                                style={{ cursor: 'pointer', fontSize: 12 }} />
+                                                        } : undefined} />
+                                                    {/* fixed-width slot for "+", rendered (empty) on every row so every test-value
+                                                        box reserves the same outer space and stays the same width */}
+                                                    <Box sx={{ width: 14, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                                                        {isLastValue && <i
+                                                            className="wms wms-plus"
+                                                            aria-label="wm-webservice-add-param-value"
+                                                            onClick={() => !isCurrentValueEmpty && handleAddValueToGroup(group.indices)}
+                                                            style={{
+                                                                cursor: isCurrentValueEmpty ? 'not-allowed' : 'pointer',
+                                                                opacity: isCurrentValueEmpty ? 0.4 : 1,
+                                                                fontSize: 14
+                                                            }} />}
+                                                    </Box>
+                                                </Box>
+                                            )
+                                        })}
+                                    </> :
+                                        data.name !== 'Content-Type' ? <TextField
+                                            name="wm-webservice-param-value"
+                                            fullWidth={true} data-testid="param-value" size='small'
+                                            onBlur={() => handleOnBlurTestValue(index)}
+                                            onChange={(e) => handleChangeTestValue(e.target.value, index)}
+                                            value={data.value} />
+                                            : <Autocomplete
+                                                fullWidth={true}
+                                                size='small'
+                                                inputValue={data.value}
+                                                onBlur={() => handleOnBlurTestValue(index)}
+                                                onInputChange={(event, newValue: string) => {
+                                                    handleChangeTestValue(newValue, index)
+                                                }}
+                                                freeSolo
+                                                options={from === 'query' ? [] : defaultContentTypes.map((option) => option.label)}
+                                                renderInput={(params) => <TextField
+                                                    name="wm-webservice-param-value"
+                                                    {...params}
+                                                    InputLabelProps={{ children: '' }} />}
+                                            />}
+                                </TableCell>
+                                <TableCell style={tableRowStyle} width={"5%"} align='center'>
+                                    {isPlaceholderRow ? <AddIcon name="wm-webservice-add-param" onClick={handleAddRow} sx={{ cursor: 'pointer' }} />
+                                        : <i className="wms wms-delete" aria-label="wm-webservice-remove-param" onClick={() => group.indices.length > 1 ? handleDeleteGroupRow(group.indices) : handleDeleteRow(index)} style={{ cursor: 'pointer' }}></i>}
+                                </TableCell>
+                            </TableRowStyled>
+                        )
+                    })}
                 </TableBody>
             </Table>
         </TableContainer>
