@@ -631,7 +631,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     setqueryParams([{ name: '', value: '', type: 'string' }])
                     return
                 }
-                const updatedQueryParams = retrieveQueryDetailsFromURL(apiURL)
+                // Re-parsing the URL loses the type selected by the user, so preserve the existing
+                // type for parameters that are still present; use the parsed type for new parameters.
+                const existingTypeByName = new Map(queryParams.filter((param) => param.name).map((param) => [param.name, param.type]))
+                const updatedQueryParams = retrieveQueryDetailsFromURL(apiURL).map((param) => ({
+                    ...param,
+                    type: existingTypeByName.get(param.name) ?? param.type
+                }))
                 if (updatedQueryParams.length > 0) {
                     // Repeated query names (type=a&type=b) are multi-value params — keep as separate rows.
                     const nameOccurrences = updatedQueryParams.reduce<Record<string, number>>((acc, param) => {
@@ -1143,12 +1149,13 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             param.items = param.items || { type: 'string' }
                             setSwaggerParameters(param, matchingQueries[0], "QUERY")
                         } else if (matchingQueries.length === 1) {
-                            setSwaggerParameters(param, matchingQueries[0], "QUERY")
+                            // set array shape first (like the 'multi' branch above) so setSwaggerParameters sees it
                             if (matchingQueries[0].collectionFormat === 'csv') {
                                 param.type = 'array'
                                 param.collectionFormat = 'csv'
                                 param.items = param.items || { type: 'string' }
                             }
+                            setSwaggerParameters(param, matchingQueries[0], "QUERY")
                         }
                     }
                     else if (param.in === 'formData') {
@@ -1188,8 +1195,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
             function setSwaggerParameters(obj: any, param: HeaderAndQueryI, from: "HEADER" | "QUERY") {
                 const typeCheck = checkTypeForParameter(param.type)
                 if (typeCheck === 'SERVER') {
-                    if (from === "HEADER")
-                        obj.items.type = param.type
                     obj['x-WM-VARIABLE_KEY'] = param.type === 'DATETIME' ? "DATE_TIME" : param.type
                     obj["x-WM-VARIABLE_TYPE"] = "SERVER"
                     obj['format'] = param.type
@@ -1204,6 +1209,10 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     obj["x-WM-VARIABLE_TYPE"] = "PROMPT"
                     obj["x-WM-EDITABLE"] = false
                     obj['format'] = param.type
+                }
+                // keep the array's element type in sync with the selected type (e.g. Integer with 2+ values)
+                if (obj.type === 'array' && obj.items) {
+                    obj.items.type = param.type
                 }
             }
             return settingsUploadResponseData

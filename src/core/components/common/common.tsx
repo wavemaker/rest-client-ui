@@ -219,6 +219,69 @@ export function constructCommaSeparatedUniqueQueryValuesString(valueCollection: 
   return valueToSet
 }
 
+// Supports ISO (YYYY-MM-DD), USA (MM/DD/YYYY), and EUR (DD.MM.YYYY, DD/MM/YYYY or DD-MM-YYYY) formats using Date.parse.
+// For EUR dates, swaps day/month before parsing since Date.parse doesn't natively support day-first formats.
+function isValidDatePart(v: string): boolean {
+  if (!isNaN(Date.parse(v))) return true
+  const match = /^(\d{1,2})[-./](\d{1,2})[-./](\d{4})$/.exec(v)
+  return !!match && !isNaN(Date.parse(`${match[2]}/${match[1]}/${match[3]}`))
+}
+// Validates values against the supported primitive types and date/date-time formats.
+export function isValueValidForType(value: string, type: string): boolean {
+  const v = value.trim()
+  if (!v) return true
+
+  switch (type) {
+    case 'int32':
+    case 'int64':
+      return /^-?\d+$/.test(v)
+
+    case 'float':
+    case 'double':
+      return Number.isFinite(Number(v))
+
+    case 'boolean':
+      return /^(true|false)$/i.test(v)
+
+    case 'date':
+    case 'date-time': {
+      const separatorIndex = v.search(/[T ]/)
+      if (separatorIndex === -1) return isValidDatePart(v)
+      // Validate the date separately and use a fixed date to validate the time portion with Date.parse.
+      return isValidDatePart(v.slice(0, separatorIndex)) && !isNaN(Date.parse(`1970-01-01T${v.slice(separatorIndex + 1)}`))
+    }
+
+    default:
+      return true
+  }
+}
+
+// Used on every keystroke to allow only characters that could form a valid value for the selected type.
+// Full value validation is performed by isValueValidForType on blur or type change
+export function isPartialValueValidForType(value: string, type: string): boolean {
+  if (!value) return true
+
+  switch (type) {
+    case 'int32':
+    case 'int64':
+      return /^-?\d*$/.test(value)
+
+    case 'float':
+    case 'double':
+      return /^-?\d*\.?\d*(?:[eE][+-]?\d*)?$/.test(value)
+
+    case 'boolean':
+      return /^(?:t(?:r(?:u(?:e)?)?)?|f(?:a(?:l(?:s(?:e)?)?)?)?)$/i.test(value)
+
+    case 'date':
+    case 'date-time':
+      return /^[\dT:.\-+Z/ ]*$/.test(value)
+
+    default:
+      return true
+  }
+}
+
 export function checkTypeForParameter(type: string): "SERVER" | "ENVIRONMENT" | "BASIC" {
   const UITypes = ['boolean', 'date', 'date-time', 'double', 'float', 'int32', 'int64', 'string']
   const ServerSideProperties = ['DATE', 'DATETIME', 'TIME', 'TIMESTAMP', 'USER_ID', 'USER_NAME']
