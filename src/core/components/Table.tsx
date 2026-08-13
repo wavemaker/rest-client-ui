@@ -177,6 +177,13 @@ export function HeaderAndQueryTable(
         handleToastError({ message: `"${data.value}" is not a valid ${typeLabel} value for parameter "${data.name}".`, type: 'error' })
     }
 
+    // Checks both header/query tables for the first row whose value doesn't match its type.
+    // Returns the invalid row to update the banner, or undefined when all rows are valid.
+    const findTypeMismatch = (rows: HeaderAndQueryI[], otherRows: HeaderAndQueryI[]) => {
+        const result = [...rows, ...otherRows].find(row => !isValueValidForType(row.value, row.type))
+        return result
+    }
+
     const handleChangeType = (event: SelectChangeEvent, indices: number[]) => {
         // apply the selected type to every row of this query param (multi-value params share one type)
         const valueClone = [...value]
@@ -196,6 +203,16 @@ export function HeaderAndQueryTable(
         })
         if (mismatchedEntry) {
             notifyTypeMismatch(mismatchedEntry)
+        } else {
+            // Recheck both tables because this change may have resolved the current mismatch,
+            // but another invalid row may still require the banner.
+            const otherTableRows = from === 'query' ? headerParams : queryParams
+            const remainingMismatch = findTypeMismatch(valueClone, otherTableRows)
+            if (remainingMismatch) {
+                notifyTypeMismatch(remainingMismatch)
+            } else {
+                setAlertMsg(false)
+            }
         }
         if (from === 'query' && apiURL) {
             changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
@@ -212,13 +229,21 @@ export function HeaderAndQueryTable(
         if (isGrowing && currentType && !isPartialValueValidForType(newValue, currentType)) {
             return
         }
-        setAlertMsg(false) // clear any stale type-mismatch error as soon as the user edits the value
         const valueClone = [...value]
         valueClone.forEach((data, index) => {
             if (index === currentIndex) {
                 data.value = newValue
             }
         })
+        // Revalidate both header and query tables after the value change so the banner is cleared only when all values are valid.
+        // If another mismatch remains, update the banner with the current invalid row instead of leaving a stale error message.
+        const otherTableRows = from === 'query' ? headerParams : queryParams
+        const remainingMismatch = findTypeMismatch(valueClone, otherTableRows)
+        if (remainingMismatch) {
+            notifyTypeMismatch(remainingMismatch)
+        } else {
+            setAlertMsg(false)
+        }
         setValue(valueClone)
     }
 
@@ -275,12 +300,25 @@ export function HeaderAndQueryTable(
         }
     }
 
+    // Removing a row can resolve the mismatch that triggered the banner, so revalidate both tables.
+    // Refresh the banner for any remaining mismatch, or clear it when all rows are valid.
+    const refreshAlertAfterRowRemoval = (valueClone: HeaderAndQueryI[]) => {
+        const otherTableRows = from === 'query' ? headerParams : queryParams
+        const remainingMismatch = findTypeMismatch(valueClone, otherTableRows)
+        if (remainingMismatch) {
+            notifyTypeMismatch(remainingMismatch)
+        } else {
+            setAlertMsg(false)
+        }
+    }
+
     function handleDeleteRow(currentIndex: number) {
         const valueClone = [...value]
         valueClone.splice(currentIndex, 1)
         if (from === 'query' && apiURL) {
             changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
         }
+        refreshAlertAfterRowRemoval(valueClone)
         setValue(valueClone)
     }
 
@@ -289,6 +327,7 @@ export function HeaderAndQueryTable(
         if (from === 'query' && apiURL) {
             changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
         }
+        refreshAlertAfterRowRemoval(valueClone)
         setValue(valueClone)
     }
 
@@ -438,13 +477,13 @@ export function HeaderAndQueryTable(
                                                                 className="wms wms-close"
                                                                 aria-label="wm-webservice-remove-param-value"
                                                                 onClick={() => handleDeleteRow(valueIndex)}
-                                                                style={{ cursor: 'pointer', fontSize: 12 }} />
+                                                                style={{ cursor: 'pointer', fontSize: 10 }} />
                                                         } : undefined} />
                                                     {/* fixed-width slot for "+", rendered (empty) on every row so every test-value
                                                         box reserves the same outer space and stays the same width */}
                                                     <Box sx={{ width: 14, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
-                                                        {isLastValue && <i
-                                                            className="wms wms-plus"
+                                                        {isLastValue && <i                     
+                                                                className="wms wms-plus"
                                                             aria-label="wm-webservice-add-param-value"
                                                             onClick={() => !isCurrentValueEmpty && handleAddValueToGroup(group.indices)}
                                                             style={{

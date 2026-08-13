@@ -219,12 +219,17 @@ export function constructCommaSeparatedUniqueQueryValuesString(valueCollection: 
   return valueToSet
 }
 
-// Supports ISO (YYYY-MM-DD), USA (MM/DD/YYYY), and EUR (DD.MM.YYYY, DD/MM/YYYY or DD-MM-YYYY) formats using Date.parse.
-// For EUR dates, swaps day/month before parsing since Date.parse doesn't natively support day-first formats.
+// Checks only the *shape* of a date value - 3 numeric groups joined by one consistent separator
+// (e.g. 1/22/2022, 22-01-2022, 2022.01.22) - not whether it resolves to a real calendar date, since
+// day/month order (DD/MM vs MM/DD) is ambiguous without knowing the API's expected locale.
 function isValidDatePart(v: string): boolean {
-  if (!isNaN(Date.parse(v))) return true
-  const match = /^(\d{1,2})[-./](\d{1,2})[-./](\d{4})$/.exec(v)
-  return !!match && !isNaN(Date.parse(`${match[2]}/${match[1]}/${match[3]}`))
+  return /^\d{1,4}([/.-])\d{1,4}\1\d{1,4}$/.test(v)
+}
+
+// Checks only the *shape* of a time value (HH:mm[:ss][.SSS][Z|±HH:mm]) - not whether the
+// hour/minute/second values are in range.
+function isValidTimePart(v: string): boolean {
+  return /^\d{1,2}:\d{1,2}(:\d{1,2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/.test(v)
 }
 // Validates values against the supported primitive types and date/date-time formats.
 export function isValueValidForType(value: string, type: string): boolean {
@@ -246,9 +251,11 @@ export function isValueValidForType(value: string, type: string): boolean {
     case 'date':
     case 'date-time': {
       const separatorIndex = v.search(/[T ]/)
-      if (separatorIndex === -1) return isValidDatePart(v)
-      // Validate the date separately and use a fixed date to validate the time portion with Date.parse.
-      return isValidDatePart(v.slice(0, separatorIndex)) && !isNaN(Date.parse(`1970-01-01T${v.slice(separatorIndex + 1)}`))
+      const result =
+        separatorIndex === -1
+          ? isValidDatePart(v)
+          : isValidDatePart(v.slice(0, separatorIndex)) && isValidTimePart(v.slice(separatorIndex + 1))
+      return result
     }
 
     default:

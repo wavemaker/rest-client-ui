@@ -9,7 +9,7 @@ import ProviderModal, { ProviderI } from './ProviderModal'
 import { BodyParamsI, HeaderAndQueryTable, MultipartTable, HeaderAndQueryI, TableRowStyled, tableHeaderStyle, tableRowStyle } from './Table'
 import {
     retrievePathParamNamesFromURL, httpStatusCodes, isValidUrl, removeDuplicatesByComparison, constructUpdatedQueryString,
-    findDuplicatesByComparison, retrieveQueryDetailsFromURL, checkTypeForParameter
+    findDuplicatesByComparison, retrieveQueryDetailsFromURL, checkTypeForParameter, isValueValidForType
 } from './common/common'
 import InfoIcon from '@mui/icons-material/Info'
 import { AxiosRequestConfig, AxiosResponse } from 'axios'
@@ -410,7 +410,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    // On mount, normalize multi/csv query params so the table and URL stay in sync after save/reopen.
+    // On mount, normalize multi-value query params so the table and URL stay in sync after save/reopen.
     useEffect(() => {
         // Ignore the trailing empty placeholder row (name === '').
         const configQueryParams = restImportConfig?.queryParams?.filter((row) => row.name) || []
@@ -424,9 +424,9 @@ export default function RestImport({ language, restImportConfig }: { language: s
         const hasRepeatedNames = configQueryParams.some(
             (param) => configQueryParams.filter((row) => row.name === param.name).length > 1
         )
-        // Only rebuild state when there is something special to preserve (multi/csv/repeats).
+        // Only rebuild state when there is something special to preserve (multi/repeats).
         // For plain single-value params the incoming url/queryParams are already fine.
-        if (hasMultiFormat || hasRepeatedNames || configQueryParams.some((param) => param.collectionFormat === 'csv')) {
+        if (hasMultiFormat || hasRepeatedNames) {
             // Backfill collectionFormat: 'multi' on repeated rows that don't carry the flag yet,
             // so downstream URL building keeps them as separate key=value pairs (not comma-joined).
             const normalizedParams = configQueryParams.map((param) => {
@@ -1141,7 +1141,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                     }
                     else if (param.in === 'query') {
                         // Detect multi-value query parameters and generate the appropriate
-                        // Swagger array definition (collectionFormat: 'multi' or 'csv').
+                        // Swagger array definition (collectionFormat: 'multi').
                         const matchingQueries = query.filter((q) => q.name === param.name && q.name !== '')
                         if (matchingQueries.length > 1 || matchingQueries[0]?.collectionFormat === 'multi') {
                             param.type = 'array'
@@ -1149,12 +1149,6 @@ export default function RestImport({ language, restImportConfig }: { language: s
                             param.items = param.items || { type: 'string' }
                             setSwaggerParameters(param, matchingQueries[0], "QUERY")
                         } else if (matchingQueries.length === 1) {
-                            // set array shape first (like the 'multi' branch above) so setSwaggerParameters sees it
-                            if (matchingQueries[0].collectionFormat === 'csv') {
-                                param.type = 'array'
-                                param.collectionFormat = 'csv'
-                                param.items = param.items || { type: 'string' }
-                            }
                             setSwaggerParameters(param, matchingQueries[0], "QUERY")
                         }
                     }
@@ -1380,6 +1374,11 @@ export default function RestImport({ language, restImportConfig }: { language: s
         
     }
 
+    // Dismissing the banner (its own "x") must only hide the message, not waive validation —
+    // the Test button stays disabled independently whenever a test value still doesn't match
+    // its declared type, regardless of whether alertMsg has been dismissed.
+    const hasInvalidTestValue = [...headerParams, ...queryParams].some(row => !isValueValidForType(row.value, row.type))
+
     return (
         <ThemeProvider theme={theme}>
             <Stack sx={{ height: "97vh" }} className='rest-import-ui'>
@@ -1416,7 +1415,7 @@ export default function RestImport({ language, restImportConfig }: { language: s
                                 getPathParams()
                                 handleQueryChange()
                             }} className='url-input' name='wm-webservice-sample-url' autoFocus={true} value={apiURL} onChange={(e) => setapiURL(e.target.value.trim())} size='small' fullWidth />
-                            <Button className='test-btn' name="wm-webservice-sample-test" onClick={handleTestClick} variant='contained' disabled={alertMsg}>{translate('TEST')}</Button>
+                            <Button className='test-btn' name="wm-webservice-sample-test" onClick={handleTestClick} variant='contained' disabled={alertMsg || hasInvalidTestValue}>{translate('TEST')}</Button>
                         </Stack>
                         <Grid mt={2} container>
                             <Grid item md={4}>
