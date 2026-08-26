@@ -12,7 +12,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import {
     constructUpdatedQueryString, findDuplicateObjectsWithinArray, findDuplicatesByComparison,
-    getCurrentDateTime
+    getCurrentDateTime, isPartialValueValidForType, isValueValidForType
 } from './common/common';
 import styled from "@emotion/styled";
 import { FileUploadOutlined } from '@mui/icons-material';
@@ -171,12 +171,23 @@ export function HeaderAndQueryTable(
         }
         setValue(valueClone)
     }
+    // Builds the "not a valid <Type> value" toast message, reusing the same label shown in the Type dropdown.
+    const notifyTypeMismatch = (data: HeaderAndQueryI) => {
+        const typeLabel = selectTypes.UITypes.find(t => t.value === data.type)?.label || data.type
+        handleToastError({ message: `"${data.value}" is not a valid ${typeLabel} value for parameter "${data.name}".`, type: 'error' })
+    }
+
+    // Checks both header/query tables for the first row whose value doesn't match its type.
+    // Returns the invalid row to update the banner, or undefined when all rows are valid.
+    const findTypeMismatch = (rows: HeaderAndQueryI[], otherRows: HeaderAndQueryI[]) => {
+        const result = [...rows, ...otherRows].find(row => !isValueValidForType(row.value, row.type))
+        return result
+    }
 
     const handleChangeType = (event: SelectChangeEvent, indices: number[]) => {
-        // Apply the selected type to all rows belonging to the same query parameter.
-        // This ensures multi-value query parameters (e.g. ?id=1&id=2) remain consistent,
-        // then rebuild the URL from the updated query parameter state.
+        // apply the selected type to every row of this query param (multi-value params share one type)
         const valueClone = [...value]
+        let mismatchedEntry: HeaderAndQueryI | undefined
         indices.forEach((currentIndex) => {
             const data = valueClone[currentIndex]
             if (selectTypes.ServerSideProperties.find(e => e.value === event.target.value)) {
@@ -184,8 +195,25 @@ export function HeaderAndQueryTable(
                 data.value = ServerSidePropertiesMap.get(event.target.value) as string
             } else {
                 data.type = event.target.value
+                // an existing value may no longer match the newly selected type (e.g. "abc" under Integer)
+                if (!isValueValidForType(data.value, data.type)) {
+                    mismatchedEntry = data
+                }
             }
         })
+        if (mismatchedEntry) {
+            notifyTypeMismatch(mismatchedEntry)
+        } else {
+            // Recheck both tables because this change may have resolved the current mismatch,
+            // but another invalid row may still require the banner.
+            const otherTableRows = from === 'query' ? headerParams : queryParams
+            const remainingMismatch = findTypeMismatch(valueClone, otherTableRows)
+            if (remainingMismatch) {
+                notifyTypeMismatch(remainingMismatch)
+            } else {
+                setAlertMsg(false)
+            }
+        }
         if (from === 'query' && apiURL) {
             changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
         }
@@ -194,12 +222,28 @@ export function HeaderAndQueryTable(
 
 
     const handleChangeTestValue = (newValue: string, currentIndex: number) => {
+        // block only keystrokes that ADD invalid characters (e.g. a letter in an Integer field);
+        // always allow shrinking edits (backspace/delete) so an already-invalid value can be cleared
+        const currentType = value[currentIndex]?.type
+        const isGrowing = newValue.length > (value[currentIndex]?.value.length ?? 0)
+        if (isGrowing && currentType && !isPartialValueValidForType(newValue, currentType)) {
+            return
+        }
         const valueClone = [...value]
         valueClone.forEach((data, index) => {
             if (index === currentIndex) {
                 data.value = newValue
             }
         })
+        // Revalidate both header and query tables after the value change so the banner is cleared only when all values are valid.
+        // If another mismatch remains, update the banner with the current invalid row instead of leaving a stale error message.
+        const otherTableRows = from === 'query' ? headerParams : queryParams
+        const remainingMismatch = findTypeMismatch(valueClone, otherTableRows)
+        if (remainingMismatch) {
+            notifyTypeMismatch(remainingMismatch)
+        } else {
+            setAlertMsg(false)
+        }
         setValue(valueClone)
     }
 
@@ -256,12 +300,25 @@ export function HeaderAndQueryTable(
         }
     }
 
+    // Removing a row can resolve the mismatch that triggered the banner, so revalidate both tables.
+    // Refresh the banner for any remaining mismatch, or clear it when all rows are valid.
+    const refreshAlertAfterRowRemoval = (valueClone: HeaderAndQueryI[]) => {
+        const otherTableRows = from === 'query' ? headerParams : queryParams
+        const remainingMismatch = findTypeMismatch(valueClone, otherTableRows)
+        if (remainingMismatch) {
+            notifyTypeMismatch(remainingMismatch)
+        } else {
+            setAlertMsg(false)
+        }
+    }
+
     function handleDeleteRow(currentIndex: number) {
         const valueClone = [...value]
         valueClone.splice(currentIndex, 1)
         if (from === 'query' && apiURL) {
             changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
         }
+        refreshAlertAfterRowRemoval(valueClone)
         setValue(valueClone)
     }
 
@@ -270,6 +327,7 @@ export function HeaderAndQueryTable(
         if (from === 'query' && apiURL) {
             changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
         }
+        refreshAlertAfterRowRemoval(valueClone)
         setValue(valueClone)
     }
 
@@ -291,6 +349,10 @@ export function HeaderAndQueryTable(
 
     const handleOnBlurTestValue = (currentIndex: number) => {
         const valueClone = [...value]
+        const data = valueClone[currentIndex]
+        if (data && !isValueValidForType(data.value, data.type)) {
+            notifyTypeMismatch(data)
+        }
         if (from === 'query') {
             if (apiURL && currentIndex !== valueClone.length - 1) {
                 changeapiURL(apiURL.split('?')[0] + constructUpdatedQueryString(valueClone))
@@ -415,13 +477,13 @@ export function HeaderAndQueryTable(
                                                                 className="wms wms-close"
                                                                 aria-label="wm-webservice-remove-param-value"
                                                                 onClick={() => handleDeleteRow(valueIndex)}
-                                                                style={{ cursor: 'pointer', fontSize: 12 }} />
+                                                                style={{ cursor: 'pointer', fontSize: 10 }} />
                                                         } : undefined} />
                                                     {/* fixed-width slot for "+", rendered (empty) on every row so every test-value
                                                         box reserves the same outer space and stays the same width */}
                                                     <Box sx={{ width: 14, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
-                                                        {isLastValue && <i
-                                                            className="wms wms-plus"
+                                                        {isLastValue && <i                     
+                                                                className="wms wms-plus"
                                                             aria-label="wm-webservice-add-param-value"
                                                             onClick={() => !isCurrentValueEmpty && handleAddValueToGroup(group.indices)}
                                                             style={{
