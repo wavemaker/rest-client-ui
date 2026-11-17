@@ -156,6 +156,8 @@ export default function ConfigModel(
         const providerExists = customProviderList.some((provider: { providerId: string; }) => provider.providerId === providerId);
         if (!providerId) {
             handleErrorMsg({ message: translate("PROVIDERID_ALERT"), type: 'error' })
+        } else if (!currentProviderConfig && (PKCE || flow === 'IMPLICIT') && !/^[A-Za-z0-9_-]+$/.test(providerId)) {
+            handleErrorMsg({ message: translate("PROVIDERID_INVALID_ALERT"), type: 'error' })
         } else if (providerExists && !currentProviderConfig) {
             handleErrorMsg({ message: translate('PROVIDER') + ` ("${providerId}") ` + translate('ALREADY_EXIST') + `!`, type: 'error' })
         } else if (!authorizationUrl) {
