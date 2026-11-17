@@ -79,6 +79,7 @@
   "CUSTOM": "Custom",
   "PATHPARAMSALERT": "Please provide the path parameter value",
   "PROVIDERID_ALERT": "Provider Id is required",
+  "PROVIDERID_INVALID_ALERT": "Provider Id can contain only letters, digits, underscores and hyphens",
   "AUTHORIZATIONURL_ALERT": "Authorization URL is required",
   "ACCESSTOKEN_ALERT": "Access Token URL is required",
   "CLIENTID_ALERT": "Client ID is required",
